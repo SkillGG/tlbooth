@@ -9,7 +9,7 @@ interface LoginProps {
 export default function Login({ setUser, user }: LoginProps) {
   const [loginError, setLoginError] = useState<string>("");
   const [passInput, setPassInput] = useState("");
-  const { mutate } = api.db.checkPass.useMutation({
+  const { mutate, isLoading: isChecking } = api.db.checkPass.useMutation({
     onSuccess: (data) => {
       setPassInput("");
       if (data) {
@@ -32,12 +32,14 @@ export default function Login({ setUser, user }: LoginProps) {
                   placeholder="Auth code"
                   className="rounded-bl-lg rounded-tl-lg p-2 text-gray-800 outline-none"
                   onChange={(e) => setPassInput(e.target.value)}
+                  disabled={isChecking}
                 />
                 <button
                   className="rounded-br-lg rounded-tr-lg border-2 border-slate-200 bg-slate-200 p-2 text-black hover:bg-white"
                   onClick={() => {
                     mutate(passInput);
                   }}
+                  disabled={isChecking}
                 >
                   Login
                 </button>
