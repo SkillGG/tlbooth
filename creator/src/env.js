@@ -21,6 +21,9 @@ export const env = createEnv({
         (str) => !str.includes("YOUR_MYSQL_URL_HERE"),
         "You forgot to change the default URL",
       ),
+    EDIT_PASS: z
+      .string()
+      .refine((str) => !!str.length, "You forgot to add editor password"),
     NODE_ENV: z
       .enum(["development", "test", "production"])
       .default("development"),
@@ -43,6 +46,7 @@ export const env = createEnv({
     DB_USER_URL: process.env.DB_USER_URL,
     DB_ADMIN_URL: process.env.DB_ADMIN_URL,
     NODE_ENV: process.env.NODE_ENV,
+    EDIT_PASS: process.env.EDIT_PASS,
     // NEXT_PUBLIC_CLIENTVAR: process.env.NEXT_PUBLIC_CLIENTVAR,
   },
   /**
