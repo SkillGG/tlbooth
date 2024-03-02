@@ -1,0 +1,12 @@
+{
+    "name": "tlbooth",
+    "version": "1.0.0",
+    "description": "TLBooth",
+    "main": "",
+    "scripts": {
+        "build-reader": "cd reader ; vite build",
+        "build-creator": "cd creator; "
+    },
+    "author": "",
+    "license": "ISC"
+}
