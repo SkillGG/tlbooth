@@ -5,7 +5,7 @@
     "main": "",
     "scripts": {
         "prebuild-reader": "cd reader; npm i",
-        "build-reader": "cd reader ; vite build",
+        "build-reader": "cd reader ; npx vite build",
         "build-creator": "cd creator; "
     },
     "author": "",
