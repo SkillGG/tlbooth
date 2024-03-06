@@ -20,14 +20,14 @@ export function Dashboard() {
 
   return (
     <>
-      <nav></nav>
+      <nav></nav> 
       <main>
         <TLStore.Provider value={tls}>
           {state.type === "list" && (
             <div className="border-black">
               <h2>Current translations</h2>
               {tls.map((tl) => {
-                return <>{tl.id}</>;
+                return <div key={tl.ogname}>{tl.tlname}/{tl.ogname}</div>;
               })}
             </div>
           )}
