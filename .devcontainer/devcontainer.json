@@ -1,0 +1,7 @@
+{
+	"name": "Node.js",
+	"image": "mcr.microsoft.com/devcontainers/javascript-node:0-20-bullseye",
+	"features": {
+	  "ghcr.io/devcontainers-contrib/features/jshint:2": {}
+	}
+  }
