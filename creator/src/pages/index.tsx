@@ -2,6 +2,7 @@ import Head from "next/head";
 
 import { useState } from "react";
 import Login from "@/components/Login";
+import { Dashboard } from "@/components/Dashboard/Dashboard";
 
 export default function Home() {
   const [user, setUser] = useState<string | null>(null);
@@ -14,7 +15,9 @@ export default function Home() {
         <link rel="icon" href="/favicon.ico" />
       </Head>
       <Login user={user} setUser={setUser} />
-      {user && <>You can edit the posts!</>}
+      {user && <>
+        <Dashboard /> 
+      </>}
     </>
   );
 }
