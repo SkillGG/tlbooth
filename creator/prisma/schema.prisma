@@ -11,10 +11,10 @@ datasource db {
 }
 
 model Translation {
-    id          String     @id @default(auto()) @map("_id") @db.ObjectId
-    url         String
-    lines       TextLine[]
-    lineIDs     String[]   @db.ObjectId
+    id      String     @id @default(auto()) @map("_id") @db.ObjectId
+    url     String
+    lines   TextLine[]
+    lineIDs String[]   @db.ObjectId
 }
 
 model TextLine {
@@ -22,6 +22,7 @@ model TextLine {
     pos      Int         @unique @default(0)
     TL       String
     OG       String
+    isName   Boolean
     fullText Translation @relation(fields: [textId], references: [id])
     textId   String      @db.ObjectId
 }

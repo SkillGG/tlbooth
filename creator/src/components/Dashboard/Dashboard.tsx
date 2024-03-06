@@ -3,6 +3,8 @@ import { createContext, useState } from "react";
 
 export type TL = {
   id: string;
+  ogname:string;
+  tlname:string;
 };
 
 const TLStore = createContext<TL[]>([]);
