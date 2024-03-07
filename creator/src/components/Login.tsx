@@ -1,4 +1,5 @@
 import { api } from "@/utils/api";
+import { useRouter } from "next/router";
 import { useState } from "react";
 
 interface LoginProps {
@@ -9,11 +10,13 @@ interface LoginProps {
 export default function Login({ setUser, user }: LoginProps) {
   const [loginError, setLoginError] = useState<string>("");
   const [passInput, setPassInput] = useState("");
+  const router = useRouter();
   const { mutate, isLoading: isChecking } = api.db.checkPass.useMutation({
     onSuccess: (data) => {
       setPassInput("");
       if (data) {
         setUser("admin");
+        void router.push("/list");
       } else {
         setLoginError("Wrong pass");
       }
@@ -32,6 +35,7 @@ export default function Login({ setUser, user }: LoginProps) {
                   placeholder="Auth code"
                   className="rounded-bl-lg rounded-tl-lg p-2 text-gray-800 outline-none"
                   onChange={(e) => setPassInput(e.target.value)}
+                  onKeyDown={e => e.code === "Enter" && mutate(passInput)}
                   disabled={isChecking}
                 />
                 <button

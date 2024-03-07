@@ -4,10 +4,12 @@
     "description": "TLBooth",
     "main": "",
     "scripts": {
-        "prebuild-reader": "cd reader; npm i",
-        
+        "prebuild-creator": "npm run install-creator",
+        "install-creator": "cd creator; npm i",
+        "build-creator": "cd creator; ",
+        "prebuild-reader": "npm run install-reader",
         "build-reader": "cd reader ; npx vite build",
-        "build-creator": "cd creator; "
+        "install-reader": "cd reader; npm i"
     },
     "author": "",
     "license": "ISC"

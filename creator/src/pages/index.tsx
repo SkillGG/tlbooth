@@ -1,11 +1,10 @@
 import Head from "next/head";
-
-import { useState } from "react";
 import Login from "@/components/Login";
-import { Dashboard } from "@/components/Dashboard/Dashboard";
+import { useRedirect, useUser } from "@/hooks/login";
 
 export default function Home() {
-  const [user, setUser] = useState<string | null>(null);
+  const { user, setUser } = useUser();
+  useRedirect(false);
 
   return (
     <>
@@ -15,9 +14,6 @@ export default function Home() {
         <link rel="icon" href="/favicon.ico" />
       </Head>
       <Login user={user} setUser={setUser} />
-      {user && <>
-        <Dashboard /> 
-      </>}
     </>
   );
 }
