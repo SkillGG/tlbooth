@@ -1,5 +1,5 @@
 import { useRouter } from "next/router";
-import { Dispatch, PropsWithChildren, SetStateAction, createContext, useContext, useEffect, useState } from "react";
+import { type Dispatch, type PropsWithChildren, type SetStateAction, createContext, useContext, useEffect, useState } from "react";
 
 type UserContext = {
     user: string | null
