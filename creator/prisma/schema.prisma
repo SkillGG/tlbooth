@@ -10,19 +10,54 @@ datasource db {
     url      = env("DB_ADMIN_URL")
 }
 
+enum LANG {
+    PL
+    EN
+    JP
+}
+
 model Translation {
-    id      String     @id @default(auto()) @map("_id") @db.ObjectId
-    url     String
+    id     String @id @default(auto()) @map("_id") @db.ObjectId
+    url    String
+    oglang LANG
+    tllang LANG
+
+    Chapter   Chapter? @relation(fields: [chapterId], references: [id])
+    chapterId String?  @db.ObjectId
+
     lines   TextLine[]
     lineIDs String[]   @db.ObjectId
 }
 
 model TextLine {
-    id       String      @id @default(auto()) @map("_id") @db.ObjectId
-    pos      Int         @unique @default(0)
-    TL       String
-    OG       String
-    isName   Boolean
+    id String @id @default(auto()) @map("_id") @db.ObjectId
+
+    pos    Int     @unique @default(0)
+    TL     String
+    OG     String
+    isName Boolean
+
     fullText Translation @relation(fields: [textId], references: [id])
     textId   String      @db.ObjectId
+}
+
+model Novel {
+    id String @id @default(auto()) @map("_id") @db.ObjectId
+
+    ogname String
+    tlname String?
+
+    chapters Chapter[]
+}
+
+model Chapter {
+    id String @id @default(auto()) @map("_id") @db.ObjectId
+
+    ogname String?
+    tlname String?
+
+    Novel   Novel  @relation(fields: [novelId], references: [id])
+    novelId String @db.ObjectId
+
+    translations Translation[]
 }

@@ -5,6 +5,7 @@ import { api } from "@/utils/api";
 
 import "@/styles/globals.css";
 import { UserProvider } from "@/hooks/login";
+import { NovelStoreProvider } from "@/hooks/novelStore";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -12,10 +13,12 @@ const inter = Inter({
 });
 const MyApp: AppType = ({ Component, pageProps }) => {
   return (
-    <UserProvider>
-      <main className={`font-sans ${inter.variable}`}>
-        <Component {...pageProps} />
-      </main>
+    <UserProvider loginPage="/login" mainPage="/dashboard">
+      <NovelStoreProvider>
+        <main className={`font-sans ${inter.variable}`}>
+          <Component {...pageProps} />
+        </main>
+      </NovelStoreProvider>
     </UserProvider>
   );
 };
