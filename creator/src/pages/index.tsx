@@ -1,6 +1,3 @@
-import { useRedirect } from "@/hooks/login";
-
-export default function Home() {
-  useRedirect(true);
+export default function Login() {
   return <></>;
 }

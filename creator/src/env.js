@@ -24,6 +24,9 @@ export const env = createEnv({
     EDIT_PASS: z
       .string()
       .refine((str) => !!str.length, "You forgot to add editor password"),
+    CLERK_SECRET_KEY: z
+      .string()
+      .refine((str) => !!str.length, "WTF"),
     NODE_ENV: z
       .enum(["development", "test", "production"])
       .default("development"),
@@ -36,6 +39,9 @@ export const env = createEnv({
    */
   client: {
     // NEXT_PUBLIC_CLIENTVAR: z.string(),
+    NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: z
+      .string()
+      .refine((str) => !!str.length, "You forgot to add clerk public key"),
   },
 
   /**
@@ -46,6 +52,9 @@ export const env = createEnv({
     DB_USER_URL: process.env.DB_USER_URL,
     DB_ADMIN_URL: process.env.DB_ADMIN_URL,
     NODE_ENV: process.env.NODE_ENV,
+    CLERK_SECRET_KEY: process.env.CLERK_SECRET_KEY,
+    NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY:
+      process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY,
     EDIT_PASS: process.env.EDIT_PASS,
     // NEXT_PUBLIC_CLIENTVAR: process.env.NEXT_PUBLIC_CLIENTVAR,
   },
