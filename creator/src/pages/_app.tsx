@@ -5,7 +5,6 @@ import { ClerkProvider } from "@clerk/nextjs";
 import { api } from "@/utils/api";
 
 import "@/styles/globals.css";
-import { NovelStoreProvider } from "@/hooks/novelStore";
 import LoginBar from "@/components/LoginBar";
 import Head from "next/head";
 import { AdminCheckProvider } from "@/hooks/admin";
@@ -27,16 +26,14 @@ const MyApp: AppType = ({ Component, pageProps }) => {
       </Head>
       <ClerkProvider {...pageProps}>
         <AdminCheckProvider>
-          <NovelStoreProvider>
-            <LoginBar setLoaded={setNavLoaded} />
-            {navLoaded ? (
-              <main className={`font-sans ${inter.variable}`}>
-                <Component {...pageProps} />
-              </main>
-            ) : (
-              <></>
-            )}
-          </NovelStoreProvider>
+          <LoginBar setLoaded={setNavLoaded} />
+          {navLoaded ? (
+            <main className={`font-sans ${inter.variable}`}>
+              <Component {...pageProps} />
+            </main>
+          ) : (
+            <></>
+          )}
         </AdminCheckProvider>
       </ClerkProvider>
     </>

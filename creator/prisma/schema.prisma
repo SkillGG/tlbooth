@@ -35,7 +35,7 @@ model TextLine {
     tlline String
     ogline String
 
-    fullText Translation @relation(fields: [textId], references: [id])
+    fullText Translation @relation(fields: [textId], references: [id], onDelete: Cascade)
     textId   String      @db.ObjectId
 }
 
@@ -58,7 +58,7 @@ model Chapter {
     ogname String?
     tlname String?
 
-    Novel   Novel  @relation(fields: [novelId], references: [id])
+    Novel   Novel  @relation(fields: [novelId], references: [id], onDelete: Cascade)
     novelId String @db.ObjectId
 
     translations Translation[]

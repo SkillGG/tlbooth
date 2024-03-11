@@ -1,4 +1,4 @@
-import { type Novel } from "@prisma/client";
+import type { DBNovel } from "@/server/api/routers/db";
 import {
   type Dispatch,
   type SetStateAction,
@@ -6,22 +6,32 @@ import {
   createContext,
   useState,
   useContext,
+  useEffect,
 } from "react";
 
-type novelStoreType = Novel[];
+type novelStoreType = DBNovel[] | undefined;
 
 type NovelStoreContext = {
   novelStore: novelStoreType;
   setNovelStore: Dispatch<SetStateAction<novelStoreType>>;
+  refresh: () => Promise<void>;
 } | null;
 
 const novelStoreContext = createContext<NovelStoreContext>(null);
 
-export function NovelStoreProvider({ children }: PropsWithChildren) {
-  const [novelStore, setNovelStore] = useState<novelStoreType>([]);
+export function NovelStoreProvider({
+  children,
+  value,
+  refresh,
+}: PropsWithChildren<{ value?: DBNovel[]; refresh: () => Promise<void> }>) {
+  const [novelStore, setNovelStore] = useState<novelStoreType>(value);
+
+  useEffect(() => {
+    setNovelStore(value);
+  }, [value]);
 
   return (
-    <novelStoreContext.Provider value={{ novelStore, setNovelStore }}>
+    <novelStoreContext.Provider value={{ novelStore, setNovelStore, refresh }}>
       {children}
     </novelStoreContext.Provider>
   );

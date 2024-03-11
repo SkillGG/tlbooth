@@ -4,35 +4,35 @@ import { z } from "zod";
 
 import { parse } from "node-html-parser"
 
-const ScrapperFilter = z.object({ search: z.string().optional() });
+export const ScrapperFilter = z.object({ search: z.string().optional() });
 
-export type ScrapperFilter = z.infer<typeof ScrapperFilter>
 
-const ScrapperNovelInfo = z.object({
+export const ScrapperNovelInfo = z.object({
   url: z.string().url(),
   name: z.string().min(1)
 })
 
-type ScrapperNovelInfo = z.infer<typeof ScrapperNovelInfo>
 
-const ScrapperChapterInfo = z.object({
+export const ScrapperChapterInfo = z.object({
   url: z.string().url(),
   name: z.string().min(1)
 });
 
-const ScrapperChapter = z.object({
+export const ScrapperChapter = z.object({
   info: ScrapperChapterInfo,
   lines: z.array(z.string())
 })
 
-type ScrapperChapter = z.infer<typeof ScrapperChapter>
 
-const ScrapperNovel = z.object({
+export const ScrapperNovel = z.object({
   info: ScrapperNovelInfo,
   chapters: z.array(ScrapperChapterInfo)
 });
 
-type ScrapperNovel = z.infer<typeof ScrapperNovel>
+export type ScrapperFilter = z.infer<typeof ScrapperFilter>
+export type ScrapperNovelInfo = z.infer<typeof ScrapperNovelInfo>
+export type ScrapperChapter = z.infer<typeof ScrapperChapter>
+export type ScrapperNovel = z.infer<typeof ScrapperNovel>
 
 const uri = (s: string) => encodeURIComponent(s);
 
@@ -48,10 +48,8 @@ export const scrapperRouter = createTRPCRouter({
 
     const novels = main.map<ScrapperNovelInfo | null>(p => {
       const header = p.querySelector(".novel_h");
-      console.log(header);
       const anchor = header?.querySelector("a");
       const href = anchor?.getAttribute("href");
-      console.log(anchor, href);
       if (header && href) {
         return { name: header.text, url: href } satisfies ScrapperNovelInfo
       } else {
@@ -60,8 +58,6 @@ export const scrapperRouter = createTRPCRouter({
     });
 
     const retVal: ScrapperNovelInfo[] = []
-
-    // console.log(novels);
 
     novels.forEach(p => {
       if (p) {

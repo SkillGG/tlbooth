@@ -1,0 +1,18 @@
+.spinner {
+  --size: 50px;
+  --time: 1s;
+  --weight: 8px;
+  --bg: lightblue;
+  --accent: orange;
+  width: var(--size);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  border: var(--weight) solid var(--bg);
+  border-right-color: var(--accent);
+  animation: spinner var(--time) infinite linear;
+}
+@keyframes spinner {
+  to {
+    transform: rotate(1turn);
+  }
+}
