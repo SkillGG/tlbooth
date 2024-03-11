@@ -25,17 +25,15 @@ model Translation {
     Chapter   Chapter? @relation(fields: [chapterId], references: [id])
     chapterId String?  @db.ObjectId
 
-    lines   TextLine[]
-    lineIDs String[]   @db.ObjectId
+    lines TextLine[]
 }
 
 model TextLine {
     id String @id @default(auto()) @map("_id") @db.ObjectId
 
-    pos    Int     @unique @default(0)
-    TL     String
-    OG     String
-    isName Boolean
+    pos    Int    @unique @default(0)
+    tlline String
+    ogline String
 
     fullText Translation @relation(fields: [textId], references: [id])
     textId   String      @db.ObjectId

@@ -9,12 +9,15 @@ import { NovelStoreProvider } from "@/hooks/novelStore";
 import LoginBar from "@/components/LoginBar";
 import Head from "next/head";
 import { AdminCheckProvider } from "@/hooks/admin";
+import { useState } from "react";
 
 const inter = Inter({
   subsets: ["latin"],
   variable: "--font-sans",
 });
 const MyApp: AppType = ({ Component, pageProps }) => {
+  const [navLoaded, setNavLoaded] = useState(false);
+
   return (
     <>
       <Head>
@@ -25,10 +28,14 @@ const MyApp: AppType = ({ Component, pageProps }) => {
       <ClerkProvider {...pageProps}>
         <AdminCheckProvider>
           <NovelStoreProvider>
-            <LoginBar />
-            <main className={`font-sans ${inter.variable}`}>
-              <Component {...pageProps} />
-            </main>
+            <LoginBar setLoaded={setNavLoaded} />
+            {navLoaded ? (
+              <main className={`font-sans ${inter.variable}`}>
+                <Component {...pageProps} />
+              </main>
+            ) : (
+              <></>
+            )}
           </NovelStoreProvider>
         </AdminCheckProvider>
       </ClerkProvider>

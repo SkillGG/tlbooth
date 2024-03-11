@@ -3,13 +3,17 @@ import Image from "next/image";
 import { NextResponse } from "next/server";
 import { useState } from "react";
 
-export default function LoginBar() {
+export default function LoginBar({
+  setLoaded,
+}: {
+  setLoaded: (p: boolean) => void;
+}) {
   const { user } = useClerk();
 
   const [showLogout, setShowLogout] = useState(false);
 
   return (
-    <nav className="grid w-full">
+    <nav className="grid w-full min-w-12">
       {!user ? (
         <div className="grid w-full justify-center">
           <SignInButton />
@@ -30,6 +34,9 @@ export default function LoginBar() {
           <Image
             onClick={() => {
               setShowLogout((p) => !p);
+            }}
+            onLoad={() => {
+              setLoaded(true);
             }}
             src={user?.imageUrl ?? ""}
             alt={user?.fullName ?? ""}

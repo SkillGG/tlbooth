@@ -4,6 +4,7 @@ import { api } from "@/utils/api";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useRef, useState } from "react";
+import { Skeleton } from "../Skeleton/Skeleton";
 
 export const ScrapperFilterSelector = () => {
   const [showDialog, setShowDialog] = useState(false);
@@ -76,23 +77,42 @@ export const ScraperList = () => {
 
   const isAdmin = useAdmin();
 
+  const [showSkeleton, setSkeleton] = useState(false);
+
   return (
     <>
       <ScrapperFilterSelector />
+      <button onClick={() => setSkeleton((p) => !p)}>Toggle skeleton</button>
       <div
-        className="ontent-center grid grid-flow-row text-white"
-        style={{ gridTemplateColumns: "auto min-content" }}
+        className="mt-1 grid grid-flow-row gap-1 overflow-x-hidden overflow-y-scroll px-3 text-white"
+        style={{ maxHeight: "90%" }}
       >
-        {novels?.map((novel) => {
-          return (
-            <>
-              <div key={novel.url}>{novel.name}</div>
-              <div className="w-max">
-                <Link href={`/edit/${novel.url}`}>Edit novel</Link>
+        {!showSkeleton && novels ? (
+          novels.map((novel) => {
+            return (
+              <div
+                key={novel.url}
+                className="grid rounded-lg border-2 border-blue-800"
+                style={{ gridTemplateColumns: "auto min-content" }}
+              >
+                <div key={novel.url} className="px-3">
+                  {novel.name}
+                </div>
+                <div className="grid h-full w-full place-content-center border-l-2 border-l-blue-800 px-1">
+                  <Link href={`/edit/${novel.url}`}>Translate</Link>
+                </div>
               </div>
-            </>
-          );
-        })}
+            );
+          })
+        ) : (
+          <>
+            {Array.from({ length: 10 }).map(() => (
+              <>
+                <Skeleton className="h-6" />
+              </>
+            ))}
+          </>
+        )}
       </div>
     </>
   );

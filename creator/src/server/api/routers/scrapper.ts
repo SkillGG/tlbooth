@@ -61,7 +61,7 @@ export const scrapperRouter = createTRPCRouter({
 
     const retVal: ScrapperNovelInfo[] = []
 
-    console.log(novels);
+    // console.log(novels);
 
     novels.forEach(p => {
       if (p) {
