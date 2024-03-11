@@ -9,10 +9,7 @@ export function Skeleton({
   if (empty) return <div className="h-full min-h-4"></div>;
   return (
     <>
-      <div
-        className={`${styles.skeleton} h-full min-h-4 w-full rounded-lg ${className}`}
-        {...props}
-      ></div>
+      <div className={`${styles.skeleton} ${className}`} {...props}></div>
       {children}
     </>
   );

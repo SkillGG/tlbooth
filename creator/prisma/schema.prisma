@@ -17,8 +17,8 @@ enum LANG {
 }
 
 model Translation {
-    id     String @id @default(auto()) @map("_id") @db.ObjectId
-    url    String
+    id String @id @default(auto()) @map("_id") @db.ObjectId
+
     oglang LANG
     tllang LANG
 
@@ -42,6 +42,8 @@ model TextLine {
 model Novel {
     id String @id @default(auto()) @map("_id") @db.ObjectId
 
+    url String
+
     ogname String
     tlname String?
 
@@ -50,6 +52,8 @@ model Novel {
 
 model Chapter {
     id String @id @default(auto()) @map("_id") @db.ObjectId
+
+    url String
 
     ogname String?
     tlname String?

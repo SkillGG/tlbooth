@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useRef, useState } from "react";
 import { Skeleton } from "../Skeleton/Skeleton";
+import { DBNovel } from "@/server/api/routers/db";
 
 export const ScrapperFilterSelector = () => {
   const [showDialog, setShowDialog] = useState(false);
@@ -68,6 +69,33 @@ export const ScrapperFilterSelector = () => {
   );
 };
 
+const NovelCard = ({ novel }: { novel: DBNovel }) => {
+  return (
+    <>
+      <div
+        className="grid min-h-20 min-w-64 grid-flow-col gap-5 rounded-lg border-4 border-white"
+        style={{ gridTemplateColumns: "1fr 2fr" }}
+      >
+        <div className="px-3 pb-1">
+          <div className="h-min text-sm">
+            <small>OG Name:</small>
+            <div className="text-center">{novel.ogname}</div>
+          </div>
+          <div className="h-min text-sm">
+            <small>TLName:</small>
+            <div className="text-center">{novel.tlname}</div>
+          </div>
+        </div>
+        <div className="overflow-x-scroll">
+          {novel.chapters.map((r) => {
+            return <>{r.ogname}</>;
+          })}
+        </div>
+      </div>
+    </>
+  );
+};
+
 export const ScraperList = () => {
   const search = useSearchParams();
 
@@ -106,10 +134,8 @@ export const ScraperList = () => {
           })
         ) : (
           <>
-            {Array.from({ length: 10 }).map(() => (
-              <>
-                <Skeleton className="h-6" />
-              </>
+            {Array.from({ length: 10 }).map((_, i) => (
+              <Skeleton key={`scraper_skeleton_${i}`} className="h-7" />
             ))}
           </>
         )}

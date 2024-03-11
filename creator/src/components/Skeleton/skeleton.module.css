@@ -1,3 +1,30 @@
 .skeleton {
-  background-color: red;
+  @apply min-h-4 rounded-lg;
+  background-color: gray;
+  position: relative;
+  overflow: hidden;
+}
+
+.skeleton::after {
+  @apply relative block h-full w-full;
+  content: "";
+  --padding: 20px;
+  --left-grow: 60px;
+  --right-grow: 60px;
+  background: linear-gradient(
+    -60deg,
+    transparent var(--padding),
+    #fff2 calc(var(--padding) + var(--left-grow)) 20px,
+    transparent calc(var(--padding) + var(--left-grow) + var(--right-grow))
+  );
+  animation: slide 1.5s linear 0s infinite forwards;
+}
+
+@keyframes slide {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
 }
