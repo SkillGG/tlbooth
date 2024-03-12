@@ -1,31 +1,41 @@
-import { useState, type FC } from "react";
+import { useState, type FC, useRef } from "react";
 import { Skeleton } from "../Skeleton/Skeleton";
-import { type DBNovel } from "@/server/api/routers/db";
 import Link from "next/link";
-import { useNovelStore } from "@/hooks/novelStore";
-import { api } from "@/utils/api";
-import LoadingSpinner from "../LoadingIcon/loadingIcons";
+import {
+  type StoreNovel,
+  useNovelStore,
+  Mutation,
+  MutationType,
+} from "@/hooks/novelStore";
 import { useAdmin } from "@/hooks/admin";
 
+import novelItem from "./novelItem.module.css";
+import { TransformationHistory } from "./TransformHistory";
+
 interface TLListProps {
-  tls?: DBNovel[];
+  tls?: StoreNovel[];
 }
 
-const NovelCard = ({ novel }: { novel: DBNovel }) => {
-  const [show, setShow] = useState(false);
+const NovelCard = ({ novel }: { novel: StoreNovel }) => {
+  const [unwrapped, setShow] = useState(false);
 
-  const [loadDeletion, setLoadDeletion] = useState(false);
+  const show = unwrapped && !novel.forDeletion;
 
-  const { mutate: removeNovel } = api.db.removeNovel.useMutation();
-
-  const utils = api.useUtils();
+  const [editName, setEditName] = useState(false);
 
   const isAdmin = useAdmin();
+
+  const { mutate, removeMutation, novels } = useNovelStore();
+
+  const titleEditRef = useRef<HTMLSpanElement>(null);
+
+  const hasChangedTitle =
+    novels?.find((n) => n.id === novel.id)?.tlname === novel.tlname;
 
   return (
     <div className="w-full rounded-xl border-2 border-gray-400">
       <div
-        className={`w-full ${show ? "border-b-2" : ""} grid grid-flow-col text-balance border-gray-400 text-center text-sm`}
+        className={`${novel.local && novelItem.local} ${novel.forDeletion && novelItem.forDeletion} w-full ${show ? "border-b-2" : ""} grid grid-flow-col text-balance border-gray-400 text-center text-sm`}
       >
         <button className="w-full" onClick={() => setShow((p) => !p)}>
           {novel.ogname}
@@ -43,8 +53,58 @@ const NovelCard = ({ novel }: { novel: DBNovel }) => {
                 <div className="text-center">{novel.ogname}</div>
               </div>
               <div className="h-min text-sm">
-                <small>TLName:</small>
-                <div className="text-center">{novel.tlname}</div>
+                <small>
+                  TLName:
+                  {isAdmin &&
+                    !novel.forDeletion &&
+                    (!editName ? (
+                      <button onClick={() => setEditName((p) => !p)}>
+                        Edit
+                      </button>
+                    ) : (
+                      <div className="inline-grid grid-flow-col gap-x-1">
+                        <button
+                          className="text-green-300"
+                          onClick={() => {
+                            if (titleEditRef.current) {
+                              const value = titleEditRef.current.innerText;
+                              mutate(Mutation.changeTLName(novel.id, value));
+                              setEditName(false);
+                            }
+                          }}
+                        >
+                          Save
+                        </button>
+                        <button
+                          className="text-red-400"
+                          onClick={() => setEditName((p) => !p)}
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    ))}
+                </small>
+                {editName ? (
+                  <div
+                    className="grid grid-flow-col gap-x-2"
+                    style={{ gridTemplateColumns: "auto min-content" }}
+                  >
+                    <span
+                      contentEditable
+                      className="block min-w-4 border-b-2 text-center"
+                      onChange={(e) => {
+                        console.log(e.currentTarget.innerText);
+                      }}
+                      ref={titleEditRef}
+                    ></span>
+                  </div>
+                ) : (
+                  <div
+                    className={`${hasChangedTitle ? "" : `${novelItem.local}`} text-center`}
+                  >
+                    {novel.tlname}
+                  </div>
+                )}
               </div>
             </div>
             <div
@@ -53,39 +113,18 @@ const NovelCard = ({ novel }: { novel: DBNovel }) => {
             >
               {isAdmin && (
                 <>
-                  {!loadDeletion ? (
-                    <button
-                      className="m-1  justify-self-end text-red-400"
-                      style={{ transform: "translateX(5px)" }}
-                      onClick={() => {
-                        setLoadDeletion(true);
-                        removeNovel(novel.id, {
-                          onSettled: () => {
-                            utils.db.getFromDB
-                              .invalidate()
-                              .then(() => {
-                                setLoadDeletion(false);
-                              })
-                              .catch(console.error);
-                          },
-                        });
-                      }}
-                    >
-                      Delete novel
-                    </button>
-                  ) : (
-                    <>
-                      <LoadingSpinner
-                        className="m-1  justify-self-end"
-                        style={{
-                          "--size": "24px",
-                          "--accent": "red",
-                          "--bg": "transparent",
-                          "--weight": "2px",
-                        }}
-                      />
-                    </>
-                  )}
+                  <button
+                    className="m-1  justify-self-end text-red-400"
+                    style={{ transform: "translateX(5px)" }}
+                    onClick={() => {
+                      setEditName(false);
+                      console.log("removing novel", novel);
+                      if (!novel.local) mutate(Mutation.removeNovel(novel.id));
+                      else removeMutation(`add_novel_${novel.url}`);
+                    }}
+                  >
+                    Delete novel
+                  </button>
                 </>
               )}
               <div>
@@ -111,18 +150,23 @@ const NovelCard = ({ novel }: { novel: DBNovel }) => {
 export const TLList: FC<TLListProps> = () => {
   const [skeleton, setSkeleton] = useState(false);
 
-  const { novelStore: tls } = useNovelStore();
+  const { getMutated: transformed } = useNovelStore();
+
+  const tls = transformed();
 
   const showSkele = !(!skeleton && tls);
 
   return (
     <>
-      <button onClick={() => setSkeleton((p) => !p)}>Toggle skeleton</button>
+      <button className="mr-2" onClick={() => setSkeleton((p) => !p)}>
+        Toggle skeleton
+      </button>
+      <TransformationHistory />
       <div className={`grid ${showSkele ? "" : ""} gap-y-1 p-5 text-white`}>
         {!showSkele ? (
           tls.map((tl) => (
             <>
-              <NovelCard key={tl.id} novel={tl} />
+              <NovelCard key={tl.ogname} novel={tl} />
             </>
           ))
         ) : (

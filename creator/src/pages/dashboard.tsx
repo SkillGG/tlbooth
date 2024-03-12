@@ -1,35 +1,34 @@
 import Head from "next/head";
-import { api } from "@/utils/api";
 import { TLList } from "@/components/TLList/TLList";
 import { ScraperList } from "@/components/Scrapper/ScraperList";
-import { NovelStoreProvider } from "@/hooks/novelStore";
+import { api } from "@/utils/api";
+import { useNovelStore } from "@/hooks/novelStore";
+import { useEffect } from "react";
 
 export default function Dashboard() {
-  console.log("redrawing list");
-  const tls = api.db.getFromDB.useQuery().data;
+  const novels = api.db.getFromDB.useQuery().data;
+  const loadRemote = useNovelStore((s) => s.loadData);
 
-  const utils = api.useUtils();
+  useEffect(() => {
+    if (novels) {
+      console.log("loading novels");
+      loadRemote(novels);
+    }
+  }, [novels, loadRemote]);
 
   return (
     <>
       <Head>
         <title>List of TLs in Version for TLSetsu</title>
       </Head>
-      <NovelStoreProvider
-        value={tls}
-        refresh={async () => {
-          await utils.db.getFromDB.invalidate();
-        }}
-      >
-        <div className="grid w-full grid-cols-2 text-white">
-          <div>
-            <TLList />
-          </div>
-          <div>
-            <ScraperList />
-          </div>
+      <div className="grid w-full grid-cols-2 text-white">
+        <div>
+          <TLList />
         </div>
-      </NovelStoreProvider>
+        <div>
+          <ScraperList />
+        </div>
+      </div>
     </>
   );
 }

@@ -7,8 +7,7 @@ import type {
   ScrapperFilter,
 } from "@/server/api/routers/scrapper";
 import { useState } from "react";
-import { useNovelStore } from "@/hooks/novelStore";
-import LoadingSpinner from "../LoadingIcon/loadingIcons";
+import { Mutation, useNovelStore } from "@/hooks/novelStore";
 
 export const ScrapperFilterSelector = () => {
   const [showDialog, setShowDialog] = useState(false);
@@ -75,11 +74,9 @@ export const ScrapperFilterSelector = () => {
 };
 
 const NovelCard = ({ novel }: { novel: ScrapperNovelInfo }) => {
-  const { novelStore, refresh: refreshStore } = useNovelStore();
+  const { getMutated: getNovels, mutate } = useNovelStore();
 
-  const [loading, setLoading] = useState(false);
-
-  const { mutate: addNovel } = api.db.registerNovel.useMutation();
+  const novelStore = getNovels();
 
   return (
     <div
@@ -93,41 +90,16 @@ const NovelCard = ({ novel }: { novel: ScrapperNovelInfo }) => {
       </div>
       {!novelStore?.find((n) => n.url === novel.url) && (
         <div className="h-min w-min self-center px-4">
-          {!loading ? (
+          {
             <button
               className="h-full"
               onClick={() => {
-                addNovel(novel, {
-                  onSuccess: () => {
-                    refreshStore()
-                      .then(() => {
-                        setLoading(false);
-                      })
-                      .catch(console.error);
-                  },
-                  onError: () => {
-                    console.error("Could not add!");
-                    setLoading(false);
-                  },
-                });
-                setLoading(true);
+                mutate(Mutation.addNovel(novel.url, novel.name));
               }}
             >
               Add
             </button>
-          ) : (
-            <>
-              <LoadingSpinner
-                className="place-self-center"
-                style={{
-                  "--accent": "white",
-                  "--bg": "transparent",
-                  "--size": "16px",
-                  "--weight": "2px",
-                }}
-              />
-            </>
-          )}
+          }
         </div>
       )}
     </div>
