@@ -42,7 +42,7 @@ model TextLine {
 model Novel {
     id String @id @default(auto()) @map("_id") @db.ObjectId
 
-    url String
+    url String @unique
 
     ogname String
     tlname String?
@@ -53,7 +53,7 @@ model Novel {
 model Chapter {
     id String @id @default(auto()) @map("_id") @db.ObjectId
 
-    url String
+    url String @unique
 
     ogname String?
     tlname String?

@@ -3,7 +3,6 @@ import { z } from "zod";
 import { createTRPCRouter, publicProcedure } from "@/server/api/trpc";
 import { type Prisma } from "@prisma/client";
 import { ScrapperNovelInfo } from "./scrapper";
-import { contextProps } from "@trpc/react-query/shared";
 
 export type DBNovel = Prisma.NovelGetPayload<{ include: { chapters: { include: { translations: { include: { lines: true } } } } } }>
 

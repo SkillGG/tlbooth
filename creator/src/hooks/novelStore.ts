@@ -3,6 +3,8 @@ import { api } from '@/utils/api';
 import { create } from 'zustand';
 import deepEquals from "fast-deep-equal";
 
+import { trpcClient } from '@/pages/_app';
+
 type NovelStore = {
     novels: StoreNovel[] | null
     mutations: Mutation[],
@@ -13,6 +15,7 @@ type NovelStore = {
     undo: (id: string) => void
     redo: (id: string) => void
     getMutated: () => StoreNovel[] | null
+    apply: () => Promise<(() => void)[]>
 }
 
 export type StoreNovel = (DBNovel & { local?: true, forDeletion?: true })
@@ -52,19 +55,19 @@ export class Mutation {
     static addNovel(url: string, name: string) {
         const novel: StoreNovel = { id: `localnovel_${++this.addNovelID}`, chapters: [], ogname: name, tlname: null, url, local: true };
         return new Mutation(`add_novel_${url}`, (p) => [...p, novel], name, MutationType.ADD_NOVEL, async () => {
-            await api.useUtils().client.db.registerNovel.mutate({ name, url });
+            await trpcClient.db.registerNovel.mutate({ name, url });
         }, [{ novelId: novel.id }]);
     }
     static removeNovel(id: string) {
         return new Mutation(`remove_novel_${id}`, p => p.map(n => n.id === id ? { ...n, forDeletion: true } : n), p => p.find(x => x.id === id)?.ogname ?? id, MutationType.DELETE_NOVEL, async () => {
-            await api.useUtils().client.db.removeNovel.mutate(id);
+            await trpcClient.db.removeNovel.mutate(id);
         }, [{ novelId: id }])
     }
     static changeTLName(id: string, name: string) {
         return new Mutation(`change_name_${id}`, p => {
             return p.map(n => n.id === id ? { ...n, tlname: name } : n);
         }, name, MutationType.CHANGE_TITLE, async () => {
-            // await api.useUtils().client.db.updateNovel.mutate({ id, tlname: name });
+            // await trpcClient.db.updateNovel.mutate({ id, tlname: name });
             console.error("TODO:")
         }, [{ novelId: id }])
     }
@@ -138,5 +141,18 @@ export const useNovelStore = create<NovelStore>()((set, get) => ({
         return get().mutations.reduce((p, n) => {
             return n.fn(p);
         }, remote)
+    },
+    apply: async () => {
+        console.log("applying mutations")
+        const sets: (() => void)[] = [];
+        try {
+            for (const mut of get().mutations) {
+                await mut.apiFn()
+                sets.push(() => set((st) => ({ mutations: st.mutations.filter(f => f.id !== mut.id) })))
+            }
+        } catch (e) {
+            console.error(e);
+        }
+        return sets;
     }
 }))

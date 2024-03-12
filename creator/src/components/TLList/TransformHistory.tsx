@@ -1,8 +1,13 @@
 import { useNovelStore } from "@/hooks/novelStore";
+import { api } from "@/utils/api";
 import { useState } from "react";
 
 export function TransformationHistory() {
   const [showHistory, setShowHistory] = useState(false);
+
+  const {
+    db: { invalidate: invalidateList },
+  } = api.useUtils();
 
   const {
     novels,
@@ -11,6 +16,7 @@ export function TransformationHistory() {
     removeMutation: remove,
     undo,
     redo,
+    apply,
   } = useNovelStore();
 
   return (
@@ -47,7 +53,15 @@ export function TransformationHistory() {
         <button
           className="text-center"
           onClick={() => {
-            // TODO Apply
+            apply()
+              .then((sets) => {
+                void invalidateList().then((_) => {
+                  for (const s of sets) {
+                    s();
+                  }
+                });
+              })
+              .catch(console.error);
           }}
         >
           Apply

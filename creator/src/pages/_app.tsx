@@ -14,9 +14,14 @@ const inter = Inter({
   subsets: ["latin"],
   variable: "--font-sans",
 });
+
+export let trpcClient = null as unknown as ReturnType<
+  typeof api.useUtils
+>["client"];
+
 const MyApp: AppType = ({ Component, pageProps }) => {
   const [navLoaded, setNavLoaded] = useState(false);
-
+  trpcClient = api.useUtils().client;
   return (
     <>
       <Head>
