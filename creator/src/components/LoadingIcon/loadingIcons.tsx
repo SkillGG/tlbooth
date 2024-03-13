@@ -1,7 +1,7 @@
 import type { ComponentPropsWithoutRef } from "react";
 import spinner from "./loadingicons.module.css";
 
-export default function LoadingSpinner({
+export function LoadingSpinner({
   className,
   style,
   ...props

@@ -26,7 +26,8 @@ export const ScrapperChapter = z.object({
 
 export const ScrapperNovel = z.object({
   info: ScrapperNovelInfo,
-  chapters: z.array(ScrapperChapterInfo)
+  chapters: z.array(ScrapperChapterInfo),
+  description: z.string()
 });
 
 export type ScrapperFilter = z.infer<typeof ScrapperFilter>
@@ -51,7 +52,7 @@ export const scrapperRouter = createTRPCRouter({
       const anchor = header?.querySelector("a");
       const href = anchor?.getAttribute("href");
       if (header && href) {
-        return { name: header.text, url: href } satisfies ScrapperNovelInfo
+        return { name: header.text, url: uri(href) } satisfies ScrapperNovelInfo
       } else {
         return null;
       }
@@ -67,9 +68,15 @@ export const scrapperRouter = createTRPCRouter({
 
     return retVal;
   }),
-  getNovelInfo: publicProcedure.input(z.string().url().startsWith("https://ncode.syosetu.com")).query(async ({ ctx: _, input: url }): Promise<ScrapperNovel> => {
-    const novel = await (await fetch(url)).text();
-    return { info: { url, name: "" }, chapters: [{ name: "Ch1", url: uri("https://google.com/ch1"), }] }
+  getNovel: publicProcedure.input(z.string().url()).query(async ({ ctx: _, input: url }): Promise<ScrapperNovel> => {
+
+    console.log("getting the novel");
+
+    return {
+      info: { url: uri(url), name: "" }, chapters: [
+        { name: "NAme", url: "https://google.com" }
+      ], description: ""
+    }
   }),
   getChapter: publicProcedure.input(ScrapperChapterInfo).query(async ({ ctx: _, input }): Promise<ScrapperChapter> => {
     return { info: input, lines: [] };

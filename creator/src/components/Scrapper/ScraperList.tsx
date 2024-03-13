@@ -8,6 +8,7 @@ import type {
 } from "@/server/api/routers/scrapper";
 import { useState } from "react";
 import { Mutation, useNovelStore } from "@/hooks/novelStore";
+import { RefreshButton } from "../LoadingIcon/refreshButton";
 
 export const ScrapperFilterSelector = () => {
   const [showDialog, setShowDialog] = useState(false);
@@ -122,14 +123,12 @@ export const ScraperList = () => {
   return (
     <>
       <ScrapperFilterSelector />
-      <button
-        className="mx-2"
-        onClick={() => {
-          void utils.scrapper.getList.invalidate();
+      <RefreshButton
+        className="mx-1 inline-block"
+        refreshFn={async () => {
+          await utils.scrapper.getList.invalidate();
         }}
-      >
-        Refresh
-      </button>
+      />
       <button onClick={() => setSkeleton((p) => !p)}>Toggle skeleton</button>
       <div
         className="mt-1 grid grid-flow-row gap-1 overflow-x-hidden overflow-y-scroll px-3 text-white"

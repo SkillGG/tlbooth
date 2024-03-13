@@ -10,7 +10,7 @@ type NovelStore = {
   mutations: Mutation[];
   undoneMutations: Mutation[];
   loadData: (remote: NovelStore["novels"]) => void;
-  mutate: (t: Mutation) => void;
+  mutate: (t: Mutation, override?: boolean) => void;
   removeMutation: (id: string) => void;
   undo: (id: string) => void;
   redo: (id: string) => void;
@@ -117,11 +117,15 @@ export const useNovelStore = create<NovelStore>()((set, get) => ({
   undoneMutations: [],
   getNovel: (id) => get().novels?.find((n) => n.id === id) ?? null,
   loadData: (remote) => set((s) => ({ ...s, novels: remote })),
-  mutate: (t) =>
+  mutate: (t, o = false) =>
     set((s) => {
       console.log("adding mutation", t.id);
       const muts = [...get().mutations, ...get().undoneMutations];
-      if (muts.find((m) => m.id === t.id)) return s;
+      if (muts.find((m) => m.id === t.id)) {
+        if (o)
+          return { mutations: [...s.mutations.filter(m => m.id !== t.id), t] };
+        return s
+      };
       return { mutations: [...s.mutations, t] };
     }),
   removeMutation: (id) =>
