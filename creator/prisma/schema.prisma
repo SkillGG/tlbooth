@@ -47,13 +47,25 @@ model Novel {
     ogname String
     tlname String?
 
+    ogdesc String @default("")
+    tldesc String @default("")
+
     chapters Chapter[]
+}
+
+enum ChapterStatus {
+    ADDED
+    TLD
+    PRD
+    PUBLISHED
 }
 
 model Chapter {
     id String @id @default(auto()) @map("_id") @db.ObjectId
 
     url String @unique
+
+    status ChapterStatus
 
     ogname String?
     tlname String?

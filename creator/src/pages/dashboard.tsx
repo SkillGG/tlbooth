@@ -21,7 +21,7 @@ export default function Dashboard() {
       <Head>
         <title>List of TLs in Version for TLSetsu</title>
       </Head>
-      <div className="grid w-full grid-cols-2 text-white">
+      <div className="grid w-full text-white" style={{gridTemplateColumns: "3fr 1fr"}}>
         <div>
           <TLList />
         </div>

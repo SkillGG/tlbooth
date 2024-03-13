@@ -67,12 +67,8 @@ export const scrapperRouter = createTRPCRouter({
 
     return retVal;
   }),
-  getNovel: publicProcedure.input(z.string().url().startsWith("https://ncode.syosetu.com")).query(async ({ ctx: _, input: url }): Promise<ScrapperNovel> => {
-
+  getNovelInfo: publicProcedure.input(z.string().url().startsWith("https://ncode.syosetu.com")).query(async ({ ctx: _, input: url }): Promise<ScrapperNovel> => {
     const novel = await (await fetch(url)).text();
-
-    console.log(novel);
-
     return { info: { url, name: "" }, chapters: [{ name: "Ch1", url: uri("https://google.com/ch1"), }] }
   }),
   getChapter: publicProcedure.input(ScrapperChapterInfo).query(async ({ ctx: _, input }): Promise<ScrapperChapter> => {
