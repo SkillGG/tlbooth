@@ -21,7 +21,7 @@ export function TransformationHistory() {
 
   return (
     <>
-      <div className=" inline-grid w-fit grid-flow-col gap-x-3">
+      <div className="inline-grid w-fit grid-flow-col gap-x-3">
         {!!trans.length && (
           <button
             className="h-fit w-fit text-center"
@@ -44,28 +44,32 @@ export function TransformationHistory() {
             Redo
           </button>
         )}
-        <button
-          className="h-fit w-fit text-center"
-          onClick={() => setShowHistory((p) => !p)}
-        >
-          Show changes
-        </button>
-        <button
-          className="text-center"
-          onClick={() => {
-            apply()
-              .then((sets) => {
-                void invalidateList().then((_) => {
-                  for (const s of sets) {
-                    s();
-                  }
-                });
-              })
-              .catch(console.error);
-          }}
-        >
-          Apply
-        </button>
+        {trans.length + undone.length > 0 && (
+          <>
+            <button
+              className="h-fit w-fit text-center"
+              onClick={() => setShowHistory((p) => !p)}
+            >
+              Show changes
+            </button>
+            <button
+              className="text-center"
+              onClick={() => {
+                apply()
+                  .then((sets) => {
+                    void invalidateList().then((_) => {
+                      for (const s of sets) {
+                        s();
+                      }
+                    });
+                  })
+                  .catch(console.error);
+              }}
+            >
+              Apply
+            </button>
+          </>
+        )}
       </div>
       {showHistory && (
         <div

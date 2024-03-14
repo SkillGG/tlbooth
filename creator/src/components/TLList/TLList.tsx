@@ -19,22 +19,27 @@ export const TLList: FC<TLListProps> = () => {
   const showSkele = !(!skeleton && tls);
 
   return (
-    <>
-      <button className="mr-2" onClick={() => setSkeleton((p) => !p)}>
-        Toggle skeleton
-      </button>
-      <TransformationHistory />
-      <div className={`grid ${showSkele ? "" : ""} gap-y-1 p-5 text-white`}>
+    <div className="flex max-h-full flex-col overflow-hidden px-5">
+      <div className="">
+        <button className="mr-2" onClick={() => setSkeleton((p) => !p)}>
+          Toggle skeleton
+        </button>
+        <TransformationHistory />
+      </div>
+      <div className={`flex w-full flex-col gap-y-1 overflow-auto text-white`}>
         {!showSkele ? (
           tls.map((tl) => <NovelCard key={tl.ogname} novel={tl} />)
         ) : (
           <>
-            <Skeleton className="mb-1 h-5 w-full"></Skeleton>
-            <Skeleton className="mb-1 h-5 w-full"></Skeleton>
-            <Skeleton className="h-5 w-full"></Skeleton>
+            {Array.from({ length: 40 }).map((_, i) => (
+              <Skeleton
+                key={`scraper_skeleton_${i}`}
+                className={`${Math.random() > 0.7 ? (Math.random() > 0.9 ? "h-24" : "h-12") : "h-6"}`}
+              />
+            ))}
           </>
         )}
       </div>
-    </>
+    </div>
   );
 };

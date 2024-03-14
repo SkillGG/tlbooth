@@ -9,6 +9,9 @@ export default {
         sans: ["var(--font-sans)", ...fontFamily.sans],
       },
     },
+    screens: {
+      "lg": "1050px",
+    }
   },
   plugins: [],
 } satisfies Config;

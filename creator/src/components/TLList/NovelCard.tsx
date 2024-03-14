@@ -9,6 +9,7 @@ import { api } from "@/utils/api";
 import { RefreshButton } from "../LoadingIcon/refreshButton";
 import { cssIf } from "@/utils/utils";
 import type { ScrapperNovel } from "@/server/api/routers/scrapper";
+import { EditField, useEditRef } from "../EditField";
 
 const ChapterList = ({
   novel,
@@ -26,11 +27,11 @@ const ChapterList = ({
     return { ...r, scrapped: !novel.chapters.find((c) => c.url === r.url) };
   });
 
-
   return (
     <>
       <div className="ml-1 mt-1">
         <RefreshButton
+          className="grid h-6 w-fit min-w-14 items-center justify-center"
           refreshFn={async () => {
             await utils.scrapper.getNovel.invalidate();
           }}
@@ -61,114 +62,6 @@ const ChapterList = ({
   );
 };
 
-type EditFieldProps = {
-  lock: boolean;
-  fieldName: string;
-  defaultValue?: string;
-  onSave: (s: string) => Promise<void> | void;
-  onCancel?: (s: string) => Promise<void> | void;
-  changed: boolean;
-  ref: {
-    hide(): void;
-    show(): void;
-  } | null;
-};
-
-type EditFieldRef = { show: () => void; hide: () => void };
-
-const EditField = React.forwardRef<EditFieldRef, EditFieldProps>(
-  function EditField(
-    { onSave, onCancel, defaultValue, lock, changed, fieldName },
-    ref,
-  ) {
-    const isAdmin = useAdmin();
-
-    const [edit, setEdit] = useState(false);
-
-    const textRef = useRef<HTMLSpanElement>(null);
-    const saveRef = useRef<HTMLButtonElement>(null);
-
-    useImperativeHandle(ref, () => {
-      return { show: () => setEdit(true), hide: () => setEdit(false) };
-    });
-
-    const changedClass = !changed ? "" : novelItem.local;
-
-    useEffect(() => {
-      console.log(defaultValue);
-      if (textRef.current) textRef.current.innerText = defaultValue ?? "";
-    }, [defaultValue, edit]);
-
-    return (
-      <>
-        <div data-edit={edit} className="h-min text-sm">
-          <small>
-            {fieldName}:
-            {isAdmin &&
-              !lock &&
-              (!edit ? (
-                <button className="ml-1" onClick={() => setEdit((p) => !p)}>
-                  Edit
-                </button>
-              ) : (
-                <div className="inline-grid grid-flow-col gap-x-1">
-                  <button
-                    ref={saveRef}
-                    className="text-green-300"
-                    onClick={() => {
-                      if (textRef.current) {
-                        const value = textRef.current.innerText.trim();
-                        void onSave(value);
-                        setEdit(false);
-                      }
-                    }}
-                  >
-                    Save
-                  </button>
-                  <button
-                    className="text-red-400"
-                    onClick={() => {
-                      setEdit((p) => !p);
-                      if (textRef.current)
-                        void onCancel?.(textRef.current.innerText);
-                    }}
-                  >
-                    Cancel
-                  </button>
-                </div>
-              ))}
-          </small>
-          {edit ? (
-            <div
-              key="editfield"
-              className="grid grid-flow-col gap-x-2"
-              style={{ gridTemplateColumns: "auto min-content" }}
-            >
-              <span
-                contentEditable
-                className="block min-w-4 border-b-2 text-center"
-                onKeyDown={(e) => {
-                  if (e.code === "Enter") {
-                    saveRef.current?.click();
-                  }
-                }}
-                ref={textRef}
-              ></span>
-            </div>
-          ) : (
-            <div
-              key="nonEditField"
-              className={`${changedClass} min-h-5 text-center`}
-            >
-              <span>{defaultValue}</span>
-            </div>
-          )}
-        </div>
-      </>
-    );
-  },
-);
-
 export const NovelCard = ({ novel }: { novel: StoreNovel }) => {
   const [unwrapped, setShow] = useState(false);
 
@@ -180,9 +73,9 @@ export const NovelCard = ({ novel }: { novel: StoreNovel }) => {
 
   const { mutate, removeMutation, novels } = useNovelStore();
 
-  const nameEdit = useRef<EditFieldRef>(null);
-  const ogdescEdit = useRef<EditFieldRef>(null);
-  const tldescEdit = useRef<EditFieldRef>(null);
+  const nameEdit = useEditRef();
+  const ogdescEdit = useEditRef();
+  const tldescEdit = useEditRef();
 
   return (
     <div className="w-full justify-center rounded-xl border-2 border-gray-400">
@@ -196,12 +89,9 @@ export const NovelCard = ({ novel }: { novel: StoreNovel }) => {
             nameEdit.current?.hide();
           }}
         >
-          <span
-            className="block w-max justify-self-center"
-            style={{ maxWidth: "90%" }}
-          >
+          <div className="justify-self-center" style={{ maxWidth: "90%" }}>
             {novel.ogname}
-          </span>
+          </div>
         </button>
       </div>
       {show && (
@@ -219,14 +109,7 @@ export const NovelCard = ({ novel }: { novel: StoreNovel }) => {
                 fieldName="TLName"
                 ref={nameEdit}
                 lock={!!novel.forDeletion}
-                onCancel={() => {
-                  /** */
-                }}
                 onSave={(v) => mutate(Mutation.changeTLName(novel.id, v), true)}
-                changed={
-                  novels?.find((n) => n.id === novel.id)?.tlname !==
-                  novel.tlname
-                }
                 defaultValue={novel.tlname ?? ""}
               />
             </div>
@@ -236,27 +119,25 @@ export const NovelCard = ({ novel }: { novel: StoreNovel }) => {
                 onSave={(v) => mutate(Mutation.changeOGDesc(novel.id, v), true)}
                 ref={ogdescEdit}
                 lock={!!novel.forDeletion}
-                changed={
-                  novels?.find((n) => n.id === novel.id)?.ogdesc !==
-                  novel.ogdesc
-                }
                 defaultValue={novel.ogdesc}
               />
               <EditField
                 fieldName="TLDesc"
                 ref={tldescEdit}
                 lock={!!novel.forDeletion}
-                onCancel={() => {
-                  /** */
-                }}
                 onSave={(v) => {
                   mutate(Mutation.changeTLDesc(novel.id, v), true);
                 }}
-                changed={
-                  novels?.find((n) => n.id === novel.id)?.tldesc !==
-                  novel.tldesc
-                }
                 defaultValue={novel.tldesc ?? ""}
+                classNames={{
+                  staticField: {
+                    span:
+                      novels?.find((n) => n.id === novel.id)?.tldesc ===
+                      novel.tldesc
+                        ? ""
+                        : "bg-yellow-300",
+                  },
+                }}
               />
             </div>
 
@@ -265,9 +146,9 @@ export const NovelCard = ({ novel }: { novel: StoreNovel }) => {
               style={{ gridAutoRows: "min-content" }}
             >
               {isAdmin && (
-                <>
+                <div className="relative right-0 justify-self-end">
                   <button
-                    className="absolute mr-1 mt-1 justify-self-end text-red-400"
+                    className="absolute right-0 mt-1 justify-self-end text-red-400"
                     style={{ transform: "translateX(5px)" }}
                     onClick={() => {
                       console.log("removing novel", novel);
@@ -275,9 +156,9 @@ export const NovelCard = ({ novel }: { novel: StoreNovel }) => {
                       else removeMutation(`add_novel_${novel.url}`);
                     }}
                   >
-                    Delete novel
+                    Delete
                   </button>
-                </>
+                </div>
               )}
               <ChapterList novel={novel} novelData={novelData} />
             </div>

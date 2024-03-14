@@ -4,22 +4,26 @@ import { LoadingSpinner } from "./loadingIcons";
 export const RefreshButton: FC<
   {
     refreshFn: () => Promise<void> | void;
+    iconClass?: ComponentPropsWithoutRef<"div">["className"];
+    force?: true;
   } & ComponentPropsWithoutRef<"div">
-> = ({ refreshFn, style, className }) => {
+> = ({ refreshFn, className, iconClass, force }) => {
   const [spinner, setSpinner] = useState(false);
 
   return (
     <>
-      {spinner ? (
-        <LoadingSpinner
-          className={className}
-          style={{
-            "--accent": "transparent",
-            "--size": "1rem",
-            "--weight": "2px",
-            "--bg": "green",
-          }}
-        />
+      {spinner || force ? (
+        <div className={className}>
+          <LoadingSpinner
+            className={iconClass}
+            style={{
+              "--accent": "transparent",
+              "--size": "1rem",
+              "--weight": "2px",
+              "--bg": "green",
+            }}
+          />
+        </div>
       ) : (
         <button
           onClick={async () => {

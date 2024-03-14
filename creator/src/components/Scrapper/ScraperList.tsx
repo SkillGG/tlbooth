@@ -18,7 +18,6 @@ export const ScrapperFilterSelector = () => {
   return (
     <div className="inline-block">
       <button
-        className="border-4 border-black"
         onClick={() => {
           setShowDialog(true);
         }}
@@ -74,7 +73,7 @@ export const ScrapperFilterSelector = () => {
   );
 };
 
-const NovelCard = ({ novel }: { novel: ScrapperNovelInfo }) => {
+const NovelItem = ({ novel }: { novel: ScrapperNovelInfo }) => {
   const { getMutated: getNovels, mutate } = useNovelStore();
 
   const novelStore = getNovels();
@@ -121,39 +120,45 @@ export const ScraperList = () => {
   const utils = api.useUtils();
 
   return (
-    <>
-      {novels && !("error" in novels) && <ScrapperFilterSelector />}
-      <RefreshButton
-        className="mx-1 inline-block"
-        refreshFn={async () => {
-          await utils.scrapper.getList.invalidate();
-        }}
-      />
+    <div className="flex max-h-full flex-col overflow-hidden">
+      <div className="grid w-fit grid-flow-col gap-3">
+        <RefreshButton
+          className="grid items-center"
+          refreshFn={async () => {
+            await utils.scrapper.getList.invalidate();
+          }}
+        />
+        {novels && !("error" in novels) && (
+          <>
+            <ScrapperFilterSelector />
+            <button onClick={() => setSkeleton((p) => !p)}>
+              Toggle skeleton
+            </button>
+          </>
+        )}
+      </div>
       {novels && "error" in novels ? (
         <div className="w-full text-center text-red-400">{novels.error}</div>
       ) : (
         <>
-          <button onClick={() => setSkeleton((p) => !p)}>
-            Toggle skeleton
-          </button>
-          <div
-            className="mt-1 grid grid-flow-row gap-1 overflow-x-hidden overflow-y-scroll px-3 text-white"
-            style={{ maxHeight: "90%" }}
-          >
+          <div className="grid h-full gap-1 overflow-auto">
             {!showSkeleton && novels ? (
               novels.map((novel) => {
-                return <NovelCard key={novel.url} novel={novel} />;
+                return <NovelItem key={novel.url} novel={novel} />;
               })
             ) : (
               <>
-                {Array.from({ length: 10 }).map((_, i) => (
-                  <Skeleton key={`scraper_skeleton_${i}`} className="h-7" />
+                {Array.from({ length: 30 }).map((_, i) => (
+                  <Skeleton
+                    key={`scraper_skeleton_${i}`}
+                    className={`${Math.random() > 0.7 ? (Math.random() > 0.9 ? (Math.random() > 0.7 ? "h-36" : "h-24") : "h-12") : "h-6"}`}
+                  />
                 ))}
               </>
             )}
           </div>
         </>
       )}
-    </>
+    </div>
   );
 };
