@@ -122,30 +122,38 @@ export const ScraperList = () => {
 
   return (
     <>
-      <ScrapperFilterSelector />
+      {novels && !("error" in novels) && <ScrapperFilterSelector />}
       <RefreshButton
         className="mx-1 inline-block"
         refreshFn={async () => {
           await utils.scrapper.getList.invalidate();
         }}
       />
-      <button onClick={() => setSkeleton((p) => !p)}>Toggle skeleton</button>
-      <div
-        className="mt-1 grid grid-flow-row gap-1 overflow-x-hidden overflow-y-scroll px-3 text-white"
-        style={{ maxHeight: "90%" }}
-      >
-        {!showSkeleton && novels ? (
-          novels.map((novel) => {
-            return <NovelCard key={novel.url} novel={novel} />;
-          })
-        ) : (
-          <>
-            {Array.from({ length: 10 }).map((_, i) => (
-              <Skeleton key={`scraper_skeleton_${i}`} className="h-7" />
-            ))}
-          </>
-        )}
-      </div>
+      {novels && "error" in novels ? (
+        <div className="w-full text-center text-red-400">{novels.error}</div>
+      ) : (
+        <>
+          <button onClick={() => setSkeleton((p) => !p)}>
+            Toggle skeleton
+          </button>
+          <div
+            className="mt-1 grid grid-flow-row gap-1 overflow-x-hidden overflow-y-scroll px-3 text-white"
+            style={{ maxHeight: "90%" }}
+          >
+            {!showSkeleton && novels ? (
+              novels.map((novel) => {
+                return <NovelCard key={novel.url} novel={novel} />;
+              })
+            ) : (
+              <>
+                {Array.from({ length: 10 }).map((_, i) => (
+                  <Skeleton key={`scraper_skeleton_${i}`} className="h-7" />
+                ))}
+              </>
+            )}
+          </div>
+        </>
+      )}
     </>
   );
 };

@@ -1,5 +1,6 @@
 .local {
-  background-color: #ff02;
+  background-color: #ce03;
+  @apply rounded-lg;
 }
 
 .forDeletion {

@@ -1,7 +1,7 @@
 import { useAdmin } from "@/hooks/admin";
 import { type StoreNovel, useNovelStore } from "@/hooks/novelStore";
 import Link from "next/link";
-import React, { useImperativeHandle, useRef, useState } from "react";
+import React, { useEffect, useImperativeHandle, useRef, useState } from "react";
 import { Mutation } from "@/hooks/novelStore";
 
 import novelItem from "./novelItem.module.css";
@@ -19,9 +19,13 @@ const ChapterList = ({
 }) => {
   const utils = api.useUtils();
 
+  const { mutate } = useNovelStore();
+
+  const getRemote = (id: string) => novel.chapters.find((c) => c.id === id);
   const chapters = novelData?.chapters.map((r) => {
     return { ...r, scrapped: !novel.chapters.find((c) => c.url === r.url) };
   });
+
 
   return (
     <>
@@ -40,7 +44,15 @@ const ChapterList = ({
               className={`${cssIf(r.scrapped, novelItem.scrapped)} grid grid-flow-col`}
             >
               <div>{r.name}</div>
-              <div>Add</div>
+              <div>
+                <button
+                  onClick={() => {
+                    mutate(Mutation.stageChapter(novel.id, r));
+                  }}
+                >
+                  Add
+                </button>
+              </div>
             </div>
           );
         })}
@@ -51,9 +63,10 @@ const ChapterList = ({
 
 type EditFieldProps = {
   lock: boolean;
+  fieldName: string;
   defaultValue?: string;
   onSave: (s: string) => Promise<void> | void;
-  onCancel: (s: string) => Promise<void> | void;
+  onCancel?: (s: string) => Promise<void> | void;
   changed: boolean;
   ref: {
     hide(): void;
@@ -65,7 +78,7 @@ type EditFieldRef = { show: () => void; hide: () => void };
 
 const EditField = React.forwardRef<EditFieldRef, EditFieldProps>(
   function EditField(
-    { onSave, onCancel, defaultValue, lock, changed: unappliedChange },
+    { onSave, onCancel, defaultValue, lock, changed, fieldName },
     ref,
   ) {
     const isAdmin = useAdmin();
@@ -73,27 +86,38 @@ const EditField = React.forwardRef<EditFieldRef, EditFieldProps>(
     const [edit, setEdit] = useState(false);
 
     const textRef = useRef<HTMLSpanElement>(null);
+    const saveRef = useRef<HTMLButtonElement>(null);
 
     useImperativeHandle(ref, () => {
       return { show: () => setEdit(true), hide: () => setEdit(false) };
     });
 
+    const changedClass = !changed ? "" : novelItem.local;
+
+    useEffect(() => {
+      console.log(defaultValue);
+      if (textRef.current) textRef.current.innerText = defaultValue ?? "";
+    }, [defaultValue, edit]);
+
     return (
       <>
-        <div className="h-min text-sm">
+        <div data-edit={edit} className="h-min text-sm">
           <small>
-            TLName:
+            {fieldName}:
             {isAdmin &&
               !lock &&
               (!edit ? (
-                <button onClick={() => setEdit((p) => !p)}>Edit</button>
+                <button className="ml-1" onClick={() => setEdit((p) => !p)}>
+                  Edit
+                </button>
               ) : (
                 <div className="inline-grid grid-flow-col gap-x-1">
                   <button
+                    ref={saveRef}
                     className="text-green-300"
                     onClick={() => {
                       if (textRef.current) {
-                        const value = textRef.current.innerText;
+                        const value = textRef.current.innerText.trim();
                         void onSave(value);
                         setEdit(false);
                       }
@@ -103,7 +127,11 @@ const EditField = React.forwardRef<EditFieldRef, EditFieldProps>(
                   </button>
                   <button
                     className="text-red-400"
-                    onClick={() => setEdit((p) => !p)}
+                    onClick={() => {
+                      setEdit((p) => !p);
+                      if (textRef.current)
+                        void onCancel?.(textRef.current.innerText);
+                    }}
                   >
                     Cancel
                   </button>
@@ -112,25 +140,27 @@ const EditField = React.forwardRef<EditFieldRef, EditFieldProps>(
           </small>
           {edit ? (
             <div
+              key="editfield"
               className="grid grid-flow-col gap-x-2"
               style={{ gridTemplateColumns: "auto min-content" }}
             >
               <span
                 contentEditable
                 className="block min-w-4 border-b-2 text-center"
-                onChange={(e) => {
-                  console.log(e.currentTarget.innerText);
+                onKeyDown={(e) => {
+                  if (e.code === "Enter") {
+                    saveRef.current?.click();
+                  }
                 }}
                 ref={textRef}
-              >
-                {defaultValue}
-              </span>
+              ></span>
             </div>
           ) : (
             <div
-              className={`${!unappliedChange ? "" : `${novelItem.local}`} text-center`}
+              key="nonEditField"
+              className={`${changedClass} min-h-5 text-center`}
             >
-              {defaultValue}
+              <span>{defaultValue}</span>
             </div>
           )}
         </div>
@@ -151,10 +181,8 @@ export const NovelCard = ({ novel }: { novel: StoreNovel }) => {
   const { mutate, removeMutation, novels } = useNovelStore();
 
   const nameEdit = useRef<EditFieldRef>(null);
-
-  console.log("NovelCard refresh");
-
-  console.log(novel.tlname, novels?.find((f) => f.id === novel.id)?.tlname);
+  const ogdescEdit = useRef<EditFieldRef>(null);
+  const tldescEdit = useRef<EditFieldRef>(null);
 
   return (
     <div className="w-full justify-center rounded-xl border-2 border-gray-400">
@@ -180,7 +208,7 @@ export const NovelCard = ({ novel }: { novel: StoreNovel }) => {
         <>
           <div
             className="box-content grid grid-flow-col gap-5 "
-            style={{ gridTemplateColumns: "1fr 2fr" }}
+            style={{ gridTemplateColumns: "1fr 1fr 2fr" }}
           >
             <div className="px-3 pb-1">
               <div className="h-min text-sm">
@@ -188,21 +216,50 @@ export const NovelCard = ({ novel }: { novel: StoreNovel }) => {
                 <div className="text-center">{novel.ogname}</div>
               </div>
               <EditField
+                fieldName="TLName"
                 ref={nameEdit}
                 lock={!!novel.forDeletion}
                 onCancel={() => {
                   /** */
                 }}
-                onSave={(v) => {
-                  mutate(Mutation.changeTLName(novel.id, v), true);
-                }}
+                onSave={(v) => mutate(Mutation.changeTLName(novel.id, v), true)}
                 changed={
-                  novels?.find((n) => n.id === novel.id)?.tlname ===
+                  novels?.find((n) => n.id === novel.id)?.tlname !==
                   novel.tlname
                 }
                 defaultValue={novel.tlname ?? ""}
               />
             </div>
+            <div className="px-3 pb-1">
+              <EditField
+                fieldName="OGDesc"
+                onSave={(v) => mutate(Mutation.changeOGDesc(novel.id, v), true)}
+                ref={ogdescEdit}
+                lock={!!novel.forDeletion}
+                changed={
+                  novels?.find((n) => n.id === novel.id)?.ogdesc !==
+                  novel.ogdesc
+                }
+                defaultValue={novel.ogdesc}
+              />
+              <EditField
+                fieldName="TLDesc"
+                ref={tldescEdit}
+                lock={!!novel.forDeletion}
+                onCancel={() => {
+                  /** */
+                }}
+                onSave={(v) => {
+                  mutate(Mutation.changeTLDesc(novel.id, v), true);
+                }}
+                changed={
+                  novels?.find((n) => n.id === novel.id)?.tldesc !==
+                  novel.tldesc
+                }
+                defaultValue={novel.tldesc ?? ""}
+              />
+            </div>
+
             <div
               className="grid h-full min-h-24 overflow-y-scroll px-5"
               style={{ gridAutoRows: "min-content" }}

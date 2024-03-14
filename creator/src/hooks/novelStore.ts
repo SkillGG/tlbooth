@@ -4,6 +4,11 @@ import { create } from "zustand";
 import deepEquals from "fast-deep-equal";
 
 import { trpcClient } from "@/pages/_app";
+import {
+  ScrapperChapter,
+  ScrapperNovel,
+  ScrapperNovelInfo,
+} from "@/server/api/routers/scrapper";
 
 type NovelStore = {
   novels: StoreNovel[] | null;
@@ -24,8 +29,9 @@ export type StoreNovel = DBNovel & { local?: true; forDeletion?: true };
 export enum MutationType {
   CHANGE_TITLE = "Change Title",
   ADD_NOVEL = "Add Novel",
-  ADD_CHAPTER = "Add Chapter",
+  STAGE_CHAPTER = "Add Chapter",
   DELETE_NOVEL = "Delete Novel",
+  CHANGE_DESC = "Change description",
 }
 
 type MutationDescription = string | ((p: StoreNovel[]) => string);
@@ -94,12 +100,10 @@ export class Mutation {
       [{ novelId: id }],
     );
   }
-  static changeTLName(id: string, name: string) {
+  static changeOGName(id: string, name: string) {
     return new Mutation(
-      `change_name_${id}`,
-      (p) => {
-        return p.map((n) => (n.id === id ? { ...n, tlname: name } : n));
-      },
+      `change_ogname_${id}`,
+      (p) => p.map((n) => (n.id === id ? { ...n, ogname: name } : n)),
       name,
       MutationType.CHANGE_TITLE,
       async () => {
@@ -107,6 +111,76 @@ export class Mutation {
         console.error("TODO:");
       },
       [{ novelId: id }],
+    );
+  }
+  static changeTLName(id: string, name: string) {
+    return new Mutation(
+      `change_tlname_${id}`,
+      (p) => p.map((n) => (n.id === id ? { ...n, tlname: name } : n)),
+      name,
+      MutationType.CHANGE_TITLE,
+      async () => {
+        // await trpcClient.db.updateNovel.mutate({ id, tlname: name });
+        console.error("TODO:");
+      },
+      [{ novelId: id }],
+    );
+  }
+  static changeTLDesc(id: string, desc: string) {
+    return new Mutation(
+      `change_tldesc_${id}`,
+      (p) => p.map((n) => (n.id === id ? { ...n, tldesc: desc } : n)),
+      desc.substring(0, 10),
+      MutationType.CHANGE_DESC,
+      async () => {
+        // TODO
+      },
+      [{ novelId: id }],
+    );
+  }
+  static changeOGDesc(id: string, desc: string) {
+    return new Mutation(
+      `change_ogdesc_${id}`,
+      (p) => p.map((n) => (n.id === id ? { ...n, ogdesc: desc } : n)),
+      desc.substring(0, 10),
+      MutationType.CHANGE_DESC,
+      async () => {
+        // TODO
+      },
+      [{ novelId: id }],
+    );
+  }
+  static stageChapterId = 0;
+  static stageChapter(
+    novelId: string,
+    chapter: ScrapperNovel["chapters"][number],
+  ) {
+    return new Mutation(
+      `stage_chapter_${chapter.url}`,
+      (p) =>
+        p.map((n) => {
+          return {
+            ...n,
+            chapters: [
+              ...n.chapters,
+              {
+                id: `staged_chapter_${++Mutation.stageChapterId}`,
+                novelId,
+                ogname: chapter.name,
+                tlname: null,
+                status: "ADDED",
+                translations: [],
+                url: chapter.url,
+              },
+            ],
+          };
+        }),
+      chapter.name,
+      MutationType.STAGE_CHAPTER,
+      async () => {
+        // TODO
+      },
+      [{ novelId }],
     );
   }
 }
@@ -123,9 +197,11 @@ export const useNovelStore = create<NovelStore>()((set, get) => ({
       const muts = [...get().mutations, ...get().undoneMutations];
       if (muts.find((m) => m.id === t.id)) {
         if (o)
-          return { mutations: [...s.mutations.filter(m => m.id !== t.id), t] };
-        return s
-      };
+          return {
+            mutations: [...s.mutations.filter((m) => m.id !== t.id), t],
+          };
+        return s;
+      }
       return { mutations: [...s.mutations, t] };
     }),
   removeMutation: (id) =>
