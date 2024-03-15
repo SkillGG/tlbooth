@@ -1,5 +1,5 @@
 .skeleton {
-  @apply min-h-4 rounded-lg;
+  @apply rounded-lg;
   background-color: gray;
   position: relative;
   overflow: hidden;

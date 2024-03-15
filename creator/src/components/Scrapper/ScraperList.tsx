@@ -31,11 +31,9 @@ export const ScrapperFilterSelector = () => {
           <div className="grid grid-flow-col">
             <input
               type="checkbox"
+              id="filterCheckbox"
               className="mr-2"
-              checked={"search" in filters}
-            />
-            <label
-              onClick={() => {
+              onChange={() => {
                 if ("search" in filters) {
                   setFilters((p) => {
                     delete p.search;
@@ -47,7 +45,9 @@ export const ScrapperFilterSelector = () => {
                   });
                 }
               }}
-            >
+              checked={"search" in filters}
+            />
+            <label htmlFor="filterCheckbox">
               Search
               <input
                 onClick={(e) => {

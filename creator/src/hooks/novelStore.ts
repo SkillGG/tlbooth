@@ -71,7 +71,7 @@ export class Mutation {
       id: `localnovel_${++this.addNovelID}`,
       chapters: [],
       ogname: name,
-      tlname: null,
+      tlname: "",
       url,
       local: true,
       ogdesc: "",

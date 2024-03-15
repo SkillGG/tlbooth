@@ -34,7 +34,7 @@ export const TLList: FC<TLListProps> = () => {
             {Array.from({ length: 40 }).map((_, i) => (
               <Skeleton
                 key={`scraper_skeleton_${i}`}
-                className={`${Math.random() > 0.7 ? (Math.random() > 0.9 ? "h-24" : "h-12") : "h-6"}`}
+                className={`${Math.random() > 0.7 ? (Math.random() > 0.9 ? "h-24 min-h-24" : "h-12 min-h-12") : "h-6 min-h-6"}`}
               />
             ))}
           </>

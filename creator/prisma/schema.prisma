@@ -45,7 +45,7 @@ model Novel {
     url String @unique
 
     ogname String
-    tlname String?
+    tlname String @default("")
 
     ogdesc String @default("")
     tldesc String @default("")

@@ -7,7 +7,7 @@ import { Mutation } from "@/hooks/novelStore";
 import novelItem from "./novelItem.module.css";
 import { api } from "@/utils/api";
 import { RefreshButton } from "../LoadingIcon/refreshButton";
-import { cssIf } from "@/utils/utils";
+import { cssIf, cssPIf } from "@/utils/utils";
 import type { ScrapperNovel } from "@/server/api/routers/scrapper";
 import { EditField, useEditRef } from "../EditField";
 
@@ -20,9 +20,8 @@ const ChapterList = ({
 }) => {
   const utils = api.useUtils();
 
-  const { mutate } = useNovelStore();
+  const { mutate, getNovel } = useNovelStore();
 
-  const getRemote = (id: string) => novel.chapters.find((c) => c.id === id);
   const chapters = novelData?.chapters.map((r) => {
     return { ...r, scrapped: !novel.chapters.find((c) => c.url === r.url) };
   });
@@ -71,11 +70,21 @@ export const NovelCard = ({ novel }: { novel: StoreNovel }) => {
 
   const isAdmin = useAdmin();
 
-  const { mutate, removeMutation, novels } = useNovelStore();
+  const { mutate, removeMutation, getNovel } = useNovelStore();
 
   const nameEdit = useEditRef();
   const ogdescEdit = useEditRef();
   const tldescEdit = useEditRef();
+
+  const checkNovelPropEquality = <T,>(
+    novel: StoreNovel,
+    v: (n: StoreNovel) => T,
+    noNovel = true,
+  ): boolean => {
+    const nvl = getNovel(novel.id);
+    if (!nvl) return noNovel;
+    return v(novel) === v(nvl);
+  };
 
   return (
     <div className="w-full justify-center rounded-xl border-2 border-gray-400">
@@ -110,16 +119,82 @@ export const NovelCard = ({ novel }: { novel: StoreNovel }) => {
                 ref={nameEdit}
                 lock={!!novel.forDeletion}
                 onSave={(v) => mutate(Mutation.changeTLName(novel.id, v), true)}
+                onReset={() =>
+                  mutate(
+                    Mutation.changeTLName(
+                      novel.id,
+                      getNovel(novel.id)?.tlname ?? "",
+                    ),
+                    true,
+                  )
+                }
                 defaultValue={novel.tlname ?? ""}
+                className={{
+                  staticField: {
+                    div: cssIf(
+                      !checkNovelPropEquality(
+                        novel,
+                        (n) => n.tlname,
+                        !!novel.tlname,
+                      ),
+                      "rounded-lg",
+                    ),
+                  },
+                }}
+                style={{
+                  staticField: {
+                    div: cssPIf(
+                      !checkNovelPropEquality(
+                        novel,
+                        (n) => n.tlname,
+                        !!novel.tlname,
+                      ),
+                      { backgroundColor: "#ff02" },
+                    ),
+                  },
+                }}
               />
             </div>
             <div className="px-3 pb-1">
               <EditField
                 fieldName="OGDesc"
                 onSave={(v) => mutate(Mutation.changeOGDesc(novel.id, v), true)}
+                onReset={() => {
+                  mutate(
+                    Mutation.changeOGDesc(
+                      novel.id,
+                      getNovel(novel.id)?.ogdesc ?? "",
+                    ),
+                    true,
+                  );
+                }}
                 ref={ogdescEdit}
                 lock={!!novel.forDeletion}
                 defaultValue={novel.ogdesc}
+                className={{
+                  staticField: {
+                    div: cssIf(
+                      !checkNovelPropEquality(
+                        novel,
+                        (n) => n.ogdesc,
+                        !!novel.ogdesc,
+                      ),
+                      "rounded-lg",
+                    ),
+                  },
+                }}
+                style={{
+                  staticField: {
+                    div: cssPIf(
+                      !checkNovelPropEquality(
+                        novel,
+                        (n) => n.ogdesc,
+                        !!novel.ogdesc,
+                      ),
+                      { backgroundColor: "#ff02" },
+                    ),
+                  },
+                }}
               />
               <EditField
                 fieldName="TLDesc"
@@ -128,14 +203,38 @@ export const NovelCard = ({ novel }: { novel: StoreNovel }) => {
                 onSave={(v) => {
                   mutate(Mutation.changeTLDesc(novel.id, v), true);
                 }}
+                onReset={() =>
+                  mutate(
+                    Mutation.changeTLDesc(
+                      novel.id,
+                      getNovel(novel.id)?.tldesc ?? "",
+                    ),
+                    true,
+                  )
+                }
                 defaultValue={novel.tldesc ?? ""}
-                classNames={{
+                className={{
                   staticField: {
-                    span:
-                      novels?.find((n) => n.id === novel.id)?.tldesc ===
-                      novel.tldesc
-                        ? ""
-                        : "bg-yellow-300",
+                    div: cssIf(
+                      !checkNovelPropEquality(
+                        novel,
+                        (n) => n.tldesc,
+                        !!novel.tldesc,
+                      ),
+                      "rounded-lg",
+                    ),
+                  },
+                }}
+                style={{
+                  staticField: {
+                    div: cssPIf(
+                      !checkNovelPropEquality(
+                        novel,
+                        (n) => n.tldesc,
+                        !!novel.tldesc,
+                      ),
+                      { backgroundColor: "#ff02" },
+                    ),
                   },
                 }}
               />
@@ -151,7 +250,6 @@ export const NovelCard = ({ novel }: { novel: StoreNovel }) => {
                     className="absolute right-0 mt-1 justify-self-end text-red-400"
                     style={{ transform: "translateX(5px)" }}
                     onClick={() => {
-                      console.log("removing novel", novel);
                       if (!novel.local) mutate(Mutation.removeNovel(novel.id));
                       else removeMutation(`add_novel_${novel.url}`);
                     }}

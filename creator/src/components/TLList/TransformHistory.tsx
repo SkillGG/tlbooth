@@ -1,6 +1,6 @@
 import { useNovelStore } from "@/hooks/novelStore";
 import { api } from "@/utils/api";
-import { useState } from "react";
+import React, { useState } from "react";
 
 export function TransformationHistory() {
   const [showHistory, setShowHistory] = useState(false);
@@ -90,7 +90,7 @@ export function TransformationHistory() {
             >
               {trans?.map((t) => {
                 return (
-                  <>
+                  <React.Fragment key={t.id}>
                     <div className="grid justify-start" title={`${t.id}`}>
                       {t.type}:{" "}
                     </div>
@@ -109,7 +109,7 @@ export function TransformationHistory() {
                         Remove
                       </button>
                     </div>
-                  </>
+                  </React.Fragment>
                 );
               })}
               {!!undone.length && (
@@ -121,7 +121,7 @@ export function TransformationHistory() {
               )}
               {undone.map((t) => {
                 return (
-                  <>
+                  <React.Fragment key={`undone_${t.id}`}>
                     <div className="grid justify-start" title={`${t.id}`}>
                       {t.type}:
                     </div>
@@ -149,7 +149,7 @@ export function TransformationHistory() {
                         Remove
                       </button>
                     </div>
-                  </>
+                  </React.Fragment>
                 );
               })}
             </div>

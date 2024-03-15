@@ -74,11 +74,11 @@ export const scrapperRouter = createTRPCRouter({
       },
     ),
   getNovel: publicProcedure
-    .input(z.string().url())
+    .input(z.string())
     .query(async ({ ctx: _, input: url }): Promise<ScrapperNovel> => {
       console.log("getting the novel");
 
-      const urlI = new URL(url);
+      const urlI = new URL(decodeURIComponent(url));
 
       return {
         info: { url: uri(url), name: "" },
