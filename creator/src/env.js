@@ -7,26 +7,9 @@ export const env = createEnv({
    * isn't built with invalid env vars.
    */
   server: {
-    DB_USER_URL: z
-      .string()
-      .url()
-      .refine(
-        (str) => !str.includes("YOUR_MYSQL_URL_HERE"),
-        "You forgot to change the default URL",
-      ),
-    DB_ADMIN_URL: z
-      .string()
-      .url()
-      .refine(
-        (str) => !str.includes("YOUR_MYSQL_URL_HERE"),
-        "You forgot to change the default URL",
-      ),
-    EDIT_PASS: z
-      .string()
-      .refine((str) => !!str.length, "You forgot to add editor password"),
-    CLERK_SECRET_KEY: z
-      .string()
-      .refine((str) => !!str.length, "WTF"),
+    DB_URL: z.string().url(),
+    DB_DIRECT_URL: z.string().url("Should be an url"),
+    CLERK_SECRET_KEY: z.string(),
     NODE_ENV: z
       .enum(["development", "test", "production"])
       .default("development"),
@@ -49,13 +32,12 @@ export const env = createEnv({
    * middlewares) or client-side so we need to destruct manually.
    */
   runtimeEnv: {
-    DB_USER_URL: process.env.DB_USER_URL,
-    DB_ADMIN_URL: process.env.DB_ADMIN_URL,
     NODE_ENV: process.env.NODE_ENV,
     CLERK_SECRET_KEY: process.env.CLERK_SECRET_KEY,
     NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY:
       process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY,
-    EDIT_PASS: process.env.EDIT_PASS,
+    DB_DIRECT_URL: process.env.DB_DIRECT_URL,
+    DB_URL: process.env.DB_URL,
     // NEXT_PUBLIC_CLIENTVAR: process.env.NEXT_PUBLIC_CLIENTVAR,
   },
   /**

@@ -7,16 +7,21 @@ import type {
   ScrapperFilter,
 } from "@/server/api/routers/scrapper";
 import { useState } from "react";
-import { Mutation, useNovelStore } from "@/hooks/novelStore";
-import { RefreshButton } from "../LoadingIcon/refreshButton";
+import {
+  Mutation,
+  useNovelStore,
+} from "@/hooks/novelStore";
+import { RefreshButton } from "../Icons/refreshButton";
 
 export const ScrapperFilterSelector = () => {
   const [showDialog, setShowDialog] = useState(false);
 
-  const [filters, setFilters] = useState<ScrapperFilter>({});
+  const [filters, setFilters] = useState<ScrapperFilter>(
+    {},
+  );
 
   return (
-    <div className="inline-block">
+    <div className="grid">
       <button
         onClick={() => {
           setShowDialog(true);
@@ -60,7 +65,9 @@ export const ScrapperFilterSelector = () => {
               />
             </label>
           </div>
-          <button className="border-2">Apply filters</button>
+          <button className="border-2">
+            Apply filters
+          </button>
         </div>
         <div
           className="absolute left-0 top-0 z-10 grid h-full w-full items-center justify-center bg-red-200 opacity-5"
@@ -73,7 +80,11 @@ export const ScrapperFilterSelector = () => {
   );
 };
 
-const NovelItem = ({ novel }: { novel: ScrapperNovelInfo }) => {
+const NovelItem = ({
+  novel,
+}: {
+  novel: ScrapperNovelInfo;
+}) => {
   const { getMutated: getNovels, mutate } = useNovelStore();
 
   const novelStore = getNovels();
@@ -94,7 +105,9 @@ const NovelItem = ({ novel }: { novel: ScrapperNovelInfo }) => {
             <button
               className="h-full"
               onClick={() => {
-                mutate(Mutation.addNovel(novel.url, novel.name));
+                mutate(
+                  Mutation.addNovel(novel.url, novel.name),
+                );
               }}
             >
               Add
@@ -109,8 +122,9 @@ const NovelItem = ({ novel }: { novel: ScrapperNovelInfo }) => {
 export const ScraperList = () => {
   const search = useSearchParams();
 
-  const novels = search.has("filters")
-    ? api.scrapper.getList.useQuery().data
+  const novels =
+    search.has("filters") ?
+      api.scrapper.getList.useQuery().data
     : api.scrapper.getList.useQuery().data;
 
   const isAdmin = useAdmin();
@@ -137,28 +151,41 @@ export const ScraperList = () => {
           </>
         )}
       </div>
-      {novels && "error" in novels ? (
-        <div className="w-full text-center text-red-400">{novels.error}</div>
-      ) : (
-        <>
+      {novels && "error" in novels ?
+        <div className="w-full text-center text-red-400">
+          {novels.error}
+        </div>
+      : <>
           <div className="grid h-full gap-1 overflow-auto">
-            {!showSkeleton && novels ? (
+            {!showSkeleton && novels ?
               novels.map((novel) => {
-                return <NovelItem key={novel.url} novel={novel} />;
+                return (
+                  <NovelItem
+                    key={novel.url}
+                    novel={novel}
+                  />
+                );
               })
-            ) : (
-              <>
+            : <>
                 {Array.from({ length: 30 }).map((_, i) => (
                   <Skeleton
                     key={`scraper_skeleton_${i}`}
-                    className={`${Math.random() > 0.7 ? (Math.random() > 0.9 ? (Math.random() > 0.7 ? "h-36" : "h-24") : "h-12") : "h-6"}`}
+                    className={`${
+                      Math.random() > 0.7 ?
+                        Math.random() > 0.9 ?
+                          Math.random() > 0.7 ?
+                            "h-36"
+                          : "h-24"
+                        : "h-12"
+                      : "h-6"
+                    }`}
                   />
                 ))}
               </>
-            )}
+            }
           </div>
         </>
-      )}
+      }
     </div>
   );
 };

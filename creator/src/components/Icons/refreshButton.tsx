@@ -1,5 +1,9 @@
-import { type FC, useState, type ComponentPropsWithoutRef } from "react";
-import { LoadingSpinner } from "./loadingIcons";
+import {
+  type FC,
+  useState,
+  type ComponentPropsWithoutRef,
+} from "react";
+import { LoadingSpinner } from "./icons";
 
 export const RefreshButton: FC<
   {
@@ -12,7 +16,7 @@ export const RefreshButton: FC<
 
   return (
     <>
-      {spinner || force ? (
+      {spinner || force ?
         <div className={className}>
           <LoadingSpinner
             className={iconClass}
@@ -24,8 +28,7 @@ export const RefreshButton: FC<
             }}
           />
         </div>
-      ) : (
-        <button
+      : <button
           onClick={async () => {
             setSpinner(true);
             await refreshFn();
@@ -35,7 +38,7 @@ export const RefreshButton: FC<
         >
           Refresh
         </button>
-      )}
+      }
     </>
   );
 };

@@ -164,13 +164,14 @@ export class Mutation {
             chapters: [
               ...n.chapters,
               {
+                num: "1",
                 id: `staged_chapter_${++Mutation.stageChapterId}`,
                 novelId,
                 ogname: chapter.name,
                 tlname: null,
-                status: "ADDED",
                 translations: [],
                 url: chapter.url,
+                status: "STAGED",
               },
             ],
           };

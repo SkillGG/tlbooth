@@ -6,8 +6,9 @@ generator client {
 }
 
 datasource db {
-    provider = "mongodb"
-    url      = env("DB_ADMIN_URL")
+    provider  = "postgresql"
+    url       = env("DB_URL")
+    directUrl = env("DB_DIRECT_URL")
 }
 
 enum LANG {
@@ -16,31 +17,46 @@ enum LANG {
     JP
 }
 
+enum ChapterStatus {
+    STAGED
+    TL
+    PR
+    PUBLISH
+}
+
+enum LineStatus {
+    STAGED
+    TL
+    PR
+}
+
 model Translation {
-    id String @id @default(auto()) @map("_id") @db.ObjectId
+    id String @id @default(cuid())
 
     oglang LANG
     tllang LANG
 
     Chapter   Chapter? @relation(fields: [chapterId], references: [id])
-    chapterId String?  @db.ObjectId
+    chapterId String?
 
     lines TextLine[]
 }
 
 model TextLine {
-    id String @id @default(auto()) @map("_id") @db.ObjectId
+    id String @id @default(cuid()) @map("_id")
 
-    pos    Int    @unique @default(0)
+    pos    Int
     tlline String
     ogline String
 
+    status LineStatus @default(STAGED)
+
     fullText Translation @relation(fields: [textId], references: [id], onDelete: Cascade)
-    textId   String      @db.ObjectId
+    textId   String
 }
 
 model Novel {
-    id String @id @default(auto()) @map("_id") @db.ObjectId
+    id String @id @default(cuid()) @map("_id")
 
     url String @unique
 
@@ -53,25 +69,20 @@ model Novel {
     chapters Chapter[]
 }
 
-enum ChapterStatus {
-    ADDED
-    TLD
-    PRD
-    PUBLISHED
-}
-
 model Chapter {
-    id String @id @default(auto()) @map("_id") @db.ObjectId
+    id String @id @default(cuid()) @map("_id")
 
     url String @unique
 
+    num String @default("1")
+
     status ChapterStatus
 
-    ogname String?
+    ogname String
     tlname String?
 
     Novel   Novel  @relation(fields: [novelId], references: [id], onDelete: Cascade)
-    novelId String @db.ObjectId
+    novelId String
 
     translations Translation[]
 }

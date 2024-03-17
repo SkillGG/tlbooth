@@ -1,19 +1,25 @@
-import { createTRPCRouter, publicProcedure } from "@/server/api/trpc";
-import { type Novel } from "@prisma/client";
+import {
+  createTRPCRouter,
+  publicProcedure,
+} from "@/server/api/trpc";
 import { z } from "zod";
 
 import { parse } from "node-html-parser";
 
-export const ScrapperFilter = z.object({ search: z.string().optional() });
+export const ScrapperFilter = z.object({
+  search: z.string().optional(),
+});
 
 export const ScrapperNovelInfo = z.object({
   url: z.string().url(),
+  description: z.string(),
   name: z.string().min(1),
 });
 
 export const ScrapperChapterInfo = z.object({
   url: z.string().url(),
   name: z.string().min(1),
+  num: z.string(),
 });
 
 export const ScrapperChapter = z.object({
@@ -24,12 +30,18 @@ export const ScrapperChapter = z.object({
 export const ScrapperNovel = z.object({
   info: ScrapperNovelInfo,
   chapters: z.array(ScrapperChapterInfo),
-  description: z.string(),
 });
 
 export type ScrapperFilter = z.infer<typeof ScrapperFilter>;
-export type ScrapperNovelInfo = z.infer<typeof ScrapperNovelInfo>;
-export type ScrapperChapter = z.infer<typeof ScrapperChapter>;
+export type ScrapperNovelInfo = z.infer<
+  typeof ScrapperNovelInfo
+>;
+export type ScrapperChapter = z.infer<
+  typeof ScrapperChapter
+>;
+export type ScrapperChapterInfo = z.infer<
+  typeof ScrapperChapterInfo
+>;
 export type ScrapperNovel = z.infer<typeof ScrapperNovel>;
 
 const uri = (s: string) => encodeURIComponent(s);
@@ -38,8 +50,14 @@ export const scrapperRouter = createTRPCRouter({
   getList: publicProcedure
     .input(ScrapperFilter.optional())
     .query(
-      async ({ ctx: _ }): Promise<ScrapperNovelInfo[] | { error: string }> => {
-        const result = await fetch("https://yomou.syosetu.com/search.php");
+      async ({
+        ctx: _,
+      }): Promise<
+        ScrapperNovelInfo[] | { error: string }
+      > => {
+        const result = await fetch(
+          "https://yomou.syosetu.com/search.php",
+        );
 
         if (!result.ok) {
           return { error: result.statusText };
@@ -49,18 +67,26 @@ export const scrapperRouter = createTRPCRouter({
 
         const parsed = parse(siteHTML);
 
-        const main = parsed.querySelectorAll(".searchkekka_box");
+        const main = parsed.querySelectorAll(
+          ".searchkekka_box",
+        );
 
-        const novels = main.map<ScrapperNovelInfo | null>((p) => {
-          const header = p.querySelector(".novel_h");
-          const anchor = header?.querySelector("a");
-          const href = anchor?.getAttribute("href");
-          if (header && href) {
-            return { name: header.text, url: uri(href) };
-          } else {
-            return null;
-          }
-        });
+        const novels = main.map<ScrapperNovelInfo | null>(
+          (p) => {
+            const header = p.querySelector(".novel_h");
+            const anchor = header?.querySelector("a");
+            const href = anchor?.getAttribute("href");
+            if (header && href) {
+              return {
+                name: header.text,
+                url: uri(href),
+                description: "",
+              };
+            } else {
+              return null;
+            }
+          },
+        );
 
         const retVal: ScrapperNovelInfo[] = [];
 
@@ -75,20 +101,64 @@ export const scrapperRouter = createTRPCRouter({
     ),
   getNovel: publicProcedure
     .input(z.string())
-    .query(async ({ ctx: _, input: url }): Promise<ScrapperNovel> => {
-      console.log("getting the novel");
+    .query(
+      async ({
+        ctx: _,
+        input: __,
+      }): Promise<ScrapperNovel> => {
+        console.log("getting the novel");
 
-      const urlI = new URL(decodeURIComponent(url));
+        // const urlI = new URL(decodeURIComponent(input));
 
-      return {
-        info: { url: uri(url), name: "" },
-        chapters: [{ name: urlI.pathname, url: uri(url + "?q=" + "/manga") }],
-        description: "",
-      };
-    }),
+        return {
+          info: {
+            url: "https://testnovel.com/1",
+            name: "",
+            description: "",
+          },
+          chapters: [
+            {
+              name: "テスト章 1 Staged",
+              num: "1",
+              url: "https://testnovel.com/1/1",
+            },
+            {
+              name: "テスト章 1.5 PR",
+              num: "1.5",
+              url: "https://testnovel.com/1/1.5",
+            },
+            {
+              name: "テスト章 3 TLd",
+              num: "2",
+              url: "https://testnovel.com/1/3",
+            },
+            {
+              name: "Test chapter 2.5",
+              num: "2.5",
+              url: "https://testnovel.com/1/2.5",
+            },
+            {
+              name: "Test chapter 4",
+              num: "4",
+              url: "https://testnovel.com/1/4",
+            },
+            {
+              name: "Test chapter 5",
+              num: "5",
+              url: "https://testnovel.com/1/5",
+            },
+          ],
+        };
+      },
+    ),
   getChapter: publicProcedure
     .input(ScrapperChapterInfo)
-    .query(async ({ ctx: _, input }): Promise<ScrapperChapter> => {
-      return { info: input, lines: [] };
-    }),
+    .query(
+      async ({
+        ctx: _,
+        input,
+      }): Promise<ScrapperChapter> => {
+        return { info: input, lines: [] };
+      },
+    ),
 });

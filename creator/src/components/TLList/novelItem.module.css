@@ -10,3 +10,70 @@
 .scrapped {
   background-color: #f002;
 }
+
+.pcchaps {
+  grid-template-columns: min-content 1fr auto 1fr;
+  @apply border-2 p-1;
+}
+
+.chapnum {
+  grid-column: 1 / span 1;
+  display: grid;
+  align-content: center;
+  @apply border-b-2 px-1;
+}
+
+.chapremote {
+  grid-column: 2 / span 1;
+  display: grid;
+  @apply content-center justify-center border-b-2 p-1;
+}
+
+.chapedit {
+  grid-column: 3 / span 1;
+  @apply border-b-2 py-1;
+}
+
+.chaplocal {
+  grid-column: 4 / span 1;
+  display: grid;
+  @apply content-center justify-center border-b-2 p-1;
+}
+
+.chaplinked {
+  grid-column: 2 / span 3;
+  display: flex;
+  @apply border-b-2 p-1;
+}
+
+.phonechaps {
+  grid-template-columns: 1fr min-content 1fr;
+  /* grid-auto-flow: dense; */
+}
+
+.phonechaps .chaplinked {
+  grid-column: 1 / span 3;
+}
+
+.phonechaps .chapedit {
+  grid-column: 2 / span 1;
+}
+
+.phonechaps .chapnum {
+  grid-column: 1 / span 3;
+  @apply break-all border-b-2 border-dotted;
+}
+
+.phonechaps .chaplocal {
+  grid-column: 3 / span 1;
+  text-wrap: balance;
+  text-align: center;
+  @apply break-words break-all border-b-2;
+}
+
+.phonechaps .chapremote {
+  grid-column: 1 / span 1;
+  text-wrap: balance;
+  text-align: center;
+  @apply break-words break-all border-b-2;
+}

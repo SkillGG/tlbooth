@@ -1,6 +1,6 @@
 import { useNovelStore } from "@/hooks/novelStore";
 import { api } from "@/utils/api";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 
 export function TransformationHistory() {
   const [showHistory, setShowHistory] = useState(false);
@@ -18,6 +18,12 @@ export function TransformationHistory() {
     redo,
     apply,
   } = useNovelStore();
+
+  useEffect(() => {
+    if (trans.length + undone.length === 0) {
+      setShowHistory(false);
+    }
+  }, [trans, undone]);
 
   return (
     <>
@@ -85,16 +91,23 @@ export function TransformationHistory() {
             <div
               className="grid gap-x-2"
               style={{
-                gridTemplateColumns: " auto auto min-content",
+                gridTemplateColumns:
+                  "auto auto min-content",
               }}
             >
               {trans?.map((t) => {
                 return (
                   <React.Fragment key={t.id}>
-                    <div className="grid justify-start" title={`${t.id}`}>
+                    <div
+                      className="grid justify-start"
+                      title={`${t.id}`}
+                    >
                       {t.type}:{" "}
                     </div>
-                    <div className="grid justify-center" title={`${t.id}`}>
+                    <div
+                      className="grid justify-center"
+                      title={`${t.id}`}
+                    >
                       {t.getDesc(novels ?? [])}
                     </div>
                     <div
@@ -115,17 +128,25 @@ export function TransformationHistory() {
               {!!undone.length && (
                 <>
                   <div></div>
-                  <div className="grid justify-center">Undone:</div>
+                  <div className="grid justify-center">
+                    Undone:
+                  </div>
                   <div></div>
                 </>
               )}
               {undone.map((t) => {
                 return (
                   <React.Fragment key={`undone_${t.id}`}>
-                    <div className="grid justify-start" title={`${t.id}`}>
+                    <div
+                      className="grid justify-start"
+                      title={`${t.id}`}
+                    >
                       {t.type}:
                     </div>
-                    <div className="grid justify-center" title={`${t.id}`}>
+                    <div
+                      className="grid justify-center"
+                      title={`${t.id}`}
+                    >
                       {t.getDesc(novels ?? [])}
                     </div>
                     <div
