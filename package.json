@@ -11,6 +11,11 @@
         "build-reader": "cd reader ; npx vite build",
         "install-reader": "cd reader; npm i"
     },
+    "prettier": {
+        "printWidth": 60,
+        "experimentalTernaries": true,
+        "tabWidth": 4
+    },
     "author": "",
     "license": "ISC"
 }

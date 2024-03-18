@@ -24,7 +24,7 @@
                 "color": "terminal.ansiBrightYellow",
                 "commands": [
                     "cd creator",
-                    "npx prisma studio --port 5666"
+                    "npx prisma studio --port 5666 --browser none"
                 ],
                 "joinOperator": ";"
             },

@@ -12,19 +12,59 @@ import type {
 import { useMediaQuery } from "@uidotdev/usehooks";
 import { compareChapterNums } from "./NovelCard";
 import deepEquals from "fast-deep-equal";
-import { ChapterMenuButton } from "./ChapterMenuButton";
-import React from "react";
+import React, { useState } from "react";
+import { createPortal } from "react-dom";
+import {
+  ChapterActionMenu,
+  type ChapterActionMenuItem,
+} from "./ChapterActionMenu";
 
 type StagedChapterInfo = ScrapperChapterInfo & {
   staged: boolean;
 };
 
+type ActionMenuData = {
+  x: number;
+  y: number;
+  actions: ChapterActionMenuItem[];
+};
+
+function ChapterMenuButton({
+  actions,
+  openMenu,
+  onClick,
+  ...props
+}: React.ComponentPropsWithoutRef<"button"> & {
+  actions: ChapterActionMenuItem[];
+  openMenu?(d: ActionMenuData): void;
+}) {
+  return (
+    <button
+      {...props}
+      data-ismenubutton="true"
+      onClick={(e) => {
+        onClick?.(e);
+        if (e.defaultPrevented) return;
+        openMenu?.({
+          x: e.clientX,
+          y: e.clientY,
+          actions,
+        });
+      }}
+    >
+      ...
+    </button>
+  );
+}
+
 function ChapterItem({
   db,
   local,
+  openMenu,
 }: {
   db?: StagedChapterInfo;
   local?: StagedChapterInfo;
+  openMenu?(d: ActionMenuData): void;
 }): React.ReactElement {
   if (db && !local) {
     return (
@@ -35,13 +75,8 @@ function ChapterItem({
           {db.name}
         </div>
         <ChapterMenuButton
-          actions={[
-            {
-              label: "Edit",
-            },
-            "-",
-            { label: "Delete" },
-          ]}
+          actions={[{ label: "edit" }, "-"]}
+          openMenu={openMenu}
         />
       </div>
     );
@@ -54,11 +89,8 @@ function ChapterItem({
           {local.name}
         </div>
         <ChapterMenuButton
-          actions={[
-            !local.staged ?
-              { label: "Stage" }
-            : { label: "Unstage" },
-          ]}
+          actions={[{ label: "edit" }, "-"]}
+          openMenu={openMenu}
         />
       </div>
     );
@@ -72,16 +104,12 @@ function ChapterItem({
             {db.name}
           </div>
           <ChapterMenuButton
-            actions={[
-              { label: "Edit" },
-              "-",
-              { label: "Remove" },
-            ]}
+            actions={[{ label: "edit" }, "-"]}
+            openMenu={openMenu}
           />
         </div>
       );
     } else {
-      console.log(local, db);
       return (
         <>
           <div
@@ -89,10 +117,12 @@ function ChapterItem({
           >
             {db.name}
           </div>
-          <ChapterMenuButton
-            className={`${novelItem.chapedit}`}
-            actions={[]}
-          />
+          <div className={`${novelItem.chapedit}`}>
+            <ChapterMenuButton
+              actions={[{ label: "edit" }, "-"]}
+              openMenu={openMenu}
+            />
+          </div>
           <div
             className={`${novelItem.chaplocal} text-chapstate-localonly`}
           >
@@ -116,6 +146,10 @@ export const ChapterList = ({
   novel: StoreNovel;
   novelData?: ScrapperNovel;
 }) => {
+  const [showMenu, setShowMenu] = useState<
+    false | ActionMenuData
+  >(false);
+
   const utils = api.useUtils();
 
   const { getNovel } = useNovelStore();
@@ -171,6 +205,9 @@ export const ChapterList = ({
       </div>
       <div
         className={`${isPhone ? novelItem.phonechaps : novelItem.pcchaps} grid h-full max-h-full grid-flow-row overflow-y-auto`}
+        onScroll={() =>
+          showMenu && setShowMenu(() => false)
+        }
       >
         <div
           className={`${novelItem.chapnum} text-center font-bold`}
@@ -178,13 +215,13 @@ export const ChapterList = ({
           CH#
         </div>
         <div
-          className={`${novelItem.chapremote} text-chapstate-dbonly text-center font-bold`}
+          className={`${novelItem.chapremote} text-center font-bold text-chapstate-dbonly`}
         >
           DB
         </div>
         <div className={`${novelItem.chapedit} `}></div>
         <div
-          className={`${novelItem.chaplocal} text-chapstate-localonly text-center font-bold`}
+          className={`${novelItem.chaplocal} text-center font-bold text-chapstate-localonly`}
         >
           Online
         </div>
@@ -204,10 +241,24 @@ export const ChapterList = ({
                 <ChapterItem
                   db={chapterInfo.db}
                   local={chapterInfo.local}
+                  openMenu={(data) => {
+                    setShowMenu(data);
+                  }}
                 />
               </React.Fragment>
             );
           })}
+
+        {showMenu &&
+          createPortal(
+            <ChapterActionMenu
+              hide={() => setShowMenu(() => false)}
+              x={showMenu.x}
+              y={showMenu.y}
+              actions={showMenu.actions}
+            />,
+            document.body,
+          )}
       </div>
     </div>
   );

@@ -24,41 +24,56 @@ export function ChapterActionMenu({
   x,
   y,
 }: ChapterActionMenuProps) {
+  console.log("chapter action menu showing?");
+
+  useEffect(() => {
+    const abort = new AbortController();
+    document.body.addEventListener(
+      "click",
+      (e) => {
+        if (
+          e.target &&
+          e.target instanceof HTMLButtonElement &&
+          !!e.target.dataset.ismenubutton
+        ) {
+        } else {
+          hide();
+        }
+      },
+      { signal: abort.signal },
+    );
+    return () => {
+      abort.abort();
+    };
+  }, [hide]);
+
   return (
     <div
-      className="absolute left-0 top-0 h-full w-full bg-[#fff1]"
-      onClick={() => {
-        hide();
+      className="absolute"
+      style={{
+        top: `${y}px`,
+        left: `${x}px`,
       }}
     >
       <div
-        className="absolute"
-        style={{
-          top: `${y}px`,
-          left: `${x}px`,
-        }}
+        className="flex flex-col bg-amber-300 text-black"
+        style={{ transform: "translate(-100%)" }}
       >
-        <div
-          className="flex flex-col bg-amber-300 text-black"
-          style={{ transform: "translate(-100%)" }}
-        >
-          {actions.map((action, i) => {
-            if (action === "-")
-              return <hr key={`hr_${i}`} />;
-            return (
-              <div key={action.label}>
-                <button
-                  onClick={async () => {
-                    await action.action?.();
-                  }}
-                  className="grid content-center justify-center px-2"
-                >
-                  {action.label}
-                </button>
-              </div>
-            );
-          })}
-        </div>
+        {actions.map((action, i) => {
+          if (action === "-") return <hr key={`hr_${i}`} />;
+          return (
+            <div key={action.label}>
+              <button
+                onClick={async () => {
+                  await action.action?.();
+                }}
+                className="grid content-center justify-center px-2"
+              >
+                {action.label}
+              </button>
+            </div>
+          );
+        })}
       </div>
     </div>
   );
