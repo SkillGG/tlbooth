@@ -2,6 +2,7 @@ import {
   type FC,
   useState,
   type ComponentPropsWithoutRef,
+  useEffect,
 } from "react";
 import { LoadingSpinner } from "./icons";
 
@@ -13,6 +14,18 @@ export const RefreshButton: FC<
   } & ComponentPropsWithoutRef<"div">
 > = ({ refreshFn, className, iconClass, force }) => {
   const [spinner, setSpinner] = useState(false);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    if (error.length > 0) {
+      const timeout = setTimeout(() => {
+        setError("");
+      }, 1000);
+      return () => {
+        clearTimeout(timeout);
+      };
+    }
+  }, [error]);
 
   return (
     <>
@@ -28,11 +41,15 @@ export const RefreshButton: FC<
             }}
           />
         </div>
+      : !!error ?
+        <div className={className}>{error}</div>
       : <button
           onClick={async () => {
-            setSpinner(true);
-            await refreshFn();
-            setSpinner(false);
+            try {
+              setSpinner(true);
+              await refreshFn();
+              setSpinner(false);
+            } catch (err) {}
           }}
           className={className}
         >

@@ -1,6 +1,7 @@
 import {
   type StoreNovel,
   useNovelStore,
+  Mutation,
 } from "@/hooks/novelStore";
 import novelItem from "./novelItem.module.css";
 import { api } from "@/utils/api";
@@ -57,15 +58,20 @@ function ChapterMenuButton({
   );
 }
 
-function ChapterItem({
+const ChapterItem = React.memo(function ChapterItem({
+  novelId,
   db,
   local,
   openMenu,
 }: {
   db?: StagedChapterInfo;
+  novelId: string;
   local?: StagedChapterInfo;
   openMenu?(d: ActionMenuData): void;
 }): React.ReactElement {
+  const { mutate, getChapterByURL, getDBChapterByURL } =
+    useNovelStore();
+
   if (db && !local) {
     return (
       <div
@@ -75,7 +81,11 @@ function ChapterItem({
           {db.name}
         </div>
         <ChapterMenuButton
-          actions={[{ label: "edit" }, "-"]}
+          actions={[
+            { label: "edit" },
+            "-",
+            { label: "Kill da ho!" },
+          ]}
           openMenu={openMenu}
         />
       </div>
@@ -89,13 +99,27 @@ function ChapterItem({
           {local.name}
         </div>
         <ChapterMenuButton
-          actions={[{ label: "edit" }, "-"]}
+          actions={[
+            {
+              label: "Stage",
+              action: async () => {
+                console.log("Staging chapter", local);
+                mutate(
+                  Mutation.stageChapter(novelId, local),
+                );
+              },
+            },
+          ]}
           openMenu={openMenu}
         />
       </div>
     );
   } else if (db && local) {
     if (deepEquals({ ...db, staged: false }, local)) {
+      const isLocalFromMutation = !(
+        getChapterByURL(novelId, local.url) &&
+        getDBChapterByURL(novelId, db.url)
+      );
       return (
         <div
           className={`${novelItem.chaplinked} text-chapstate-good`}
@@ -104,7 +128,15 @@ function ChapterItem({
             {db.name}
           </div>
           <ChapterMenuButton
-            actions={[{ label: "edit" }, "-"]}
+            actions={
+              isLocalFromMutation ?
+                [
+                  { label: "edit" },
+                  "-",
+                  { label: "Unstage" },
+                ]
+              : [{ label: "edit" }]
+            }
             openMenu={openMenu}
           />
         </div>
@@ -137,7 +169,7 @@ function ChapterItem({
       <div className={`${novelItem.chaplinked}`}></div>
     </>
   );
-}
+});
 
 export const ChapterList = ({
   novel,
@@ -199,7 +231,14 @@ export const ChapterList = ({
         <RefreshButton
           className="grid h-6 w-fit min-w-14 items-center justify-center"
           refreshFn={async () => {
-            await utils.scrapper.getNovel.invalidate();
+            try {
+              const r = await utils.scrapper.getNovel
+                .invalidate()
+                .catch(() => "error");
+              if (r === "error") throw "Error";
+            } catch (e) {
+              console.log(e);
+            }
           }}
         />
       </div>
@@ -239,6 +278,7 @@ export const ChapterList = ({
                   {num}
                 </div>
                 <ChapterItem
+                  novelId={novel.id}
                   db={chapterInfo.db}
                   local={chapterInfo.local}
                   openMenu={(data) => {

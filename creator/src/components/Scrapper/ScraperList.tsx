@@ -95,7 +95,7 @@ const NovelItem = ({
       style={{ gridTemplateColumns: "auto min-content" }}
     >
       <div
-        className={`w-full text-balance border-gray-400 px-3 text-center text-sm`}
+        className={`grid w-full content-center text-balance border-gray-400 px-3 text-center text-sm`}
       >
         {novel.name}
       </div>
@@ -106,7 +106,11 @@ const NovelItem = ({
               className="h-full"
               onClick={() => {
                 mutate(
-                  Mutation.addNovel(novel.url, novel.name),
+                  Mutation.addNovel(
+                    novel.url,
+                    novel.name,
+                    novel.description,
+                  ),
                 );
               }}
             >

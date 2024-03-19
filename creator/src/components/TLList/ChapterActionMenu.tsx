@@ -66,6 +66,7 @@ export function ChapterActionMenu({
               <button
                 onClick={async () => {
                   await action.action?.();
+                  hide();
                 }}
                 className="grid content-center justify-center px-2"
               >
