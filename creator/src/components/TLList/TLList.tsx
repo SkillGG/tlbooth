@@ -1,12 +1,10 @@
 import { useState, type FC } from "react";
 import { Skeleton } from "../Skeleton/Skeleton";
-import {
-  type StoreNovel,
-  useNovelStore,
-} from "@/hooks/novelStore";
+import { useNovelStore } from "@/hooks/novelStore";
 
 import { TransformationHistory } from "./TransformHistory";
 import { NovelCard } from "./NovelCard";
+import { type StoreNovel } from "@/hooks/mutations/mutation";
 
 interface TLListProps {
   tls?: StoreNovel[];

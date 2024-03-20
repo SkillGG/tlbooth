@@ -1,8 +1,4 @@
-import {
-  type StoreNovel,
-  useNovelStore,
-  Mutation,
-} from "@/hooks/novelStore";
+import { useNovelStore } from "@/hooks/novelStore";
 import novelItem from "./novelItem.module.css";
 import { api } from "@/utils/api";
 import { RefreshButton } from "../Icons/refreshButton";
@@ -20,6 +16,8 @@ import {
   type ChapterActionMenuItem,
 } from "./ChapterActionMenu";
 import { useRouter } from "next/router";
+import { StageChapterMutation } from "@/hooks/mutations/chapterMutations/stageChapter";
+import { StoreNovel } from "@/hooks/mutations/mutation";
 
 type StagedChapterInfo = ScrapperChapterInfo & {
   staged: boolean;
@@ -114,7 +112,13 @@ const ChapterItem = React.memo(function ChapterItem({
               action: async () => {
                 console.log("Staging chapter", local);
                 mutate(
-                  Mutation.stageChapter(novelID, local),
+                  new StageChapterMutation(
+                    novelID,
+                    local.url,
+                    local.name,
+                    "",
+                    local.num,
+                  ),
                 );
               },
             },
@@ -167,7 +171,10 @@ const ChapterItem = React.memo(function ChapterItem({
                     action() {
                       if (localChap) {
                         removeMutation(
-                          `stage_chapter_${localChap.id}`,
+                          StageChapterMutation.getID(
+                            novelID,
+                            localChap.id,
+                          ),
                         );
                       }
                     },

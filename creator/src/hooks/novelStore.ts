@@ -1,27 +1,37 @@
-import { type DBNovel } from "@/server/api/routers/db";
 import { create } from "zustand";
 import deepEquals from "fast-deep-equal";
 
-import { trpcClient } from "@/pages/_app";
-import type { ScrapperChapterInfo } from "@/server/api/routers/scrapper";
-import type { LANG } from "@prisma/client";
 import {
-  MutationSavedType,
-  isMutationSavedType,
-  type RegularMutationData,
+  type Mutation,
   MutationType,
-} from "./utils/storageSaveHelpers";
+  type SaveMutationData,
+  type SaveMutationDatas,
+  type StoreChapter,
+  type StoreNovel,
+} from "./mutations/mutation";
+import {
+  type MutationSavedType,
+  isMutationSavedType,
+} from "./mutations/mutationSave";
+import { StageChapterMutation } from "./mutations/chapterMutations/stageChapter";
+import { AddNovelMutation } from "./mutations/novelMutations/addNovel";
+import { ChangeNovelDescriptionMutation } from "./mutations/novelMutations/changeDescription";
+import { ChangeNovelNameMutation } from "./mutations/novelMutations/changeName";
+import { RemoveNovelMutation } from "./mutations/novelMutations/removeNovel";
+
+type AnyMutation<T extends MutationType = MutationType> =
+  Mutation<T, SaveMutationData<{ type: T }>>;
 
 type NovelStore = {
   novels: StoreNovel[] | null;
-  mutations: Mutation[];
-  undoneMutations: Mutation[];
+  mutations: AnyMutation[];
+  undoneMutations: AnyMutation[];
   loadData: (remote: NovelStore["novels"]) => void;
 
   loadMutations: (l: Storage) => void;
   saveMutations: (s: Storage) => void;
 
-  mutate: (t: Mutation, override?: boolean) => void;
+  mutate: (t: AnyMutation, override?: boolean) => void;
   removeMutation: (id: string) => void;
   undo: (id: string) => void;
   redo: (id: string) => void;
@@ -36,10 +46,10 @@ type NovelStore = {
   findMutation: (
     id: string,
     undone?: boolean,
-  ) => Mutation | null;
+  ) => AnyMutation | null;
   findMutationBy: (
-    n: (m: Mutation, undone?: boolean) => boolean,
-  ) => Mutation | null;
+    n: (m: AnyMutation, undone?: boolean) => boolean,
+  ) => AnyMutation | null;
 
   getChapter: (
     novelID: string,
@@ -60,283 +70,6 @@ type NovelStore = {
 
   apply: () => Promise<(() => void)[]>;
 };
-
-export type StoreNovel = DBNovel & {
-  local?: true;
-  forDeletion?: true;
-};
-
-export type StoreChapter = StoreNovel["chapters"][number];
-
-
-type MutationDescription =
-  | string
-  | ((p: StoreNovel[]) => string);
-
-export type Dependency =
-  | {
-      novelID: string;
-    }
-  | { chapterID: string };
-
-export class Mutation {
-  fn: (p: StoreNovel[]) => StoreNovel[];
-  desc: MutationDescription;
-  type: MutationType;
-  id: string;
-  apiFn: () => Promise<void>;
-  dependencies: Dependency[];
-  data?: RegularMutationData;
-  constructor(
-    id: string,
-    fn: (p: StoreNovel[]) => StoreNovel[],
-    desc: MutationDescription,
-    type: MutationType,
-    apiFn: () => Promise<void>,
-    dependencies: Dependency[],
-    data?: RegularMutationData,
-  ) {
-    this.fn = fn;
-    this.id = id;
-    this.desc = desc;
-    this.type = type;
-    this.apiFn = apiFn;
-    this.data = data;
-    this.dependencies = dependencies;
-  }
-  getDesc(n: StoreNovel[]) {
-    return typeof this.desc === "function" ?
-        this.desc(n)
-      : this.desc;
-  }
-
-  static addNovelID = 0;
-  static addNovelMutationID = (novelID: string) =>
-    `add_novel_${novelID}`;
-  static addNovel(
-    novelUrl: string,
-    novelName: string,
-    novelDescription: string,
-    id?: string,
-  ) {
-    const novel: StoreNovel = {
-      id: `localnovel_${id ?? ++this.addNovelID}`,
-      chapters: [],
-      ogname: novelName,
-      tlname: "",
-      url: novelUrl,
-      local: true,
-      ogdesc: "",
-      tldesc: "",
-    };
-    const type = MutationType.ADD_NOVEL;
-    return new Mutation(
-      this.addNovelMutationID(novel.id),
-      (p) => [...p, novel],
-      novelName,
-      type,
-      async () => {
-        await trpcClient.db.registerNovel.mutate({
-          name: novelName,
-          url: novelUrl,
-          description: novelDescription,
-        });
-      },
-      [{ novelID: novel.id }],
-      { type, novel },
-    );
-  }
-  static removeNovelMutationID = (novelID: string) =>
-    `remove_novel_${novelID}`;
-  static removeNovel(novelID: string) {
-    const type = MutationType.DELETE_NOVEL;
-    return new Mutation(
-      this.removeNovelMutationID(novelID),
-      (p) =>
-        p.map((n) =>
-          n.id === novelID ?
-            { ...n, forDeletion: true }
-          : n,
-        ),
-      (p) =>
-        p.find((x) => x.id === novelID)?.ogname ?? novelID,
-      type,
-      async () => {
-        await trpcClient.db.removeNovel.mutate(novelID);
-      },
-      [{ novelID }],
-      { type, novelID },
-    );
-  }
-  static changeOGNameMutationID = (novelID: string) =>
-    `change_ogname_${novelID}`;
-  static changeOGName(novelID: string, name: string) {
-    const type = MutationType.CHANGE_NAME;
-    return new Mutation(
-      this.changeOGNameMutationID(novelID),
-      (p) =>
-        p.map((n) =>
-          n.id === novelID ? { ...n, ogname: name } : n,
-        ),
-      name,
-      type,
-      async () => {
-        // await trpcClient.db.updateNovel.mutate({ id, tlname: name });
-        console.error("TODO:");
-      },
-      [{ novelID }],
-      { type, novelID, name, og: true },
-    );
-  }
-  static changeTLNameMutationID = (novelID: string) =>
-    `change_tlname_${novelID}`;
-  static changeTLName(novelID: string, name: string) {
-    const type = MutationType.CHANGE_NAME;
-    return new Mutation(
-      this.changeTLNameMutationID(novelID),
-      (p) =>
-        p.map((n) =>
-          n.id === novelID ? { ...n, tlname: name } : n,
-        ),
-      name,
-      type,
-      async () => {
-        // await trpcClient.db.updateNovel.mutate({ id, tlname: name });
-        console.error("TODO:");
-      },
-      [{ novelID }],
-      { type, novelID, name, og: false },
-    );
-  }
-  static changeTLDescMutationID = (novelID: string) =>
-    `change_tldesc_${novelID}`;
-  static changeTLDesc(novelID: string, desc: string) {
-    const type = MutationType.CHANGE_DESC;
-    return new Mutation(
-      this.changeTLDescMutationID(novelID),
-      (p) =>
-        p.map((n) =>
-          n.id === novelID ? { ...n, tldesc: desc } : n,
-        ),
-      desc.substring(0, 10),
-      type,
-      async () => {
-        // TODO
-      },
-      [{ novelID }],
-      { type, desc, novelID: novelID, og: false },
-    );
-  }
-  static changeOGDescMutationID = (novelID: string) =>
-    `change_ogdesc_${novelID}`;
-  static changeOGDesc(novelID: string, desc: string) {
-    const type = MutationType.CHANGE_DESC;
-    return new Mutation(
-      this.changeOGDescMutationID(novelID),
-      (p) =>
-        p.map((n) =>
-          n.id === novelID ? { ...n, ogdesc: desc } : n,
-        ),
-      desc.substring(0, 10),
-      MutationType.CHANGE_DESC,
-      async () => {
-        // TODO
-      },
-      [{ novelID }],
-      { type, desc, novelID: novelID, og: true },
-    );
-  }
-  static stageChapterID = 0;
-  static stageChapterMutationID = (chapterID: string) =>
-    `stage_chapter_${chapterID}`;
-  static stageChapter(
-    novelID: string,
-    chapter: ScrapperChapterInfo,
-    id?: string,
-  ) {
-    const type = MutationType.STAGE_CHAPTER;
-    const chapterID =
-      id ?? `staged_chapter_${++Mutation.stageChapterID}`;
-    return new Mutation(
-      this.stageChapterMutationID(chapterID),
-      (p) =>
-        p.map((n) => {
-          return n.id === novelID ?
-              {
-                ...n,
-                chapters: [
-                  ...n.chapters,
-                  {
-                    id: chapterID,
-                    novelID: novelID,
-                    num: chapter.num,
-                    ogname: chapter.name,
-                    url: chapter.url,
-                    status: "STAGED",
-                    tlname: "",
-                    translations: [],
-                  },
-                ],
-              }
-            : n;
-        }),
-      chapter.name,
-      type,
-      async () => {
-        // TODO
-      },
-      [{ novelID }],
-      {
-        type,
-        novelID: novelID,
-        chapter,
-        chapterID: chapterID,
-      },
-    );
-  }
-  static addTLID = 0;
-  static addTLMutationID = (
-    nID: string,
-    cID: string,
-    oL: LANG,
-    tL: LANG,
-  ) => `add_translation_${oL}.${tL}_${nID}_${cID}`;
-  static addTranslation(
-    novelID: string,
-    chapterID: string,
-    ogLang: LANG,
-    tlLang: LANG,
-    id?: string,
-  ) {
-    const tlID =
-      id ??
-      this.addTLMutationID(
-        novelID,
-        chapterID,
-        ogLang,
-        tlLang,
-      );
-    const type = MutationType.ADD_TRANSLATION;
-    return new Mutation(
-      tlID,
-      (p) => p,
-      `${ogLang}=>${tlLang}`,
-      type,
-      async () => {
-        /** TODO */
-      },
-      [{ novelID: novelID }, { chapterID: chapterID }],
-      {
-        type,
-        chapterID,
-        novelID,
-        ogLang,
-        tlID,
-        tlLang,
-      },
-    );
-  }
-}
 
 export const useNovelStore = create<NovelStore>()(
   (set, get) => ({
@@ -364,79 +97,52 @@ export const useNovelStore = create<NovelStore>()(
           muts,
           undoneMuts,
           statics: {
-            chapterID: Mutation.stageChapterID,
-            novelID: Mutation.addNovelID,
+            stageChapterID: StageChapterMutation.chapterID,
+            addNovelID: AddNovelMutation.novelID,
           },
         } satisfies MutationSavedType),
       );
     },
     loadMutations: (s) => {
       console.log("loading mutations!");
-      const rmd2Mut = (
-        rmd: RegularMutationData,
-      ): Mutation => {
+      const rmd2mut = (rmd: SaveMutationDatas) => {
         switch (rmd.type) {
           case MutationType.ADD_NOVEL:
-            return Mutation.addNovel(
-              rmd.novel.url,
-              rmd.novel.ogname,
-              rmd.novel.ogdesc,
-              rmd.novel.id,
-            );
+            return AddNovelMutation.fromData(rmd);
           case MutationType.CHANGE_DESC:
-            if (rmd.og)
-              return Mutation.changeOGDesc(
-                rmd.novelID,
-                rmd.desc,
-              );
-            return Mutation.changeTLDesc(
-              rmd.novelID,
-              rmd.desc,
+            return ChangeNovelDescriptionMutation.fromData(
+              rmd,
             );
           case MutationType.CHANGE_NAME:
-            if (rmd.og)
-              return Mutation.changeOGName(
-                rmd.novelID,
-                rmd.name,
-              );
-            return Mutation.changeTLDesc(
-              rmd.novelID,
-              rmd.name,
-            );
-          case MutationType.DELETE_NOVEL:
-            return Mutation.removeNovel(rmd.novelID);
+            return ChangeNovelNameMutation.fromData(rmd);
+          case MutationType.REMOVE_NOVEL:
+            return RemoveNovelMutation.fromData(rmd);
           case MutationType.STAGE_CHAPTER:
-            return Mutation.stageChapter(
-              rmd.novelID,
-              rmd.chapter,
-              rmd.chapterID,
-            );
-          case MutationType.ADD_TRANSLATION:
-            return Mutation.addTranslation(
-              rmd.novelID,
-              rmd.chapterID,
-              rmd.ogLang,
-              rmd.tlLang,
-              rmd.tlID,
-            );
+            return StageChapterMutation.fromData(rmd);
+          default:
+            rmd satisfies never;
+            throw "Unknown mutation type!";
         }
       };
-
       const str = s.getItem("mutations");
       if (str) {
         const savedData = JSON.parse(str) as unknown;
-        if (!isMutationSavedType(savedData)) return;
-        Mutation.addNovelID = savedData.statics.novelID;
-        Mutation.stageChapterID =
-          savedData.statics.chapterID;
+        if (!isMutationSavedType(savedData)) {
+          console.error("failed to parse savedData");
+          return;
+        }
+        console.log(savedData);
+        AddNovelMutation.novelID =
+          savedData.statics.addNovelID;
+        StageChapterMutation.chapterID =
+          savedData.statics.stageChapterID;
         set((p) => {
-          const nStore: NovelStore = {
+          return {
             ...p,
-            mutations: savedData.muts.map(rmd2Mut),
+            mutations: savedData.muts.map(rmd2mut),
             undoneMutations:
-              savedData.undoneMuts.map(rmd2Mut),
+              savedData.undoneMuts.map(rmd2mut),
           };
-          return nStore;
         });
       }
     },
@@ -505,13 +211,20 @@ export const useNovelStore = create<NovelStore>()(
     removeMutation: (id) => {
       set((s) => {
         console.log("removing mutation", id);
-        const linkedMutations: Mutation[] = [];
+        const linkedMutations: AnyMutation[] = [];
         const muts = [
           ...get().mutations,
           ...get().undoneMutations,
         ];
         const thisMut = muts.find((t) => t.id === id);
-        if (!thisMut) return s;
+        if (!thisMut) {
+          console.error(
+            "There is no mutation found with id",
+            id,
+            muts,
+          );
+          return s;
+        }
         if (thisMut.type === MutationType.ADD_NOVEL) {
           console.log("searching for linked mutations!");
           const dependants = [];
@@ -531,13 +244,13 @@ export const useNovelStore = create<NovelStore>()(
 
         console.log("linked", linkedMutations);
 
-        const filterFn = (x: Mutation) => {
+        const filterFn = (x: AnyMutation) => {
           if (x.id === id) {
-            console.error(s);
+            console.error("filter1?", s);
             return false;
           }
           if (linkedMutations.find((n) => n.id === x.id)) {
-            console.error(s);
+            console.error("filter2?", s);
             return false;
           }
           return true;

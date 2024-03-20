@@ -6,11 +6,9 @@ import type {
   ScrapperFilter,
 } from "@/server/api/routers/scrapper";
 import { useState } from "react";
-import {
-  Mutation,
-  useNovelStore,
-} from "@/hooks/novelStore";
+import { useNovelStore } from "@/hooks/novelStore";
 import { RefreshButton } from "../Icons/refreshButton";
+import { AddNovelMutation } from "@/hooks/mutations/novelMutations/addNovel";
 
 export const ScrapperFilterSelector = () => {
   const [showDialog, setShowDialog] = useState(false);
@@ -105,7 +103,7 @@ const NovelItem = ({
               className="h-full"
               onClick={() => {
                 mutate(
-                  Mutation.addNovel(
+                  new AddNovelMutation(
                     novel.url,
                     novel.name,
                     novel.description,

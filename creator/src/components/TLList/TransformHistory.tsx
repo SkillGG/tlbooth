@@ -108,7 +108,7 @@ export function TransformationHistory() {
                       className="grid justify-center"
                       title={`${t.id}`}
                     >
-                      {t.getDesc(novels ?? [])}
+                      {t.getDescription(novels ?? [])}
                     </div>
                     <div
                       className="grid w-min justify-end text-red-800"
@@ -147,7 +147,7 @@ export function TransformationHistory() {
                       className="grid justify-center"
                       title={`${t.id}`}
                     >
-                      {t.getDesc(novels ?? [])}
+                      {t.getDescription(novels ?? [])}
                     </div>
                     <div
                       className="grid w-min grid-flow-col justify-end gap-x-1 "

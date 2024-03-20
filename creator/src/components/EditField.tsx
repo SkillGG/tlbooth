@@ -32,7 +32,7 @@ type EditFieldProps = {
   lock: boolean;
   fieldName: string;
   defaultValue?: string;
-  onSave: (s: string) => Promise<void> | void;
+  onSave?: (s: string) => Promise<void> | void;
   onCancel?: (s: string) => Promise<void> | void;
   showRestore?: boolean;
   onReset?: () => Promise<void> | void;
@@ -133,7 +133,7 @@ export const EditField = React.forwardRef<
                     if (textRef.current) {
                       const value =
                         textRef.current.innerText.trim();
-                      void onSave(value.trim());
+                      void onSave?.(value.trim());
                       setEdit(false);
                     }
                   }}

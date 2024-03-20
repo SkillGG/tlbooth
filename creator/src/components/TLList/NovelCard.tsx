@@ -1,15 +1,16 @@
-import {
-  type StoreNovel,
-  useNovelStore,
-} from "@/hooks/novelStore";
+import { useNovelStore } from "@/hooks/novelStore";
 import React, { useState } from "react";
-import { Mutation } from "@/hooks/novelStore";
 
 import novelItem from "./novelItem.module.css";
 import { api } from "@/utils/api";
 import { cssIf, cssPIf } from "@/utils/utils";
 import { EditField, useEditRef } from "../EditField";
 import { ChapterList } from "./ChapterList";
+import { type StoreNovel } from "@/hooks/mutations/mutation";
+import { ChangeNovelNameMutation } from "@/hooks/mutations/novelMutations/changeName";
+import { ChangeNovelDescriptionMutation } from "@/hooks/mutations/novelMutations/changeDescription";
+import { RemoveNovelMutation } from "@/hooks/mutations/novelMutations/removeNovel";
+import { AddNovelMutation } from "@/hooks/mutations/novelMutations/addNovel";
 
 export const compareChapterNums = (
   n: string,
@@ -89,18 +90,26 @@ export const NovelCard = ({
                 ref={nameEdit}
                 lock={!!novel.forDeletion}
                 showRestore={isMutation(
-                  Mutation.changeTLNameMutationID(novel.id),
+                  ChangeNovelNameMutation.getID(
+                    novel.id,
+                    false,
+                  ),
                 )}
                 onSave={(v) =>
                   mutate(
-                    Mutation.changeTLName(novel.id, v),
+                    new ChangeNovelNameMutation(
+                      novel.id,
+                      v,
+                      false,
+                    ),
                     true,
                   )
                 }
                 onReset={() => {
                   removeMutation(
-                    Mutation.changeTLNameMutationID(
+                    ChangeNovelNameMutation.getID(
                       novel.id,
+                      false,
                     ),
                   );
                 }}
@@ -136,19 +145,27 @@ export const NovelCard = ({
                 fieldName="OGDesc"
                 onSave={(v) =>
                   mutate(
-                    Mutation.changeOGDesc(novel.id, v),
+                    new ChangeNovelDescriptionMutation(
+                      novel.id,
+                      v,
+                      true,
+                    ),
                     true,
                   )
                 }
                 onReset={() => {
                   removeMutation(
-                    Mutation.changeOGDescMutationID(
+                    ChangeNovelDescriptionMutation.getID(
                       novel.id,
+                      true,
                     ),
                   );
                 }}
                 showRestore={isMutation(
-                  Mutation.changeOGDescMutationID(novel.id),
+                  ChangeNovelDescriptionMutation.getID(
+                    novel.id,
+                    true,
+                  ),
                 )}
                 ref={ogdescEdit}
                 lock={!!novel.forDeletion}
@@ -183,18 +200,26 @@ export const NovelCard = ({
                 ref={tldescEdit}
                 lock={!!novel.forDeletion}
                 showRestore={isMutation(
-                  Mutation.changeTLDescMutationID(novel.id),
+                  ChangeNovelDescriptionMutation.getID(
+                    novel.id,
+                    false,
+                  ),
                 )}
                 onSave={(v) => {
                   mutate(
-                    Mutation.changeTLDesc(novel.id, v),
+                    new ChangeNovelDescriptionMutation(
+                      novel.id,
+                      v,
+                      true,
+                    ),
                     true,
                   );
                 }}
                 onReset={() => {
                   removeMutation(
-                    Mutation.changeTLDescMutationID(
+                    ChangeNovelDescriptionMutation.getID(
                       novel.id,
+                      false,
                     ),
                   );
                 }}
@@ -235,13 +260,14 @@ export const NovelCard = ({
                   className="absolute right-0 mt-1 justify-self-end text-red-400"
                   style={{ transform: "translateX(5px)" }}
                   onClick={() => {
+                    console.log(novel.local);
                     if (!novel.local)
                       mutate(
-                        Mutation.removeNovel(novel.id),
+                        new RemoveNovelMutation(novel.id),
                       );
                     else
                       removeMutation(
-                        `add_novel_${novel.url}`,
+                        AddNovelMutation.getID(novel.id),
                       );
                   }}
                 >
