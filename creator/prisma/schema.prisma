@@ -36,8 +36,8 @@ model Translation {
     oglang LANG
     tllang LANG
 
-    Chapter   Chapter? @relation(fields: [chapterId], references: [id])
-    chapterId String?
+    Chapter   Chapter? @relation(fields: [chapterID], references: [id])
+    chapterID String?  @map("chapterId")
 
     lines TextLine[]
 }
@@ -51,8 +51,8 @@ model TextLine {
 
     status LineStatus @default(STAGED)
 
-    fullText Translation @relation(fields: [textId], references: [id], onDelete: Cascade)
-    textId   String
+    fullText Translation @relation(fields: [textID], references: [id], onDelete: Cascade)
+    textID   String      @map("textId")
 }
 
 model Novel {
@@ -81,8 +81,8 @@ model Chapter {
     ogname String
     tlname String?
 
-    Novel   Novel  @relation(fields: [novelId], references: [id], onDelete: Cascade)
-    novelId String
+    Novel   Novel  @relation(fields: [novelID], references: [id], onDelete: Cascade)
+    novelID String @map("novelId")
 
     translations Translation[]
 }

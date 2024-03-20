@@ -1,13 +1,18 @@
-import { useParams } from "next/navigation";
+import { TLList } from "@/components/TLList/TLList";
+import Head from "next/head";
+// import { useParams } from "next/navigation";
 
-export default function Edit() {
-  const params = useParams();
+export default function Dashboard() {
+  // const params = useParams();
 
-  console.log(params);
-
-  if (params) {
-    return <>Editing url: {params.url}</>;
-  } else {
-    return <>No page to edit!</>;
-  }
+  return (
+    <>
+      <Head>
+        <title>List of TLs in Version for TLSetsu</title>
+      </Head>
+      <div className="grid px-2 text-white">
+        <TLList />
+      </div>
+    </>
+  );
 }

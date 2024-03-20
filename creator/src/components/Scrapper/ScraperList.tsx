@@ -1,4 +1,3 @@
-import { useAdmin } from "@/hooks/admin";
 import { api } from "@/utils/api";
 import { useSearchParams } from "next/navigation";
 import { Skeleton } from "../Skeleton/Skeleton";
@@ -130,8 +129,6 @@ export const ScraperList = () => {
     search.has("filters") ?
       api.scrapper.getList.useQuery().data
     : api.scrapper.getList.useQuery().data;
-
-  const isAdmin = useAdmin();
 
   const [showSkeleton, setSkeleton] = useState(false);
 

@@ -19,6 +19,7 @@ import {
   ChapterActionMenu,
   type ChapterActionMenuItem,
 } from "./ChapterActionMenu";
+import { useRouter } from "next/router";
 
 type StagedChapterInfo = ScrapperChapterInfo & {
   staged: boolean;
@@ -59,30 +60,37 @@ function ChapterMenuButton({
 }
 
 const ChapterItem = React.memo(function ChapterItem({
-  novelId,
+  novelID,
   db,
   local,
   openMenu,
 }: {
   db?: StagedChapterInfo;
-  novelId: string;
+  novelID: string;
   local?: StagedChapterInfo;
   openMenu?(d: ActionMenuData): void;
 }): React.ReactElement {
-  const { mutate, getChapterByURL, getDBChapterByURL } =
-    useNovelStore();
+  const router = useRouter();
+
+  const {
+    mutate,
+    getChapterBy,
+    getDBChapterBy,
+    removeMutation,
+  } = useNovelStore();
 
   if (db && !local) {
     return (
       <div
         className={`${novelItem.chaplinked} text-chapstate-dbonly`}
+        title={"DB: " + db.url}
       >
         <div className="grid h-full w-full content-center justify-center text-balance text-center">
           {db.name}
         </div>
         <ChapterMenuButton
           actions={[
-            { label: "edit" },
+            { label: "db not local" },
             "-",
             { label: "Kill da ho!" },
           ]}
@@ -94,6 +102,7 @@ const ChapterItem = React.memo(function ChapterItem({
     return (
       <div
         className={`${novelItem.chaplinked} text-chapstate-localonly`}
+        title={"Local:" + local.url}
       >
         <div className="h-full w-full text-balance text-center">
           {local.name}
@@ -105,7 +114,7 @@ const ChapterItem = React.memo(function ChapterItem({
               action: async () => {
                 console.log("Staging chapter", local);
                 mutate(
-                  Mutation.stageChapter(novelId, local),
+                  Mutation.stageChapter(novelID, local),
                 );
               },
             },
@@ -116,13 +125,26 @@ const ChapterItem = React.memo(function ChapterItem({
     );
   } else if (db && local) {
     if (deepEquals({ ...db, staged: false }, local)) {
-      const isLocalFromMutation = !(
-        getChapterByURL(novelId, local.url) &&
-        getDBChapterByURL(novelId, db.url)
+      const localChap = getChapterBy(
+        novelID,
+        (c) =>
+          c.url === local.url &&
+          c.num === local.num &&
+          c.ogname === local.name,
       );
+      const dbChap = getDBChapterBy(
+        novelID,
+        (c) =>
+          c.url === db.url &&
+          c.num === local.num &&
+          c.ogname === local.name,
+      );
+      const isLocalFromMutation = !(localChap && dbChap);
+
       return (
         <div
           className={`${novelItem.chaplinked} text-chapstate-good`}
+          title={"DB: " + db.url + " Local: " + local.url}
         >
           <div className="grid w-full content-center justify-center">
             {db.name}
@@ -131,11 +153,35 @@ const ChapterItem = React.memo(function ChapterItem({
             actions={
               isLocalFromMutation ?
                 [
-                  { label: "edit" },
+                  {
+                    label: "Edit",
+                    action() {
+                      void router.push(
+                        `/edit/${(dbChap ?? localChap)?.id ?? ""}`,
+                      );
+                    },
+                  },
                   "-",
-                  { label: "Unstage" },
+                  {
+                    label: "Unstage",
+                    action() {
+                      if (localChap) {
+                        removeMutation(
+                          `stage_chapter_${localChap.id}`,
+                        );
+                      }
+                    },
+                  },
                 ]
-              : [{ label: "edit" }]
+              : [
+                  { label: "db&local" },
+                  {
+                    label: "DB And Local exist!",
+                    action() {
+                      console.log(localChap, dbChap);
+                    },
+                  },
+                ]
             }
             openMenu={openMenu}
           />
@@ -151,7 +197,7 @@ const ChapterItem = React.memo(function ChapterItem({
           </div>
           <div className={`${novelItem.chapedit}`}>
             <ChapterMenuButton
-              actions={[{ label: "edit" }, "-"]}
+              actions={[{ label: "different!" }, "-"]}
               openMenu={openMenu}
             />
           </div>
@@ -278,7 +324,7 @@ export const ChapterList = ({
                   {num}
                 </div>
                 <ChapterItem
-                  novelId={novel.id}
+                  novelID={novel.id}
                   db={chapterInfo.db}
                   local={chapterInfo.local}
                   openMenu={(data) => {

@@ -50,7 +50,7 @@ export const databaseRouter = createTRPCRouter({
       const result = await ctx.db.novel.delete({
         where: {
           id: input,
-          chapters: { every: { novelId: input } },
+          chapters: { every: { novelID: input } },
         },
       });
       console.log("=================");

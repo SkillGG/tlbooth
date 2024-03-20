@@ -31,9 +31,7 @@ export const NovelCard = ({
 
   const show = unwrapped && !novel.forDeletion;
 
-  // const isAdmin = useAdmin();
-
-  const { mutate, removeMutation, getNovel } =
+  const { mutate, removeMutation, getDBNovel, isMutation } =
     useNovelStore();
 
   const nameEdit = useEditRef();
@@ -45,7 +43,7 @@ export const NovelCard = ({
     v: (n: StoreNovel) => T,
     noNovel = true,
   ): boolean => {
-    const nvl = getNovel(novel.id);
+    const nvl = getDBNovel(novel.id);
     if (!nvl) return noNovel;
     return v(novel) === v(nvl);
   };
@@ -90,21 +88,22 @@ export const NovelCard = ({
                 fieldName="TLName"
                 ref={nameEdit}
                 lock={!!novel.forDeletion}
+                showRestore={isMutation(
+                  Mutation.changeTLNameMutationID(novel.id),
+                )}
                 onSave={(v) =>
                   mutate(
                     Mutation.changeTLName(novel.id, v),
                     true,
                   )
                 }
-                onReset={() =>
-                  mutate(
-                    Mutation.changeTLName(
+                onReset={() => {
+                  removeMutation(
+                    Mutation.changeTLNameMutationID(
                       novel.id,
-                      getNovel(novel.id)?.tlname ?? "",
                     ),
-                    true,
-                  )
-                }
+                  );
+                }}
                 defaultValue={novel.tlname ?? ""}
                 className={{
                   staticField: {
@@ -142,14 +141,15 @@ export const NovelCard = ({
                   )
                 }
                 onReset={() => {
-                  mutate(
-                    Mutation.changeOGDesc(
+                  removeMutation(
+                    Mutation.changeOGDescMutationID(
                       novel.id,
-                      getNovel(novel.id)?.ogdesc ?? "",
                     ),
-                    true,
                   );
                 }}
+                showRestore={isMutation(
+                  Mutation.changeOGDescMutationID(novel.id),
+                )}
                 ref={ogdescEdit}
                 lock={!!novel.forDeletion}
                 defaultValue={novel.ogdesc}
@@ -182,21 +182,22 @@ export const NovelCard = ({
                 fieldName="TLDesc"
                 ref={tldescEdit}
                 lock={!!novel.forDeletion}
+                showRestore={isMutation(
+                  Mutation.changeTLDescMutationID(novel.id),
+                )}
                 onSave={(v) => {
                   mutate(
                     Mutation.changeTLDesc(novel.id, v),
                     true,
                   );
                 }}
-                onReset={() =>
-                  mutate(
-                    Mutation.changeTLDesc(
+                onReset={() => {
+                  removeMutation(
+                    Mutation.changeTLDescMutationID(
                       novel.id,
-                      getNovel(novel.id)?.tldesc ?? "",
                     ),
-                    true,
-                  )
-                }
+                  );
+                }}
                 defaultValue={novel.tldesc ?? ""}
                 className={{
                   staticField: {
