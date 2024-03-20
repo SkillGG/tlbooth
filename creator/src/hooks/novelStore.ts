@@ -4,6 +4,13 @@ import deepEquals from "fast-deep-equal";
 
 import { trpcClient } from "@/pages/_app";
 import type { ScrapperChapterInfo } from "@/server/api/routers/scrapper";
+import type { LANG } from "@prisma/client";
+import {
+  MutationSavedType,
+  isMutationSavedType,
+  type RegularMutationData,
+  MutationType,
+} from "./utils/storageSaveHelpers";
 
 type NovelStore = {
   novels: StoreNovel[] | null;
@@ -61,51 +68,16 @@ export type StoreNovel = DBNovel & {
 
 export type StoreChapter = StoreNovel["chapters"][number];
 
-export enum MutationType {
-  CHANGE_NAME = "Change Title",
-  ADD_NOVEL = "Add Novel",
-  STAGE_CHAPTER = "Add Chapter",
-  DELETE_NOVEL = "Delete Novel",
-  CHANGE_DESC = "Change description",
-}
 
 type MutationDescription =
   | string
   | ((p: StoreNovel[]) => string);
 
-export type Dependency = {
-  novelID: string;
-};
-
-type RegularMutationData =
+export type Dependency =
   | {
-      type: MutationType.ADD_NOVEL;
-      novel: {
-        url: string;
-        id: string;
-        ogdesc: string;
-        ogname: string;
-      };
-    }
-  | {
-      type: MutationType.CHANGE_DESC;
-      og: boolean;
       novelID: string;
-      desc: string;
     }
-  | {
-      type: MutationType.CHANGE_NAME;
-      og: boolean;
-      novelID: string;
-      name: string;
-    }
-  | { type: MutationType.DELETE_NOVEL; novelID: string }
-  | {
-      type: MutationType.STAGE_CHAPTER;
-      novelID: string;
-      chapter: ScrapperChapterInfo;
-      chapterID: string;
-    };
+  | { chapterID: string };
 
 export class Mutation {
   fn: (p: StoreNovel[]) => StoreNovel[];
@@ -322,13 +294,49 @@ export class Mutation {
       },
     );
   }
+  static addTLID = 0;
+  static addTLMutationID = (
+    nID: string,
+    cID: string,
+    oL: LANG,
+    tL: LANG,
+  ) => `add_translation_${oL}.${tL}_${nID}_${cID}`;
+  static addTranslation(
+    novelID: string,
+    chapterID: string,
+    ogLang: LANG,
+    tlLang: LANG,
+    id?: string,
+  ) {
+    const tlID =
+      id ??
+      this.addTLMutationID(
+        novelID,
+        chapterID,
+        ogLang,
+        tlLang,
+      );
+    const type = MutationType.ADD_TRANSLATION;
+    return new Mutation(
+      tlID,
+      (p) => p,
+      `${ogLang}=>${tlLang}`,
+      type,
+      async () => {
+        /** TODO */
+      },
+      [{ novelID: novelID }, { chapterID: chapterID }],
+      {
+        type,
+        chapterID,
+        novelID,
+        ogLang,
+        tlID,
+        tlLang,
+      },
+    );
+  }
 }
-
-type MutationSavedType = {
-  muts: RegularMutationData[];
-  undoneMuts: RegularMutationData[];
-  statics: { chapterID: number; novelID: number };
-};
 
 export const useNovelStore = create<NovelStore>()(
   (set, get) => ({
@@ -364,180 +372,6 @@ export const useNovelStore = create<NovelStore>()(
     },
     loadMutations: (s) => {
       console.log("loading mutations!");
-      const isMutationSavedType = (
-        s: unknown,
-      ): s is MutationSavedType => {
-        if (typeof s !== "object" || !s) {
-          console.error(
-            "mutationSaveObject type should be an object",
-          );
-          return false;
-        }
-        if (
-          !("muts" in s && Array.isArray(s.muts)) ||
-          !(
-            "undoneMuts" in s && Array.isArray(s.undoneMuts)
-          ) ||
-          !(
-            "statics" in s &&
-            typeof s.statics === "object" &&
-            s.statics
-          )
-        ) {
-          console.error(
-            "mutationSaveObject should have 3 fields",
-          );
-          return false;
-        }
-        if (
-          !(
-            "chapterID" in s.statics &&
-            "novelID" in s.statics
-          )
-        ) {
-          console.error(
-            "mutationSaveObject should have static IDs",
-          );
-          return false;
-        }
-        for (const z of s.muts.concat(s.undoneMuts)) {
-          const x = z as unknown;
-          if (typeof x !== "object" || !x) {
-            console.error(
-              "mutationSave should be an object!",
-            );
-            return false;
-          }
-          if (!("type" in x && x)) {
-            console.error(
-              "mutationSave should have a type",
-            );
-            return false;
-          }
-          if (typeof x.type !== "string") {
-            console.error(
-              "mutationSave.type should be string",
-            );
-            return false;
-          }
-          if (
-            !Object.values(MutationType).includes(
-              x.type as MutationType,
-            )
-          ) {
-            console.error("Unknown MutationType");
-            return false;
-          }
-          const u = x as { type: MutationType };
-          if (u.type === MutationType.ADD_NOVEL) {
-            if (
-              !(
-                "novel" in u &&
-                typeof u.novel === "object" &&
-                u.novel
-              )
-            ) {
-              console.error("ADD_NOVEL: Err1");
-              return false;
-            }
-            if (
-              !(
-                "id" in u.novel &&
-                typeof u.novel.id === "string"
-              ) ||
-              !(
-                "ogname" in u.novel &&
-                typeof u.novel.ogname === "string"
-              ) ||
-              !(
-                "ogname" in u.novel &&
-                typeof u.novel.ogname === "string"
-              ) ||
-              !(
-                "url" in u.novel &&
-                typeof u.novel.url === "string"
-              )
-            ) {
-              console.error("ADD_NOVEL: Err2");
-              return false;
-            }
-          } else if (u.type === MutationType.CHANGE_DESC) {
-            if (
-              !(
-                "novelID" in u &&
-                typeof u.novelID === "string"
-              ) ||
-              !(
-                "desc" in u && typeof u.desc === "string"
-              ) ||
-              !("og" in u && typeof u.og === "boolean")
-            ) {
-              console.error("CHANGE_DESC");
-              return false;
-            }
-          } else if (u.type === MutationType.CHANGE_NAME) {
-            if (
-              !(
-                "name" in u && typeof u.name === "string"
-              ) ||
-              !(
-                "novelID" in u &&
-                typeof u.novelID === "string"
-              ) ||
-              !("og" in u && typeof u.og === "boolean")
-            ) {
-              console.error("CHANGE_NAME");
-              return false;
-            }
-          } else if (
-            u.type === MutationType.STAGE_CHAPTER
-          ) {
-            if (
-              !(
-                "chapterID" in u &&
-                typeof u.chapterID === "string"
-              ) ||
-              !(
-                "novelID" in u &&
-                typeof u.novelID === "string"
-              ) ||
-              !(
-                "chapter" in u &&
-                typeof u.chapter === "object" &&
-                u.chapter
-              )
-            ) {
-              console.error("STAGE_CHAPTER: Err1");
-              return false;
-            }
-
-            if (
-              !(
-                "url" in u.chapter &&
-                typeof u.chapter.url === "string"
-              ) ||
-              !(
-                "name" in u.chapter &&
-                typeof u.chapter.name === "string"
-              ) ||
-              !(
-                "num" in u.chapter &&
-                typeof u.chapter.num === "string"
-              )
-            ) {
-              console.error("STAGE_CHAPTER: Err2");
-              return false;
-            }
-          } else {
-            console.log(
-              "GOT UNSUPORTED MUTATION TYPE!",
-              u.type,
-            );
-            return false;
-          }
-        }
-        return true;
-      };
       const rmd2Mut = (
         rmd: RegularMutationData,
       ): Mutation => {
@@ -577,13 +411,21 @@ export const useNovelStore = create<NovelStore>()(
               rmd.chapter,
               rmd.chapterID,
             );
+          case MutationType.ADD_TRANSLATION:
+            return Mutation.addTranslation(
+              rmd.novelID,
+              rmd.chapterID,
+              rmd.ogLang,
+              rmd.tlLang,
+              rmd.tlID,
+            );
         }
       };
+
       const str = s.getItem("mutations");
       if (str) {
         const savedData = JSON.parse(str) as unknown;
         if (!isMutationSavedType(savedData)) return;
-        console.log("Got through");
         Mutation.addNovelID = savedData.statics.novelID;
         Mutation.stageChapterID =
           savedData.statics.chapterID;

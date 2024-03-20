@@ -157,7 +157,7 @@ const ChapterItem = React.memo(function ChapterItem({
                     label: "Edit",
                     action() {
                       void router.push(
-                        `/edit/${(dbChap ?? localChap)?.id ?? ""}`,
+                        `/edit/${encodeURIComponent(novelID)}/${encodeURIComponent((dbChap ?? localChap)?.id ?? "")}`,
                       );
                     },
                   },

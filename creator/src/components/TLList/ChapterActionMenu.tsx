@@ -68,9 +68,9 @@ export function ChapterActionMenu({
                   await action.action?.();
                   hide();
                 }}
-                className="grid content-center justify-center px-2"
+                className="grid w-full content-center justify-center"
               >
-                {action.label}
+                <span className="px-2">{action.label}</span>
               </button>
             </div>
           );
