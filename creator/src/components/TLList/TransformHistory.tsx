@@ -1,3 +1,4 @@
+import { useAdmin } from "@/hooks/admin";
 import { useNovelStore } from "@/hooks/novelStore";
 import { api } from "@/utils/api";
 import React, { useEffect, useState } from "react";
@@ -18,6 +19,8 @@ export function TransformationHistory() {
     redo,
     apply,
   } = useNovelStore();
+
+  const isAdmin = useAdmin();
 
   useEffect(() => {
     if (trans.length + undone.length === 0) {
@@ -58,22 +61,24 @@ export function TransformationHistory() {
             >
               Show changes
             </button>
-            <button
-              className="text-center"
-              onClick={() => {
-                apply()
-                  .then((sets) => {
-                    void invalidateList().then((_) => {
-                      for (const s of sets) {
-                        s();
-                      }
-                    });
-                  })
-                  .catch(console.error);
-              }}
-            >
-              Apply
-            </button>
+            {isAdmin && (
+              <button
+                className="text-center"
+                onClick={() => {
+                  apply()
+                    .then((sets) => {
+                      void invalidateList().then((_) => {
+                        for (const s of sets) {
+                          s();
+                        }
+                      });
+                    })
+                    .catch(console.error);
+                }}
+              >
+                Apply
+              </button>
+            )}
           </>
         )}
       </div>
