@@ -17,7 +17,7 @@ import {
 } from "./ChapterActionMenu";
 import { useRouter } from "next/router";
 import { StageChapterMutation } from "@/hooks/mutations/chapterMutations/stageChapter";
-import { StoreNovel } from "@/hooks/mutations/mutation";
+import { type StoreNovel } from "@/hooks/mutations/mutation";
 
 type StagedChapterInfo = ScrapperChapterInfo & {
   staged: boolean;

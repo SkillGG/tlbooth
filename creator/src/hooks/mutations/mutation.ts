@@ -1,10 +1,10 @@
 import { type DBNovel } from "@/server/api/routers/db";
 import { type MutationSaveData } from "./mutationSave";
-import { AddNovelMutation } from "./novelMutations/addNovel";
-import { ChangeNovelDescriptionMutation } from "./novelMutations/changeDescription";
-import { ChangeNovelNameMutation } from "./novelMutations/changeName";
-import { RemoveNovelMutation } from "./novelMutations/removeNovel";
-import { StageChapterMutation } from "./chapterMutations/stageChapter";
+import { type AddNovelMutation } from "./novelMutations/addNovel";
+import { type ChangeNovelDescriptionMutation } from "./novelMutations/changeDescription";
+import { type ChangeNovelNameMutation } from "./novelMutations/changeName";
+import { type RemoveNovelMutation } from "./novelMutations/removeNovel";
+import { type StageChapterMutation } from "./chapterMutations/stageChapter";
 
 export type StoreNovel = DBNovel & {
   local?: true;

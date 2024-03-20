@@ -4,7 +4,6 @@ import { cssIf } from "@/utils/utils";
 import Head from "next/head";
 import { useParams } from "next/navigation";
 import { useRouter } from "next/router";
-import { useEffect } from "react";
 // import { useParams } from "next/navigation";
 
 export default function Dashboard() {
@@ -12,13 +11,8 @@ export default function Dashboard() {
 
   const router = useRouter();
 
-  const {
-    getChapter,
-    getDBChapter,
-    getNovel,
-    mutate,
-    removeMutation,
-  } = useNovelStore();
+  const { getChapter, getDBChapter, getNovel } =
+    useNovelStore();
 
   if (
     !chapterID ||
@@ -54,7 +48,7 @@ export default function Dashboard() {
               fieldName="Translated"
               defaultValue={novel?.tlname}
               lock={false}
-              onSave={(v) => {
+              onSave={(_) => {
                 // mutate(
                 //   Mutation.changeChapterTLName(
                 //     novelID,
