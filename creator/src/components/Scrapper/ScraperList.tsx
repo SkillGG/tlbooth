@@ -9,6 +9,7 @@ import { useState } from "react";
 import { useNovelStore } from "@/hooks/novelStore";
 import { RefreshButton } from "../Icons/refreshButton";
 import { AddNovelMutation } from "@/hooks/mutations/novelMutations/addNovel";
+import { createPortal } from "react-dom";
 
 export const ScrapperFilterSelector = () => {
   const [showDialog, setShowDialog] = useState(false);
@@ -153,6 +154,13 @@ export const ScraperList = () => {
       {novels && "error" in novels ?
         <div className="w-full text-center text-red-400">
           {novels.error}
+          <div className="hidden">
+            <iframe
+              dangerouslySetInnerHTML={{
+                __html: novels.body,
+              }}
+            />
+          </div>
         </div>
       : <>
           <div className="grid h-full gap-1 overflow-auto">

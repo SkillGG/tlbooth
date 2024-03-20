@@ -58,7 +58,8 @@ export const scrapperRouter = createTRPCRouter({
       async ({
         ctx: _,
       }): Promise<
-        ScrapperNovelInfo[] | { error: string }
+        | ScrapperNovelInfo[]
+        | { error: string; body: string }
       > => {
         console.log("fetch", syoHeaders);
 
@@ -70,7 +71,10 @@ export const scrapperRouter = createTRPCRouter({
         );
 
         if (!result.ok) {
-          return { error: result.statusText };
+          return {
+            error: result.statusText,
+            body: await result.text(),
+          };
         }
 
         const siteHTML = await result.text();
