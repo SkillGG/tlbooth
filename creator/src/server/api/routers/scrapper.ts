@@ -46,6 +46,10 @@ export type ScrapperNovel = z.infer<typeof ScrapperNovel>;
 
 const uri = (s: string) => encodeURIComponent(s);
 
+const syoHeaders = {
+  "User-Agent":
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/115.0",
+};
 export const scrapperRouter = createTRPCRouter({
   getList: publicProcedure
     .input(ScrapperFilter.optional())
@@ -57,6 +61,9 @@ export const scrapperRouter = createTRPCRouter({
       > => {
         const result = await fetch(
           "https://yomou.syosetu.com/search.php",
+          {
+            headers: syoHeaders,
+          },
         );
 
         if (!result.ok) {
