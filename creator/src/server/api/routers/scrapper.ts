@@ -47,8 +47,9 @@ export type ScrapperNovel = z.infer<typeof ScrapperNovel>;
 const uri = (s: string) => encodeURIComponent(s);
 
 const syoHeaders = {
-  "User-Agent": "xx",
-  Host: "google.com",
+  "User-Agent":
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/115.0",
+  Host: "yomou.syosetu.com",
 };
 export const scrapperRouter = createTRPCRouter({
   getList: publicProcedure
@@ -59,21 +60,18 @@ export const scrapperRouter = createTRPCRouter({
       }): Promise<
         ScrapperNovelInfo[] | { error: string }
       > => {
-        console.log("fetch", syoHeaders);
-
         const result = await fetch(
           "https://yomou.syosetu.com/search.php",
-          { method: "post", headers: {} },
+          { method: "get", headers: syoHeaders },
         );
 
+        const siteHTML = await result.text();
+        console.log("result", result, "html", siteHTML);
         if (!result.ok) {
-          console.log(result, await result.text());
           return {
             error: result.statusText,
           };
         }
-
-        const siteHTML = await result.text();
 
         const parsed = parse(siteHTML);
 
@@ -116,8 +114,6 @@ export const scrapperRouter = createTRPCRouter({
         ctx: _,
         input: __,
       }): Promise<ScrapperNovel> => {
-        console.log("getting the novel");
-
         // const urlI = new URL(decodeURIComponent(input));
 
         return {
