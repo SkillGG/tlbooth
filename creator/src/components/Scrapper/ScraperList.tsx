@@ -154,13 +154,6 @@ export const ScraperList = () => {
       {novels && "error" in novels ?
         <div className="w-full text-center text-red-400">
           {novels.error}
-          <div className="hidden">
-            <iframe
-              dangerouslySetInnerHTML={{
-                __html: novels.body,
-              }}
-            />
-          </div>
         </div>
       : <>
           <div className="grid h-full gap-1 overflow-auto">
