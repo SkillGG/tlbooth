@@ -20,17 +20,24 @@ export let trpcClient = null as unknown as ReturnType<
   typeof api.useUtils
 >["client"];
 
+// @ts-ignore
+window.novelStore = null;
+
 const MyApp: AppType = ({ Component, pageProps }) => {
   const [navLoaded, setNavLoaded] = useState(false);
   trpcClient = api.useUtils().client;
 
   const novels = api.db.getFromDB.useQuery().data;
-  const { loadData, loadMutations } = useNovelStore();
+  const nvStore = useNovelStore();
+
+  const { loadData, loadMutations } = nvStore;
 
   useEffect(() => {
     if (novels) {
       console.log("loading novels", novels);
       loadData(novels);
+      // @ts-ignore
+      window.novelStore = nvStore;
       console.log("loading mutations");
       loadMutations(localStorage);
     }
