@@ -20,9 +20,6 @@ export let trpcClient = null as unknown as ReturnType<
   typeof api.useUtils
 >["client"];
 
-// @ts-expect-error window?
-window.novelStore = null;
-
 const MyApp: AppType = ({ Component, pageProps }) => {
   const [navLoaded, setNavLoaded] = useState(false);
   trpcClient = api.useUtils().client;
@@ -41,7 +38,7 @@ const MyApp: AppType = ({ Component, pageProps }) => {
       console.log("loading mutations");
       loadMutations(localStorage);
     }
-  }, [novels, loadData, loadMutations]);
+  }, [novels, loadData, loadMutations, nvStore]);
 
   return (
     <>
