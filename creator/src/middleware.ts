@@ -7,17 +7,23 @@ export default authMiddleware({
 
     console.log(auth, req.nextUrl.pathname);
 
-    // if (!auth.userId && req.nextUrl.pathname !== "/") {
-    //   if (req.nextUrl.pathname.startsWith("/api")) {
-    //     return NextResponse.rewrite(
-    //       new URL("/403.json", req.url),
-    //       {
-    //         status: 403,
-    //       },
-    //     );
-    //   }
-    //   return NextResponse.redirect(new URL("/", req.url));
-    // }
+    if (!auth.userId && auth.isApiRoute) {
+      if (req.nextUrl.pathname.startsWith("/api")) {
+        console.error(
+          "Accessing API w/o auth!",
+          auth.userId,
+        );
+        return NextResponse.rewrite(
+          new URL("/403.json", req.url),
+          {
+            status: 403,
+          },
+        );
+      }
+      return NextResponse.redirect(
+        new URL("/", req.nextUrl.basePath),
+      );
+    }
     // If the user is signed in and trying to access a protected route, allow them to access route
     if (auth.userId && req.nextUrl.pathname === "/") {
       const dashboard = new URL("/dashboard", req.nextUrl);

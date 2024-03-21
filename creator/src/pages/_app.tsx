@@ -32,13 +32,11 @@ const MyApp: AppType = ({ Component, pageProps }) => {
   useEffect(() => {
     if (novels) {
       console.log("loading novels", novels);
-      loadData(novels);
-      // @ts-expect-error window?
-      window.novelStore = nvStore;
+      loadData(novels); 
       console.log("loading mutations");
       loadMutations(localStorage);
     }
-  }, [novels, loadData, loadMutations, nvStore]);
+  }, [novels, loadData, loadMutations]);
 
   return (
     <>
