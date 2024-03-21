@@ -73,7 +73,11 @@ export const scrapperRouter = createTRPCRouter({
       > => {
         const result = await fetch(
           "https://yomou.syosetu.com/search.php",
-          { method: "get", headers: syoHeaders },
+          {
+            method: "post",
+            headers: syoHeaders,
+            credentials: "include",
+          },
         );
 
         const siteHTML = await result.text();
