@@ -73,7 +73,12 @@ export const scrapperRouter = createTRPCRouter({
       }): Promise<
         ScrapperNovelInfo[] | { error: string }
       > => {
-        const rS = await fetch("https://yomou.syosetu.com/search.php").then(r=>r.text())
+        const rS = await fetch(
+          "https://yomou.syosetu.com/search.php",
+        ).then((r) => {
+          console.log(r);
+          return r.text();
+        });
 
         if (!rS) return { error: "Server error" };
 
