@@ -4,17 +4,20 @@ import { NextResponse } from "next/server";
 export default authMiddleware({
   async afterAuth(auth, req, _) {
     // Handle users who aren't authenticated
-    if (!auth.userId && req.nextUrl.pathname !== "/") {
-      if (req.nextUrl.pathname.startsWith("/api")) {
-        return NextResponse.rewrite(
-          new URL("/403.json", req.url),
-          {
-            status: 403,
-          },
-        );
-      }
-      return NextResponse.redirect(new URL("/", req.url));
-    }
+
+    // console.log(auth, req.nextUrl.pathname);
+
+    // if (!auth.userId && req.nextUrl.pathname !== "/") {
+    //   if (req.nextUrl.pathname.startsWith("/api")) {
+    //     return NextResponse.rewrite(
+    //       new URL("/403.json", req.url),
+    //       {
+    //         status: 403,
+    //       },
+    //     );
+    //   }
+    //   return NextResponse.redirect(new URL("/", req.url));
+    // }
     // If the user is signed in and trying to access a protected route, allow them to access route
     if (auth.userId && req.nextUrl.pathname === "/") {
       const dashboard = new URL("/dashboard", req.nextUrl);
