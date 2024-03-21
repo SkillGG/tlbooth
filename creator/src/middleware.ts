@@ -33,6 +33,7 @@ export default authMiddleware({
       const { privateMetadata } =
         await clerkClient.users.getUser(auth.userId);
       const url = new URL("", req.nextUrl);
+      console.log(privateMetadata);
       if (privateMetadata?.type === "admin") {
         if (!url.searchParams.has("admin")) {
           url.searchParams.set("admin", "");
