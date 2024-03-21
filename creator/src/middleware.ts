@@ -8,7 +8,7 @@ export default authMiddleware({
     // console.log(auth, req.nextUrl.pathname);
 
     if(!auth && req.nextUrl.pathname !== "/"){
-      return NextResponse.redirect(new URL("/", req.nextUrl.basePath))
+      return NextResponse.rewrite(new URL("/", req.nextUrl.basePath))
     }
 
     if (!auth.userId && auth.isApiRoute) {
@@ -24,7 +24,7 @@ export default authMiddleware({
           },
         );
       }
-      return NextResponse.redirect(
+      return NextResponse.rewrite(
         new URL("/", req.nextUrl.basePath),
       );
     }

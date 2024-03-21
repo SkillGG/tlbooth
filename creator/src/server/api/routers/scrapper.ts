@@ -75,7 +75,8 @@ export const scrapperRouter = createTRPCRouter({
           "https://yomou.syosetu.com/search.php",
           {
             method: "post",
-            headers: syoHeaders,
+            cache: "no-cache",
+            next: { revalidate: 0 },
             credentials: "include",
           },
         );
