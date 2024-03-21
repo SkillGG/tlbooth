@@ -79,6 +79,8 @@ export const scrapperRouter = createTRPCRouter({
         const siteHTML = await result.text();
         // console.log("result", result, "html", siteHTML);
         if (!result.ok) {
+          console.error("request to syo filed!");
+          console.error(result, result.headers);
           return {
             error: result.statusText,
           };
