@@ -5,7 +5,7 @@ export default authMiddleware({
   async afterAuth(auth, req, _) {
     // Handle users who aren't authenticated
 
-    console.log(auth, req.nextUrl.pathname);
+    // console.log(auth, req.nextUrl.pathname);
 
     if (!auth.userId && auth.isApiRoute) {
       if (req.nextUrl.pathname.startsWith("/api")) {

@@ -47,9 +47,20 @@ export type ScrapperNovel = z.infer<typeof ScrapperNovel>;
 const uri = (s: string) => encodeURIComponent(s);
 
 const syoHeaders = {
-  "User-Agent":
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/115.0",
   Host: "yomou.syosetu.com",
+  "User-Agent":
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:124.0) Gecko/20100101 Firefox/124.0",
+  Accept:
+    "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
+  "Accept-Language": "en,en-US;q=0.7,pl;q=0.3",
+  "Accept-Encoding": "gzip, deflate, br",
+  Connection: "keep-alive",
+  Cookie:
+    "ks2=zpbsp96ms317; sasieno=0; lineheight=0; fontsize=0; novellayout=0; fix_menu_bar=1; nlist1=1bwmw.1",
+  "Upgrade-Insecure-Requests": "1",
+  "Sec-Fetch-Dest": "document",
+  "Sec-Fetch-Mode": "navigate",
+  "Sec-Fetch-Site": "cross-site",
 };
 export const scrapperRouter = createTRPCRouter({
   getList: publicProcedure
@@ -66,7 +77,7 @@ export const scrapperRouter = createTRPCRouter({
         );
 
         const siteHTML = await result.text();
-        console.log("result", result, "html", siteHTML);
+        // console.log("result", result, "html", siteHTML);
         if (!result.ok) {
           return {
             error: result.statusText,

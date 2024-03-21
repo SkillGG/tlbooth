@@ -77,6 +77,8 @@ const ChapterItem = React.memo(function ChapterItem({
     removeMutation,
   } = useNovelStore();
 
+  console.log(db, local);
+
   if (db && !local) {
     return (
       <div
@@ -274,6 +276,8 @@ export const ChapterList = ({
       };
     return { ...p, [n.num]: { ...p[n.num], local: n } };
   }, {});
+
+  console.log(chapterInfos);
 
   return (
     <div
