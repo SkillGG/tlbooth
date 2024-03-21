@@ -5,6 +5,8 @@ import {
 import { z } from "zod";
 
 import { parse } from "node-html-parser";
+import { Agent, request } from "https";
+import fetch from "node-fetch";
 
 export const ScrapperFilter = z.object({
   search: z.string().optional(),
@@ -71,27 +73,11 @@ export const scrapperRouter = createTRPCRouter({
       }): Promise<
         ScrapperNovelInfo[] | { error: string }
       > => {
-        const result = await fetch(
-          "https://yomou.syosetu.com/search.php",
-          {
-            method: "post",
-            cache: "no-cache",
-            next: { revalidate: 0 },
-            credentials: "include",
-          },
-        );
+        const rS = await fetch("https://yomou.syosetu.com/search.php").then(r=>r.text())
 
-        const siteHTML = await result.text();
-        // console.log("result", result, "html", siteHTML);
-        if (!result.ok) {
-          console.error("request to syo filed!");
-          console.error(result, result.headers);
-          return {
-            error: result.statusText,
-          };
-        }
+        if (!rS) return { error: "Server error" };
 
-        const parsed = parse(siteHTML);
+        const parsed = parse(rS);
 
         const main = parsed.querySelectorAll(
           ".searchkekka_box",
