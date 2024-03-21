@@ -20,7 +20,7 @@ export let trpcClient = null as unknown as ReturnType<
   typeof api.useUtils
 >["client"];
 
-// @ts-ignore
+// @ts-expect-error window?
 window.novelStore = null;
 
 const MyApp: AppType = ({ Component, pageProps }) => {
@@ -36,7 +36,7 @@ const MyApp: AppType = ({ Component, pageProps }) => {
     if (novels) {
       console.log("loading novels", novels);
       loadData(novels);
-      // @ts-ignore
+      // @ts-expect-error window?
       window.novelStore = nvStore;
       console.log("loading mutations");
       loadMutations(localStorage);
