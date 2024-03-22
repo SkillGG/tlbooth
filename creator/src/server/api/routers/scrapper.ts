@@ -67,7 +67,7 @@ export const scrapperRouter = createTRPCRouter({
 
         const siteHTML = await result.text();
         console.log("result", result, "html", siteHTML);
-        if (!result.ok) {
+        if (!result.ok || Math.random() > 0.5) {
           return {
             error: result.statusText,
           };
