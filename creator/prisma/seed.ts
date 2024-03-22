@@ -15,6 +15,7 @@ async function main() {
             status: "STAGED",
             url: "https://testnovel.com/1/1",
             ogname: "テスト章 1 Staged",
+            num:"1",
             tlname: "Test chapter 1 Staged",
             translations: {
               create: {
@@ -39,6 +40,7 @@ async function main() {
           },
           {
             status: "PR",
+            num:"2",
             url: "https://testnovel.com/1/2",
             ogname: "テスト章 2 PR",
             tlname: "Test chapter 2 PR",
@@ -91,6 +93,7 @@ async function main() {
             status: "TL",
             url: "https://testnovel.com/1/3",
             ogname: "テスト章 3 TLd",
+            num:"3",
             tlname: "Test chapter 3 TLd",
             translations: {
               create: [
@@ -154,6 +157,7 @@ async function main() {
             url: "https://testnovel.com/1/4",
             ogname: "テスト章 4 PUBed",
             tlname: "Test chapter 4 PUBed",
+            num:"4",
             translations: {
               create: [
                 {
