@@ -26,15 +26,15 @@ export default authMiddleware({
       return NextResponse.redirect(dashboard);
     }
     // Check if user is "admin". Add/remove the query param if needed
-    if (auth.userId) {
+    if (auth.userId && !auth.isApiRoute) {
       const { privateMetadata } =
         await clerkClient.users.getUser(auth.userId);
-      const url = new URL("", req.nextUrl);
-      console.log("bef", url, privateMetadata);
+      const url = new URL("", req.nextUrl.href);
+      console.log("bef", url.href, privateMetadata);
       if (privateMetadata?.type === "admin") {
         if (!url.searchParams.has("admin")) {
           url.searchParams.set("admin", "");
-          console.log("aft", url);
+          console.log("aft", url.href);
           return NextResponse.redirect(url);
         }
       } else {
