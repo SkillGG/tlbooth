@@ -1,5 +1,5 @@
 import { useNovelStore } from "@/hooks/novelStore";
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 
 import novelItem from "./novelItem.module.css";
 import { api } from "@/utils/api";
@@ -32,30 +32,50 @@ export const NovelCard = ({
 
   const show = unwrapped && !novel.forDeletion;
 
-  const { mutate, removeMutation, getDBNovel, isMutation } =
+  const { mutate, removeMutation, mutations, isMutation } =
     useNovelStore();
 
   const nameEdit = useEditRef();
   const ogdescEdit = useEditRef();
   const tldescEdit = useEditRef();
 
-  const checkNovelPropEquality = <T,>(
-    novel: StoreNovel,
-    v: (n: StoreNovel) => T,
-    noNovel = true,
-  ): boolean => {
-    const nvl = getDBNovel(novel.id);
-    if (!nvl) return noNovel;
-    return v(novel) === v(nvl);
-  };
-
+  const [ogdescChanged, tldescChanged, , tlnameChanged] =
+    useMemo(
+      () => [
+        isMutation(
+          ChangeNovelDescriptionMutation.getID(
+            novel.id,
+            true,
+          ),
+        ),
+        isMutation(
+          ChangeNovelDescriptionMutation.getID(
+            novel.id,
+            false,
+          ),
+        ),
+        isMutation(
+          ChangeNovelNameMutation.getID(novel.id, true),
+        ),
+        isMutation(
+          ChangeNovelNameMutation.getID(novel.id, false),
+          false,
+        ),
+        mutations,
+      ],
+      [isMutation, novel.id, mutations],
+    );
   return (
     <div
       className="w-full justify-center rounded-xl border-2 border-gray-400"
       id={`novel_${novel.id}`}
     >
       <div
-        className={`${cssIf(novel.local, novelItem.local)} ${cssIf(show, "border-b-2")} ${cssIf(novel.forDeletion, novelItem.forDeletion)} grid grid-flow-col text-balance border-gray-400 text-center text-sm`}
+        className={`${cssIf(novel.local, novelItem.local)}
+        ${cssIf(show, "border-b-2")}
+        ${cssIf(novelData && "error" in novelData, "rounded-lg bg-red-300")}
+        ${cssIf(novel.forDeletion, novelItem.forDeletion)}
+        grid grid-flow-col text-balance border-gray-400 text-center text-sm`}
       >
         <button
           className="grid w-full"
@@ -79,22 +99,16 @@ export const NovelCard = ({
             style={{ gridTemplateColumns: "1fr 1fr 2fr" }}
           >
             <div className="px-3 pb-1">
-              <div className="h-min text-sm">
-                <small>OG Name:</small>
-                <div className="text-center">
-                  {novel.ogname}
-                </div>
-              </div>
+              <EditField
+                fieldName="OGName"
+                lock={true}
+                defaultValue={novel.ogname}
+              />
               <EditField
                 fieldName="TLName"
                 ref={nameEdit}
                 lock={!!novel.forDeletion}
-                showRestore={isMutation(
-                  ChangeNovelNameMutation.getID(
-                    novel.id,
-                    false,
-                  ),
-                )}
+                showRestore={tlnameChanged}
                 onSave={(v) =>
                   mutate(
                     new ChangeNovelNameMutation(
@@ -117,25 +131,16 @@ export const NovelCard = ({
                 className={{
                   staticField: {
                     div: cssIf(
-                      !checkNovelPropEquality(
-                        novel,
-                        (n) => n.tlname,
-                        !!novel.tlname,
-                      ),
+                      !tlnameChanged,
                       "rounded-lg",
                     ),
                   },
                 }}
                 style={{
                   staticField: {
-                    div: cssPIf(
-                      !checkNovelPropEquality(
-                        novel,
-                        (n) => n.tlname,
-                        !!novel.tlname,
-                      ),
-                      { backgroundColor: "#ff02" },
-                    ),
+                    div: cssPIf(tlnameChanged, {
+                      backgroundColor: "#ff02",
+                    }),
                   },
                 }}
               />
@@ -161,36 +166,15 @@ export const NovelCard = ({
                     ),
                   );
                 }}
-                showRestore={isMutation(
-                  ChangeNovelDescriptionMutation.getID(
-                    novel.id,
-                    true,
-                  ),
-                )}
+                showRestore={ogdescChanged}
                 ref={ogdescEdit}
                 lock={!!novel.forDeletion}
                 defaultValue={novel.ogdesc}
                 className={{
                   staticField: {
                     div: cssIf(
-                      !checkNovelPropEquality(
-                        novel,
-                        (n) => n.ogdesc,
-                        !!novel.ogdesc,
-                      ),
-                      "rounded-lg",
-                    ),
-                  },
-                }}
-                style={{
-                  staticField: {
-                    div: cssPIf(
-                      !checkNovelPropEquality(
-                        novel,
-                        (n) => n.ogdesc,
-                        !!novel.ogdesc,
-                      ),
-                      { backgroundColor: "#ff02" },
+                      ogdescChanged,
+                      "rounded-lg bg-[#ff02]",
                     ),
                   },
                 }}
@@ -199,12 +183,7 @@ export const NovelCard = ({
                 fieldName="TLDesc"
                 ref={tldescEdit}
                 lock={!!novel.forDeletion}
-                showRestore={isMutation(
-                  ChangeNovelDescriptionMutation.getID(
-                    novel.id,
-                    false,
-                  ),
-                )}
+                showRestore={tldescChanged}
                 onSave={(v) => {
                   mutate(
                     new ChangeNovelDescriptionMutation(
@@ -227,24 +206,8 @@ export const NovelCard = ({
                 className={{
                   staticField: {
                     div: cssIf(
-                      !checkNovelPropEquality(
-                        novel,
-                        (n) => n.tldesc,
-                        !!novel.tldesc,
-                      ),
-                      "rounded-lg",
-                    ),
-                  },
-                }}
-                style={{
-                  staticField: {
-                    div: cssPIf(
-                      !checkNovelPropEquality(
-                        novel,
-                        (n) => n.tldesc,
-                        !!novel.tldesc,
-                      ),
-                      { backgroundColor: "#ff02" },
+                      tldescChanged,
+                      "rounded-lg bg-[#ff02]",
                     ),
                   },
                 }}
@@ -276,7 +239,16 @@ export const NovelCard = ({
               </div>
               <ChapterList
                 novel={novel}
-                novelData={novelData}
+                novelData={
+                  novelData && "error" in novelData ?
+                    undefined
+                  : novelData
+                }
+                erred={
+                  novelData &&
+                  "error" in novelData &&
+                  novelData.error
+                }
               />
             </div>
           </div>

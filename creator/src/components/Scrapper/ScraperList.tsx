@@ -9,7 +9,6 @@ import { useState } from "react";
 import { useNovelStore } from "@/hooks/novelStore";
 import { RefreshButton } from "../Icons/refreshButton";
 import { AddNovelMutation } from "@/hooks/mutations/novelMutations/addNovel";
-import { createPortal } from "react-dom";
 
 export const ScrapperFilterSelector = () => {
   const [showDialog, setShowDialog] = useState(false);
@@ -124,8 +123,11 @@ const NovelItem = ({
 export const ScraperList = () => {
   const search = useSearchParams();
 
+  const [useDummy, setUseDummy] = useState(false);
+
   const novels =
-    search.has("filters") ?
+    useDummy ? api.scrapper.getListDummy.useQuery().data
+    : search.has("filters") ?
       api.scrapper.getList.useQuery().data
     : api.scrapper.getList.useQuery().data;
 
@@ -136,27 +138,42 @@ export const ScraperList = () => {
   return (
     <div className="flex max-h-full flex-col overflow-hidden">
       <div className="grid w-fit grid-flow-col gap-3">
-        <RefreshButton
-          className="grid items-center"
-          refreshFn={async () => {
-            await utils.scrapper.getList.invalidate();
-          }}
-        />
-        {novels && !("error" in novels) && (
+        {novels && !("error" in novels) ?
           <>
+            <RefreshButton
+              className="grid items-center"
+              refreshFn={async () => {
+                if (!useDummy)
+                  await utils.scrapper.getList.invalidate();
+                else
+                  await utils.scrapper.getListDummy.invalidate();
+              }}
+            />
             <ScrapperFilterSelector />
             <button onClick={() => setSkeleton((p) => !p)}>
               Toggle skeleton
             </button>
           </>
-        )}
+        : <div className="min-h-6"></div>}
       </div>
       {novels && "error" in novels ?
-        <div className="w-full text-center text-red-400">
-          {novels.error}
+        <div>
+          <div className="w-full text-center text-red-400">
+            {novels.error}
+          </div>
+          {novels.allowTestData && (
+            <div className="grid w-full">
+              <button
+                onClick={() => setUseDummy(true)}
+                className="w-fit justify-self-center rounded-md border-2 border-green-200 bg-slate-600 px-2 text-blue-400 hover:bg-green-400 hover:text-black active:bg-green-100 active:text-black"
+              >
+                Use dummy data
+              </button>
+            </div>
+          )}
         </div>
       : <>
-          <div className="grid h-full gap-1 overflow-auto">
+          <div className="flex h-full flex-col gap-1 overflow-auto">
             {!showSkeleton && novels ?
               novels.map((novel) => {
                 return (

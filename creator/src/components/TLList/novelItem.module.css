@@ -25,19 +25,21 @@
 
 .chapremote {
   grid-column: 2 / span 1;
+  text-align: center;
   display: grid;
   @apply content-center justify-center border-b-2 p-1;
 }
 
 .chapedit {
   grid-column: 3 / span 1;
-  @apply border-b-2 py-1;
+  @apply grid content-center border-b-2;
 }
 
 .chaplocal {
   grid-column: 4 / span 1;
   display: grid;
   @apply content-center justify-center border-b-2 p-1;
+  text-align: center;
 }
 
 .chaplinked {

@@ -32,8 +32,8 @@ type EditFieldProps = {
   lock: boolean;
   fieldName: string;
   defaultValue?: string;
-  onSave?: (s: string) => Promise<void> | void;
-  onCancel?: (s: string) => Promise<void> | void;
+  onSave?: (s: string) => unknown;
+  onCancel?: (s: string) => unknown;
   showRestore?: boolean;
   onReset?: () => Promise<void> | void;
   className?: EditFieldCustomization<string>;
@@ -42,6 +42,7 @@ type EditFieldProps = {
     hide(): void;
     show(): void;
   } | null;
+  undefinedIsEmpty?: boolean;
 };
 
 type EditFieldRef = { show: () => void; hide: () => void };
@@ -64,6 +65,7 @@ export const EditField = React.forwardRef<
     className,
     style,
     onReset,
+    undefinedIsEmpty = true,
   },
   ref,
 ) {
@@ -83,8 +85,6 @@ export const EditField = React.forwardRef<
     if (textRef.current)
       textRef.current.innerText = defaultValue ?? "";
   }, [defaultValue, edit]);
-
-  console.log(textRef.current?.innerText, defaultValue);
 
   return (
     <>
@@ -129,11 +129,19 @@ export const EditField = React.forwardRef<
                   ref={saveRef}
                   className={`${cssDef(className?.header?.edit?.save)} text-green-300`}
                   style={style?.header?.edit?.save}
-                  onClick={() => {
+                  onClick={async () => {
                     if (textRef.current) {
                       const value =
-                        textRef.current.innerText.trim();
-                      void onSave?.(value.trim());
+                        textRef.current.innerText.trim() ??
+                        "";
+                      if (
+                        value === defaultValue ||
+                        (undefinedIsEmpty &&
+                          !value &&
+                          !defaultValue)
+                      )
+                        return void setEdit(false);
+                      await onSave?.(value.trim());
                       setEdit(false);
                     }
                   }}

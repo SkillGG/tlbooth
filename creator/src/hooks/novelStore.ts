@@ -245,14 +245,9 @@ export const useNovelStore = create<NovelStore>()(
         console.log("linked", linkedMutations);
 
         const filterFn = (x: AnyMutation) => {
-          if (x.id === id) {
-            console.error("filter1?", s);
+          if (x.id === id) return false;
+          if (linkedMutations.find((n) => n.id === x.id))
             return false;
-          }
-          if (linkedMutations.find((n) => n.id === x.id)) {
-            console.error("filter2?", s);
-            return false;
-          }
           return true;
         };
 

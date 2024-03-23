@@ -7,6 +7,7 @@ import { z } from "zod";
 import { parse } from "node-html-parser";
 import { Agent, request } from "https";
 import fetch from "node-fetch";
+import { DummyNovels } from "./dummyData/dummyNovels";
 
 export const ScrapperFilter = z.object({
   search: z.string().optional(),
@@ -48,30 +49,24 @@ export type ScrapperNovel = z.infer<typeof ScrapperNovel>;
 
 const uri = (s: string) => encodeURIComponent(s);
 
-const syoHeaders = {
-  Host: "yomou.syosetu.com",
-  "User-Agent":
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:124.0) Gecko/20100101 Firefox/124.0",
-  Accept:
-    "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
-  "Accept-Language": "en,en-US;q=0.7,pl;q=0.3",
-  "Accept-Encoding": "gzip, deflate, br",
-  Connection: "keep-alive",
-  Cookie:
-    "ks2=zpbsp96ms317; sasieno=0; lineheight=0; fontsize=0; novellayout=0; fix_menu_bar=1; nlist1=1bwmw.1",
-  "Upgrade-Insecure-Requests": "1",
-  "Sec-Fetch-Dest": "document",
-  "Sec-Fetch-Mode": "navigate",
-  "Sec-Fetch-Site": "cross-site",
-};
+const devTest = true;
+
 export const scrapperRouter = createTRPCRouter({
+  getListDummy: publicProcedure.query(
+    async ({ ctx: _ }): Promise<ScrapperNovelInfo[]> => {
+      return DummyNovels.map<ScrapperNovelInfo>(
+        (n) => n.info,
+      );
+    },
+  ),
   getList: publicProcedure
     .input(ScrapperFilter.optional())
     .query(
       async ({
         ctx: _,
       }): Promise<
-        ScrapperNovelInfo[] | { error: string }
+        | ScrapperNovelInfo[]
+        | { error: string; allowTestData: boolean }
       > => {
         const rS = await fetch(
           "https://yomou.syosetu.com/search.php",
@@ -80,7 +75,12 @@ export const scrapperRouter = createTRPCRouter({
           return r.text();
         });
 
-        if (!rS) return { error: "Server error" };
+        if (!rS || devTest)
+          return {
+            error:
+              "That part is only available in admin mode!",
+            allowTestData: true,
+          };
 
         const parsed = parse(rS);
 
@@ -121,9 +121,23 @@ export const scrapperRouter = createTRPCRouter({
     .query(
       async ({
         ctx: _,
-        input: __,
-      }): Promise<ScrapperNovel> => {
+        input,
+      }): Promise<ScrapperNovel | { error: string }> => {
         // const urlI = new URL(decodeURIComponent(input));
+        if (input.startsWith("http://dummy.com")) {
+          // getting dummy novel data
+          const novel = DummyNovels.find(
+            (d) => d.info.url === input,
+          );
+          if (novel)
+            return {
+              ...novel,
+              chapters: novel.chapters.map((c) => c.info),
+            };
+          return {
+            error: "Could not find the dummy novel!",
+          };
+        }
 
         return {
           info: {

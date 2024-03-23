@@ -77,16 +77,20 @@ const ChapterItem = React.memo(function ChapterItem({
     removeMutation,
   } = useNovelStore();
 
-  console.log(db, local);
-
   if (db && !local) {
+    // only in DB
+    const dbChapter = getDBChapterBy(
+      novelID,
+      (c) => c.url === db.url,
+    );
     return (
       <div
         className={`${novelItem.chaplinked} text-chapstate-dbonly`}
         title={"DB: " + db.url}
       >
         <div className="grid h-full w-full content-center justify-center text-balance text-center">
-          {db.name}
+          {db.name}{" "}
+          {dbChapter ? `[${dbChapter.status}]` : ""}
         </div>
         <ChapterMenuButton
           actions={[
@@ -99,13 +103,18 @@ const ChapterItem = React.memo(function ChapterItem({
       </div>
     );
   } else if (!db && local) {
+    const localChap = getChapterBy(
+      novelID,
+      (c) => c.url === local.url,
+    );
     return (
       <div
         className={`${novelItem.chaplinked} text-chapstate-localonly`}
         title={"Local:" + local.url}
       >
         <div className="h-full w-full text-balance text-center">
-          {local.name}
+          {local.name}{" "}
+          {localChap ? `[${localChap.status}]` : ""}
         </div>
         <ChapterMenuButton
           actions={[
@@ -146,6 +155,15 @@ const ChapterItem = React.memo(function ChapterItem({
           c.ogname === local.name,
       );
       const isLocalFromMutation = !(localChap && dbChap);
+      const stageInfo = `[${
+        dbChap && localChap ?
+          dbChap.status === localChap.status ?
+            dbChap.status
+          : `${dbChap.status}/${localChap.status}`
+        : dbChap ? dbChap.status
+        : localChap ? localChap.status
+        : ""
+      }]`;
 
       return (
         <div
@@ -153,7 +171,7 @@ const ChapterItem = React.memo(function ChapterItem({
           title={"DB: " + db.url + " Local: " + local.url}
         >
           <div className="grid w-full content-center justify-center">
-            {db.name}
+            {db.name} {stageInfo}
           </div>
           <ChapterMenuButton
             actions={
@@ -197,12 +215,25 @@ const ChapterItem = React.memo(function ChapterItem({
         </div>
       );
     } else {
+      const localChap = getChapterBy(
+        novelID,
+        (c) => c.url === local.url,
+      );
+      const dbChap = getDBChapterBy(
+        novelID,
+        (c) => c.url === db.url,
+      );
       return (
         <>
           <div
             className={`${novelItem.chapremote} text-chapstate-dbonly`}
           >
             {db.name}
+            {dbChap?.status ?
+              <>
+                <br />[{dbChap.status}]
+              </>
+            : ""}
           </div>
           <div className={`${novelItem.chapedit}`}>
             <ChapterMenuButton
@@ -214,6 +245,11 @@ const ChapterItem = React.memo(function ChapterItem({
             className={`${novelItem.chaplocal} text-chapstate-localonly`}
           >
             {local.name}
+            {localChap?.status ?
+              <>
+                <br />[{localChap.status}]
+              </>
+            : ""}
           </div>
         </>
       );
@@ -229,9 +265,11 @@ const ChapterItem = React.memo(function ChapterItem({
 export const ChapterList = ({
   novel,
   novelData,
+  erred,
 }: {
   novel: StoreNovel;
   novelData?: ScrapperNovel;
+  erred?: string | false;
 }) => {
   const [showMenu, setShowMenu] = useState<
     false | ActionMenuData
@@ -277,8 +315,6 @@ export const ChapterList = ({
     return { ...p, [n.num]: { ...p[n.num], local: n } };
   }, {});
 
-  console.log(chapterInfos);
-
   return (
     <div
       className="flex h-full max-h-64 flex-col"
@@ -317,9 +353,12 @@ export const ChapterList = ({
         </div>
         <div className={`${novelItem.chapedit} `}></div>
         <div
-          className={`${novelItem.chaplocal} text-center font-bold text-chapstate-localonly`}
+          className={`${novelItem.chaplocal} ${erred ? "text-red-600" : ""} text-center font-bold text-chapstate-localonly`}
         >
-          Online
+          Online{" "}
+          {erred && (
+            <small className="text-[0.7rem]">{erred}</small>
+          )}
         </div>
         {Object.entries(chapterInfos)
           .sort((p, n) => compareChapterNums(p[0], n[0]))

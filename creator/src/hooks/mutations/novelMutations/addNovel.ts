@@ -49,7 +49,7 @@ export class AddNovelMutation extends Mutation<
       tlname: "",
       url: novelURL,
       local: true,
-      ogdesc: "",
+      ogdesc: novelDescription,
       tldesc: "",
     };
     super(
@@ -64,7 +64,7 @@ export class AddNovelMutation extends Mutation<
           description: novelDescription,
         });
       },
-      [],
+      [{ novelID: novel.id }],
       {
         novelDescription,
         novelID: novel.id,
