@@ -29,19 +29,19 @@ export default authMiddleware({
     if (auth.userId && !auth.isApiRoute) {
       const { privateMetadata } =
         await clerkClient.users.getUser(auth.userId);
-      const url = new URL("", req.nextUrl.href);
-      console.log("bef", url.href, privateMetadata);
+      console.log("bef", req.nextUrl.href, privateMetadata);
       if (privateMetadata?.type === "admin") {
-        if (!url.searchParams.has("admin")) {
-          url.searchParams.set("admin", "");
-          console.log("aft", url.href);
-          return NextResponse.redirect(url);
+        if (!req.nextUrl.searchParams.has("admin")) {
+          console.log("Redirecting to ?admin=");
+          req.nextUrl.searchParams.set("admin", "admin");
+          console.log("aft", req.nextUrl.href);
+          return NextResponse.redirect(req.nextUrl);
         }
       } else {
-        if (url.searchParams.has("admin")) {
-          url.searchParams.delete("admin");
-          console.log("aft", url);
-          return NextResponse.redirect(url);
+        if (req.nextUrl.searchParams.has("admin")) {
+          req.nextUrl.searchParams.delete("admin");
+          console.log("aft", req.nextUrl.href);
+          return NextResponse.redirect(req.nextUrl);
         }
       }
     }
