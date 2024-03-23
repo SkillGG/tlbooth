@@ -4,6 +4,12 @@ import { NextResponse } from "next/server";
 export default authMiddleware({
   publicRoutes: ["/"],
   async afterAuth(auth, req, _) {
+    // Redirect non logged-in users to login page
+    if (!auth.userId && !auth.isPublicRoute) {
+      return NextResponse.redirect(
+        new URL("/", req.nextUrl.href),
+      );
+    }
     // Return 403 for non-logged in API calls
     if (!auth.userId && auth.isApiRoute) {
       console.error("Accessing API w/o auth!", auth.userId);
@@ -12,12 +18,6 @@ export default authMiddleware({
         {
           status: 403,
         },
-      );
-    }
-    // Redirect non logged-in users to login page
-    if (!auth.userId && !auth.isPublicRoute) {
-      return NextResponse.redirect(
-        new URL("/", req.nextUrl.href),
       );
     }
     // Redirect logged in default page to dashboard
@@ -30,15 +30,17 @@ export default authMiddleware({
       const { privateMetadata } =
         await clerkClient.users.getUser(auth.userId);
       const url = new URL("", req.nextUrl);
-      console.log(privateMetadata);
+      console.log("bef", url, privateMetadata);
       if (privateMetadata?.type === "admin") {
         if (!url.searchParams.has("admin")) {
           url.searchParams.set("admin", "");
+          console.log("aft", url);
           return NextResponse.redirect(url);
         }
       } else {
         if (url.searchParams.has("admin")) {
           url.searchParams.delete("admin");
+          console.log("aft", url);
           return NextResponse.redirect(url);
         }
       }
