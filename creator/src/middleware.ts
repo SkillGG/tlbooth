@@ -6,6 +6,9 @@ export default authMiddleware({
   async afterAuth(auth, req, _) {
     // Redirect non logged-in users to login page
     if (!auth.userId && !auth.isPublicRoute) {
+      console.warn(
+        "Isn't logged on non-public! Redirecting!",
+      );
       return NextResponse.redirect(
         new URL("/", req.nextUrl.href),
       );
@@ -22,6 +25,7 @@ export default authMiddleware({
     }
     // Redirect logged in default page to dashboard
     if (auth.userId && req.nextUrl.pathname === "/") {
+      console.warn("Logged user tries to load login page");
       const dashboard = new URL("/dashboard", req.nextUrl);
       return NextResponse.redirect(dashboard);
     }
@@ -39,6 +43,7 @@ export default authMiddleware({
         }
       } else {
         if (req.nextUrl.searchParams.has("admin")) {
+          console.log("Redirecting to non-admin");
           req.nextUrl.searchParams.delete("admin");
           console.log("aft", req.nextUrl.href);
           return NextResponse.redirect(req.nextUrl);
