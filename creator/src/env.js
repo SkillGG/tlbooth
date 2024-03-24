@@ -24,7 +24,13 @@ export const env = createEnv({
     // NEXT_PUBLIC_CLIENTVAR: z.string(),
     NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: z
       .string()
-      .refine((str) => !!str.length, "You forgot to add clerk public key"),
+      .refine(
+        (str) => !!str.length,
+        "You forgot to add clerk public key",
+      ),
+    NEXT_PUBLIC_REMOTE: z
+      .literal("local")
+      .or(z.literal("remote")),
   },
 
   /**
@@ -38,6 +44,7 @@ export const env = createEnv({
       process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY,
     DB_DIRECT_URL: process.env.DB_DIRECT_URL,
     DB_URL: process.env.DB_URL,
+    NEXT_PUBLIC_REMOTE: process.env.NEXT_PUBLIC_REMOTE,
     // NEXT_PUBLIC_CLIENTVAR: process.env.NEXT_PUBLIC_CLIENTVAR,
   },
   /**

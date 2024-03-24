@@ -5,12 +5,11 @@ import {
 import { z } from "zod";
 
 import { parse } from "node-html-parser";
-import { Agent, request } from "https";
-import fetch from "node-fetch";
 import { DummyNovels } from "./dummyData/dummyNovels";
 
 export const ScrapperFilter = z.object({
   search: z.string().optional(),
+  remote: z.boolean().optional(),
 });
 
 export const ScrapperNovelInfo = z.object({
@@ -49,7 +48,7 @@ export type ScrapperNovel = z.infer<typeof ScrapperNovel>;
 
 const uri = (s: string) => encodeURIComponent(s);
 
-const devTest = true;
+const devTest = false;
 
 export const scrapperRouter = createTRPCRouter({
   getListDummy: publicProcedure.query(
@@ -63,15 +62,20 @@ export const scrapperRouter = createTRPCRouter({
     .input(ScrapperFilter.optional())
     .query(
       async ({
-        ctx: _,
+        ctx,
+        input,
       }): Promise<
         | ScrapperNovelInfo[]
         | { error: string; allowTestData: boolean }
       > => {
-        const rS = await fetch(
-          "https://yomou.syosetu.com/search.php",
-        ).then((r) => {
-          // console.log(r);
+        const url =
+          !input?.remote ?
+            "https://yomou.syosetu.com/search.php"
+          : "https://us-central1-fiery-cabinet-418218.cloudfunctions.net/function-1";
+
+        console.log("Requesting", url);
+
+        const rS = await fetch(url).then((r) => {
           return r.text();
         });
 

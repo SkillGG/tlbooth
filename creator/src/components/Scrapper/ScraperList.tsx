@@ -9,13 +9,14 @@ import { useState } from "react";
 import { useNovelStore } from "@/hooks/novelStore";
 import { RefreshButton } from "../Icons/refreshButton";
 import { AddNovelMutation } from "@/hooks/mutations/novelMutations/addNovel";
+import { env } from "@/env";
 
 export const ScrapperFilterSelector = () => {
   const [showDialog, setShowDialog] = useState(false);
 
-  const [filters, setFilters] = useState<ScrapperFilter>(
-    {},
-  );
+  const [filters, setFilters] = useState<ScrapperFilter>({
+    remote: "remote" === env.NEXT_PUBLIC_REMOTE,
+  });
 
   return (
     <div className="grid">
@@ -128,8 +129,12 @@ export const ScraperList = () => {
   const novels =
     useDummy ? api.scrapper.getListDummy.useQuery().data
     : search.has("filters") ?
-      api.scrapper.getList.useQuery().data
-    : api.scrapper.getList.useQuery().data;
+      api.scrapper.getList.useQuery({
+        remote: "remote" === env.NEXT_PUBLIC_REMOTE,
+      }).data
+    : api.scrapper.getList.useQuery({
+      remote: "remote" === env.NEXT_PUBLIC_REMOTE,
+    }).data;
 
   const [showSkeleton, setSkeleton] = useState(false);
 
