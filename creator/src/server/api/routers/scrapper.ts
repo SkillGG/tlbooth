@@ -49,8 +49,6 @@ export type ScrapperNovel = z.infer<typeof ScrapperNovel>;
 
 const uri = (s: string) => encodeURIComponent(s);
 
-const devTest = false;
-
 const isAdmin = async (auth?: string) => {
   console.log("auth", auth);
   if (!auth) return false;
@@ -83,6 +81,8 @@ export const scrapperRouter = createTRPCRouter({
       > => {
         const admin = await isAdmin(ctx.id);
 
+        console.log("is Admin", admin);
+
         if (!admin) {
           return {
             error:
@@ -97,6 +97,12 @@ export const scrapperRouter = createTRPCRouter({
           isRemote ?
             env.FN_GET_NOVEL_URL
           : "https://yomou.syosetu.com/search.php";
+
+        console.log(
+          "fetching",
+          url.substring(0, "https://........".length),
+        );
+
         const rS = await fetch(
           url,
           isRemote ?
