@@ -52,7 +52,9 @@ export default authMiddleware({
     }
 
     // Allow users visiting public routes to access them
-    return NextResponse.next();
+    return NextResponse.next({
+      headers: { "x-clerk-id": auth?.userId ?? "" },
+    });
   },
 });
 

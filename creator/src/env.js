@@ -10,6 +10,9 @@ export const env = createEnv({
     DB_URL: z.string().url(),
     DB_DIRECT_URL: z.string().url("Should be an url"),
     CLERK_SECRET_KEY: z.string(),
+    IS_REMOTE: z.literal("true").or(z.literal("false")),
+    FN_GET_NOVEL_URL: z.string().url(),
+    GCLOUD_KEY: z.string(),
     NODE_ENV: z
       .enum(["development", "test", "production"])
       .default("development"),
@@ -28,9 +31,6 @@ export const env = createEnv({
         (str) => !!str.length,
         "You forgot to add clerk public key",
       ),
-    NEXT_PUBLIC_REMOTE: z
-      .literal("local")
-      .or(z.literal("remote")),
   },
 
   /**
@@ -44,7 +44,9 @@ export const env = createEnv({
       process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY,
     DB_DIRECT_URL: process.env.DB_DIRECT_URL,
     DB_URL: process.env.DB_URL,
-    NEXT_PUBLIC_REMOTE: process.env.NEXT_PUBLIC_REMOTE,
+    FN_GET_NOVEL_URL: process.env.FN_GET_NOVEL_URL,
+    GCLOUD_KEY: process.env.GCLOUD_KEY,
+    IS_REMOTE: process.env.IS_REMOTE,
     // NEXT_PUBLIC_CLIENTVAR: process.env.NEXT_PUBLIC_CLIENTVAR,
   },
   /**

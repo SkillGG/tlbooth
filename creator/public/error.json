@@ -1,0 +1,12 @@
+[
+  {
+    "result": {
+      "data": {
+        "json": {
+          "error": "That part is only available in admin mode!",
+          "allowTestData": true
+        }
+      }
+    }
+  }
+]

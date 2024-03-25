@@ -6,10 +6,11 @@ import { z } from "zod";
 
 import { parse } from "node-html-parser";
 import { DummyNovels } from "./dummyData/dummyNovels";
+import { env } from "@/env";
+import { Clerk } from "@clerk/nextjs/server";
 
 export const ScrapperFilter = z.object({
   search: z.string().optional(),
-  remote: z.boolean().optional(),
 });
 
 export const ScrapperNovelInfo = z.object({
@@ -50,6 +51,18 @@ const uri = (s: string) => encodeURIComponent(s);
 
 const devTest = false;
 
+const isAdmin = async (auth?: string) => {
+  console.log("auth", auth);
+  if (!auth) return false;
+  const clerk = Clerk({ secretKey: env.CLERK_SECRET_KEY });
+  if (clerk) {
+    const user = await clerk.users.getUser(auth);
+    if (!user) return false;
+    return user.privateMetadata.type === "admin";
+  }
+  return false;
+};
+
 export const scrapperRouter = createTRPCRouter({
   getListDummy: publicProcedure.query(
     async ({ ctx: _ }): Promise<ScrapperNovelInfo[]> => {
@@ -63,23 +76,47 @@ export const scrapperRouter = createTRPCRouter({
     .query(
       async ({
         ctx,
-        input,
+        input: __,
       }): Promise<
         | ScrapperNovelInfo[]
         | { error: string; allowTestData: boolean }
       > => {
+        const admin = await isAdmin(ctx.id);
+
+        if (!admin) {
+          return {
+            error:
+              "That part is only available in admin mode!",
+            allowTestData: true,
+          };
+        }
+
+        const isRemote = env.IS_REMOTE === "true";
+
         const url =
-          !input?.remote ?
-            "https://yomou.syosetu.com/search.php"
-          : "https://us-central1-fiery-cabinet-418218.cloudfunctions.net/function-1";
-
-        console.log("Requesting", url);
-
-        const rS = await fetch(url).then((r) => {
+          isRemote ?
+            env.FN_GET_NOVEL_URL
+          : "https://yomou.syosetu.com/search.php";
+        const rS = await fetch(
+          url,
+          isRemote ?
+            {
+              method: "POST",
+              headers: {
+                Authorization: `bearer ${env.GCLOUD_KEY}`,
+                "Content-Type": " application/json",
+              },
+              body: JSON.stringify({
+                pages: ["search.php"],
+                syo: "yomou",
+              }),
+            }
+          : undefined,
+        ).then((r) => {
           return r.text();
         });
 
-        if (!rS || devTest)
+        if (!rS)
           return {
             error:
               "That part is only available in admin mode!",
