@@ -29,6 +29,15 @@ type ActionMenuData = {
   actions: ChapterActionMenuItem[];
 };
 
+const useGotoEdit = () => {
+  const router = useRouter();
+  return (novelID: string, chapterID: string) => {
+    void router.push(
+      `/edit/${encodeURIComponent(novelID)}/${encodeURIComponent(chapterID)}`,
+    );
+  };
+};
+
 function ChapterMenuButton({
   actions,
   openMenu,
@@ -68,7 +77,7 @@ const ChapterItem = React.memo(function ChapterItem({
   local?: StagedChapterInfo;
   openMenu?(d: ActionMenuData): void;
 }): React.ReactElement {
-  const router = useRouter();
+  const toEdit = useGotoEdit();
 
   const {
     mutate,
@@ -123,13 +132,11 @@ const ChapterItem = React.memo(function ChapterItem({
               action: async () => {
                 console.log("Staging chapter", local);
                 mutate(
-                  new StageChapterMutation(
+                  new StageChapterMutation({
+                    ...local,
                     novelID,
-                    local.url,
-                    local.name,
-                    "",
-                    local.num,
-                  ),
+                    description: "",
+                  }),
                 );
               },
             },
@@ -174,42 +181,33 @@ const ChapterItem = React.memo(function ChapterItem({
             {db.name} {stageInfo}
           </div>
           <ChapterMenuButton
-            actions={
+            actions={[
+              {
+                label: "Edit",
+                action() {
+                  toEdit(
+                    novelID,
+                    (dbChap ?? localChap)?.id ?? "",
+                  );
+                },
+              },
+              isLocalFromMutation ? "-" : undefined,
               isLocalFromMutation ?
-                [
-                  {
-                    label: "Edit",
-                    action() {
-                      void router.push(
-                        `/edit/${encodeURIComponent(novelID)}/${encodeURIComponent((dbChap ?? localChap)?.id ?? "")}`,
+                {
+                  label: "Unstage",
+                  action() {
+                    if (localChap) {
+                      removeMutation(
+                        StageChapterMutation.getID({
+                          novelID,
+                          chapterID: localChap.id,
+                        }),
                       );
-                    },
+                    }
                   },
-                  "-",
-                  {
-                    label: "Unstage",
-                    action() {
-                      if (localChap) {
-                        removeMutation(
-                          StageChapterMutation.getID(
-                            novelID,
-                            localChap.id,
-                          ),
-                        );
-                      }
-                    },
-                  },
-                ]
-              : [
-                  { label: "db&local" },
-                  {
-                    label: "DB And Local exist!",
-                    action() {
-                      console.log(localChap, dbChap);
-                    },
-                  },
-                ]
-            }
+                }
+              : undefined,
+            ]}
             openMenu={openMenu}
           />
         </div>

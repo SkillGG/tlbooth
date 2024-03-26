@@ -4,12 +4,13 @@ import {
   MutationType,
   type StoreNovel,
 } from "../mutation";
+import { Optional } from "@/utils/utils";
 
 export type SaveData = {
   novelURL: string;
   novelName: string;
-  novelID: string;
   novelDescription: string;
+  novelID: string;
 };
 
 export const isAddNovelMutationSaveData = (
@@ -36,12 +37,12 @@ export class AddNovelMutation extends Mutation<
   static novelID = 0;
   static getID = (novelID: string) =>
     `add_novel_${novelID}`;
-  constructor(
-    novelURL: string,
-    novelName: string,
-    novelDescription: string,
-    novelID?: string,
-  ) {
+  constructor({
+    novelDescription,
+    novelName,
+    novelURL,
+    novelID,
+  }: Optional<SaveData, "novelID">) {
     const novel: StoreNovel = {
       id: `localnovel_${novelID ?? ++AddNovelMutation.novelID}`,
       chapters: [],
@@ -59,9 +60,9 @@ export class AddNovelMutation extends Mutation<
       MutationType.ADD_NOVEL,
       async () => {
         await trpcClient.db.registerNovel.mutate({
-          name: novelName,
-          url: novelURL,
-          description: novelDescription,
+          novelName,
+          novelURL,
+          novelDescription,
         });
       },
       [{ novelID: novel.id }],
@@ -74,11 +75,6 @@ export class AddNovelMutation extends Mutation<
     );
   }
   static fromData(d: SaveData) {
-    return new AddNovelMutation(
-      d.novelURL,
-      d.novelName,
-      d.novelDescription,
-      d.novelID,
-    );
+    return new AddNovelMutation(d);
   }
 }

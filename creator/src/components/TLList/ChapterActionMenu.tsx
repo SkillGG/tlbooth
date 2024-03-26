@@ -9,7 +9,8 @@ type ActionSeparator = "-";
 
 export type ChapterActionMenuItem =
   | ChapterAction
-  | ActionSeparator;
+  | ActionSeparator
+  | undefined;
 
 type ChapterActionMenuProps = {
   actions: ChapterActionMenuItem[];
@@ -59,22 +60,28 @@ export function ChapterActionMenu({
         className="flex flex-col bg-amber-300 text-black"
         style={{ transform: "translate(-100%)" }}
       >
-        {actions.map((action, i) => {
-          if (action === "-") return <hr key={`hr_${i}`} />;
-          return (
-            <div key={action.label}>
-              <button
-                onClick={async () => {
-                  await action.action?.();
-                  hide();
-                }}
-                className="grid w-full content-center justify-center"
-              >
-                <span className="px-2">{action.label}</span>
-              </button>
-            </div>
-          );
-        })}
+        {actions
+          .map((action, i) => {
+            if (!action) return null;
+            if (action === "-")
+              return <hr key={`hr_${i}`} />;
+            return (
+              <div key={action.label}>
+                <button
+                  onClick={async () => {
+                    await action.action?.();
+                    hide();
+                  }}
+                  className="grid w-full content-center justify-center"
+                >
+                  <span className="px-2">
+                    {action.label}
+                  </span>
+                </button>
+              </div>
+            );
+          })
+          .filter((f) => f)}
       </div>
     </div>
   );

@@ -25,11 +25,14 @@ export class ChangeNovelNameMutation extends Mutation<
   MutationType.CHANGE_NAME,
   SaveData
 > {
-  static getID = (novelID: string, og: boolean) =>
+  static getID = ({
+    novelID,
+    og,
+  }: Omit<SaveData, "name">) =>
     `change_novel_${og ? "og" : "tl"}_name_${novelID}`;
-  constructor(novelID: string, name: string, og: boolean) {
+  constructor({ name, novelID, og }: SaveData) {
     super(
-      ChangeNovelNameMutation.getID(novelID, og),
+      ChangeNovelNameMutation.getID({ novelID, og }),
       (p) => {
         if (og)
           return p.map((n) =>
@@ -49,10 +52,6 @@ export class ChangeNovelNameMutation extends Mutation<
     );
   }
   static fromData(d: SaveData) {
-    return new ChangeNovelNameMutation(
-      d.novelID,
-      d.name,
-      d.og,
-    );
+    return new ChangeNovelNameMutation(d);
   }
 }

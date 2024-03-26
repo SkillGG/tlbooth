@@ -95,21 +95,17 @@ const NovelItem = ({
       <div
         className={`grid w-full content-center text-balance border-gray-400 px-3 text-center text-sm`}
       >
-        {novel.name}
+        {novel.novelName}
       </div>
-      {!novelStore?.find((n) => n.url === novel.url) && (
+      {!novelStore?.find(
+        (n) => n.url === novel.novelURL,
+      ) && (
         <div className="h-min w-min self-center px-4">
           {
             <button
               className="h-full"
               onClick={() => {
-                mutate(
-                  new AddNovelMutation(
-                    novel.url,
-                    novel.name,
-                    novel.description,
-                  ),
-                );
+                mutate(new AddNovelMutation(novel));
               }}
             >
               Add
@@ -179,7 +175,7 @@ export const ScraperList = () => {
               novels.map((novel) => {
                 return (
                   <NovelItem
-                    key={novel.url}
+                    key={novel.novelURL}
                     novel={novel}
                   />
                 );

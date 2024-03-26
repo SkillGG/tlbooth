@@ -1,52 +1,4 @@
-// static stageChapterID = 0;
-//   static stageChapterMutationID = (chapterID: string) =>
-//     `stage_chapter_${chapterID}`;
-//   static stageChapter(
-//     novelID: string,
-//     chapter: ScrapperChapterInfo,
-//     id?: string,
-//   ) {
-//     const type = MutationType.STAGE_CHAPTER;
-//     const chapterID =
-//       id ?? `staged_chapter_${++Mutation.stageChapterID}`;
-//     return new Mutation(
-//       this.stageChapterMutationID(chapterID),
-//       (p) =>
-//         p.map((n) => {
-//           return n.id === novelID ?
-//               {
-//                 ...n,
-//                 chapters: [
-//                   ...n.chapters,
-//                   {
-//                     id: chapterID,
-//                     novelID: novelID,
-//                     num: chapter.num,
-//                     ogname: chapter.name,
-//                     url: chapter.url,
-//                     status: "STAGED",
-//                     tlname: "",
-//                     translations: [],
-//                   },
-//                 ],
-//               }
-//             : n;
-//         }),
-//       chapter.name,
-//       type,
-//       async () => {
-//         // TODO
-//       },
-//       [{ novelID }],
-//       {
-//         type,
-//         novelID: novelID,
-//         chapter,
-//         chapterID: chapterID,
-//       },
-//     );
-//   }
-
+import { Optional } from "@/utils/utils";
 import { Mutation, MutationType } from "../mutation";
 
 type SaveData = {
@@ -55,7 +7,7 @@ type SaveData = {
   name: string;
   num: string;
   description: string;
-  id: string;
+  chapterID: string;
 };
 
 export const isStageChapterSaveData = (
@@ -64,8 +16,8 @@ export const isStageChapterSaveData = (
   return (
     !!o &&
     typeof o === "object" &&
-    "id" in o &&
-    typeof o.id === "string" &&
+    "chapterID" in o &&
+    typeof o.chapterID === "string" &&
     "novelID" in o &&
     typeof o.novelID === "string" &&
     "url" in o &&
@@ -83,23 +35,32 @@ export class StageChapterMutation extends Mutation<
   MutationType.STAGE_CHAPTER,
   SaveData
 > {
-  static getID(novelID: string, chapterID: string) {
+  static getID({
+    novelID,
+    chapterID,
+  }: {
+    novelID: string;
+    chapterID: string;
+  }) {
     return `stage_chapter_${novelID}_${chapterID}`;
   }
   static chapterID = 0;
-  constructor(
-    novelID: string,
-    url: string,
-    name: string,
-    description: string,
-    num: string,
-    overrideID?: string,
-  ) {
+  constructor({
+    novelID,
+    description,
+    name,
+    num,
+    url,
+    chapterID,
+  }: Optional<SaveData, "chapterID">) {
     const id =
-      overrideID ??
+      chapterID ??
       `local_chapter_${++StageChapterMutation.chapterID}`;
     super(
-      StageChapterMutation.getID(novelID, id),
+      StageChapterMutation.getID({
+        novelID,
+        chapterID: id,
+      }),
       (p) =>
         p.map((n) => {
           return n.id === novelID ?
@@ -127,17 +88,17 @@ export class StageChapterMutation extends Mutation<
         throw "ERROR";
       },
       [{ novelID }],
-      { description, id, name, novelID, num, url },
+      {
+        description,
+        chapterID: id,
+        name,
+        novelID,
+        num,
+        url,
+      },
     );
   }
   static fromData(o: SaveData) {
-    return new StageChapterMutation(
-      o.novelID,
-      o.url,
-      o.name,
-      o.description,
-      o.num,
-      o.id,
-    );
+    return new StageChapterMutation(o);
   }
 }

@@ -25,11 +25,14 @@ export class ChangeNovelDescriptionMutation extends Mutation<
   MutationType.CHANGE_DESC,
   SaveData
 > {
-  static getID = (novelID: string, og: boolean) =>
+  static getID = ({
+    novelID,
+    og,
+  }: Omit<SaveData, "desc">) =>
     `change_novel_${og ? "og" : "tl"}_desc_${novelID}`;
-  constructor(novelID: string, desc: string, og: boolean) {
+  constructor({ desc, novelID, og }: SaveData) {
     super(
-      ChangeNovelDescriptionMutation.getID(novelID, og),
+      ChangeNovelDescriptionMutation.getID({ novelID, og }),
       (p) => {
         if (og)
           return p.map((n) =>
@@ -49,10 +52,6 @@ export class ChangeNovelDescriptionMutation extends Mutation<
     );
   }
   static fromData(d: SaveData) {
-    return new ChangeNovelDescriptionMutation(
-      d.novelID,
-      d.desc,
-      d.og,
-    );
+    return new ChangeNovelDescriptionMutation(d);
   }
 }

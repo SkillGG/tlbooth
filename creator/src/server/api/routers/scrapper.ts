@@ -14,9 +14,9 @@ export const ScrapperFilter = z.object({
 });
 
 export const ScrapperNovelInfo = z.object({
-  url: z.string().url(),
-  description: z.string(),
-  name: z.string().min(1),
+  novelURL: z.string().url(),
+  novelDescription: z.string(),
+  novelName: z.string().min(1),
 });
 
 export const ScrapperChapterInfo = z.object({
@@ -46,6 +46,41 @@ export type ScrapperChapterInfo = z.infer<
   typeof ScrapperChapterInfo
 >;
 export type ScrapperNovel = z.infer<typeof ScrapperNovel>;
+
+const fetchDirectly = async ({
+  syo,
+  pages,
+}: {
+  syo: string;
+  pages: string[];
+}) => {
+  const url = `https://${syo ? syo + "." : ""}syosetu.com${pages.reduce((p, n) => p + "/" + n, "")}`;
+  console.log("Fetching directly");
+  const res = await fetch(url);
+  if (!res.ok) {
+    throw "Fetching data unsuccessful";
+  }
+  const text = await res.text();
+  return text;
+};
+const fetchFromProxy = async (data: {
+  syo: string;
+  pages: string[];
+}) => {
+  console.log("Fetching via proxy");
+  const res = await fetch(env.FN_GET_NOVEL_URL, {
+    method: "post",
+    headers: { Authorization: `bearer ${env.GCLOUD_KEY}` },
+    body: JSON.stringify(data),
+  });
+
+  if (!res.ok) {
+    throw "Fetching data unsuccessful";
+  }
+
+  const text = await res.text();
+  return text;
+};
 
 const uri = (s: string) => encodeURIComponent(s);
 
@@ -79,88 +114,62 @@ export const scrapperRouter = createTRPCRouter({
         | ScrapperNovelInfo[]
         | { error: string; allowTestData: boolean }
       > => {
-        const admin = await isAdmin(ctx.id);
+        try {
+          const admin = await isAdmin(ctx.id);
 
-        console.log("is Admin", admin);
+          if (!admin) throw "User is not an admin";
 
-        if (!admin) {
+          const isRemote = env.IS_REMOTE === "true";
+          const syo = {
+            syo: "yomou",
+            pages: ["search.php"],
+          };
+
+          const rS =
+            isRemote ?
+              await fetchFromProxy(syo)
+            : await fetchDirectly(syo);
+
+          const parsed = parse(rS);
+
+          const main = parsed.querySelectorAll(
+            ".searchkekka_box",
+          );
+
+          const novels = main.map<ScrapperNovelInfo | null>(
+            (p) => {
+              const header = p.querySelector(".novel_h");
+              const anchor = header?.querySelector("a");
+              const href = anchor?.getAttribute("href");
+              if (header && href) {
+                return {
+                  novelName: header.text,
+                  novelURL: uri(href),
+                  novelDescription: "",
+                };
+              } else {
+                return null;
+              }
+            },
+          );
+
+          const retVal: ScrapperNovelInfo[] = [];
+
+          novels.forEach((p) => {
+            if (p) {
+              retVal.push(p);
+            }
+          });
+
+          return retVal;
+        } catch (e) {
+          console.error(e);
           return {
             error:
               "That part is only available in admin mode!",
             allowTestData: true,
           };
         }
-
-        const isRemote = env.IS_REMOTE === "true";
-
-        const url =
-          isRemote ?
-            env.FN_GET_NOVEL_URL
-          : "https://yomou.syosetu.com/search.php";
-
-        console.log(
-          "fetching",
-          url.substring(0, "https://........".length),
-        );
-
-        const rS = await fetch(
-          url,
-          isRemote ?
-            {
-              method: "POST",
-              headers: {
-                Authorization: `bearer ${env.GCLOUD_KEY}`,
-                "Content-Type": " application/json",
-              },
-              body: JSON.stringify({
-                pages: ["search.php"],
-                syo: "yomou",
-              }),
-            }
-          : undefined,
-        ).then((r) => {
-          return r.text();
-        });
-
-        if (!rS)
-          return {
-            error:
-              "That part is only available in admin mode!",
-            allowTestData: true,
-          };
-
-        const parsed = parse(rS);
-
-        const main = parsed.querySelectorAll(
-          ".searchkekka_box",
-        );
-
-        const novels = main.map<ScrapperNovelInfo | null>(
-          (p) => {
-            const header = p.querySelector(".novel_h");
-            const anchor = header?.querySelector("a");
-            const href = anchor?.getAttribute("href");
-            if (header && href) {
-              return {
-                name: header.text,
-                url: uri(href),
-                description: "",
-              };
-            } else {
-              return null;
-            }
-          },
-        );
-
-        const retVal: ScrapperNovelInfo[] = [];
-
-        novels.forEach((p) => {
-          if (p) {
-            retVal.push(p);
-          }
-        });
-
-        return retVal;
       },
     ),
   getNovel: publicProcedure
@@ -174,7 +183,7 @@ export const scrapperRouter = createTRPCRouter({
         if (input.startsWith("http://dummy.com")) {
           // getting dummy novel data
           const novel = DummyNovels.find(
-            (d) => d.info.url === input,
+            (d) => d.info.novelURL === input,
           );
           if (novel)
             return {
@@ -188,9 +197,9 @@ export const scrapperRouter = createTRPCRouter({
 
         return {
           info: {
-            url: "https://testnovel.com/1",
-            name: "",
-            description: "",
+            novelURL: "https://testnovel.com/1",
+            novelName: "",
+            novelDescription: "",
           },
           chapters: [
             {

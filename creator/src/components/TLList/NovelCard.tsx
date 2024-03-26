@@ -43,22 +43,28 @@ export const NovelCard = ({
     useMemo(
       () => [
         isMutation(
-          ChangeNovelDescriptionMutation.getID(
-            novel.id,
-            true,
-          ),
+          ChangeNovelDescriptionMutation.getID({
+            novelID: novel.id,
+            og: true,
+          }),
         ),
         isMutation(
-          ChangeNovelDescriptionMutation.getID(
-            novel.id,
-            false,
-          ),
+          ChangeNovelDescriptionMutation.getID({
+            novelID: novel.id,
+            og: false,
+          }),
         ),
         isMutation(
-          ChangeNovelNameMutation.getID(novel.id, true),
+          ChangeNovelNameMutation.getID({
+            novelID: novel.id,
+            og: true,
+          }),
         ),
         isMutation(
-          ChangeNovelNameMutation.getID(novel.id, false),
+          ChangeNovelNameMutation.getID({
+            novelID: novel.id,
+            og: false,
+          }),
           false,
         ),
         mutations,
@@ -111,20 +117,20 @@ export const NovelCard = ({
                 showRestore={tlnameChanged}
                 onSave={(v) =>
                   mutate(
-                    new ChangeNovelNameMutation(
-                      novel.id,
-                      v,
-                      false,
-                    ),
+                    new ChangeNovelNameMutation({
+                      novelID: novel.id,
+                      name: v,
+                      og: false,
+                    }),
                     true,
                   )
                 }
                 onReset={() => {
                   removeMutation(
-                    ChangeNovelNameMutation.getID(
-                      novel.id,
-                      false,
-                    ),
+                    ChangeNovelNameMutation.getID({
+                      novelID: novel.id,
+                      og: false,
+                    }),
                   );
                 }}
                 defaultValue={novel.tlname ?? ""}
@@ -150,20 +156,20 @@ export const NovelCard = ({
                 fieldName="OGDesc"
                 onSave={(v) =>
                   mutate(
-                    new ChangeNovelDescriptionMutation(
-                      novel.id,
-                      v,
-                      true,
-                    ),
+                    new ChangeNovelDescriptionMutation({
+                      novelID: novel.id,
+                      desc: v,
+                      og: true,
+                    }),
                     true,
                   )
                 }
                 onReset={() => {
                   removeMutation(
-                    ChangeNovelDescriptionMutation.getID(
-                      novel.id,
-                      true,
-                    ),
+                    ChangeNovelDescriptionMutation.getID({
+                      novelID: novel.id,
+                      og: true,
+                    }),
                   );
                 }}
                 showRestore={ogdescChanged}
@@ -186,20 +192,20 @@ export const NovelCard = ({
                 showRestore={tldescChanged}
                 onSave={(v) => {
                   mutate(
-                    new ChangeNovelDescriptionMutation(
-                      novel.id,
-                      v,
-                      true,
-                    ),
+                    new ChangeNovelDescriptionMutation({
+                      novelID: novel.id,
+                      desc: v,
+                      og: true,
+                    }),
                     true,
                   );
                 }}
                 onReset={() => {
                   removeMutation(
-                    ChangeNovelDescriptionMutation.getID(
-                      novel.id,
-                      false,
-                    ),
+                    ChangeNovelDescriptionMutation.getID({
+                      novelID: novel.id,
+                      og: false,
+                    }),
                   );
                 }}
                 defaultValue={novel.tldesc ?? ""}

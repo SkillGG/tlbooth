@@ -5,13 +5,28 @@ import { type ChangeNovelDescriptionMutation } from "./novelMutations/changeDesc
 import { type ChangeNovelNameMutation } from "./novelMutations/changeName";
 import { type RemoveNovelMutation } from "./novelMutations/removeNovel";
 import { type StageChapterMutation } from "./chapterMutations/stageChapter";
+import { type ChangeChapterNameMutation } from "./chapterMutations/changeName";
 
-export type StoreNovel = DBNovel & {
-  local?: true;
+type MakeLocalDeletable<T> = T & {
   forDeletion?: true;
+  local?: true;
 };
 
+export type StoreNovel = MakeLocalDeletable<
+  DBNovel & {
+    chapters: MakeLocalDeletable<
+      DBNovel["chapters"][number] & {
+        translations: MakeLocalDeletable<
+          DBNovel["chapters"][number]["translations"][number]
+        >[];
+      }
+    >[];
+  }
+>;
+
 export type StoreChapter = StoreNovel["chapters"][number];
+export type StoreTranslation =
+  StoreNovel["chapters"][number]["translations"][number];
 
 export type Dependency =
   | {
@@ -25,8 +40,8 @@ export enum MutationType {
   STAGE_CHAPTER = "Add Chapter",
   REMOVE_NOVEL = "Delete Novel",
   CHANGE_DESC = "Change description",
+  CHANGE_CHAPTER_NAME = "Change chapter name",
   //   ADD_TRANSLATION = "Add translation",
-  //   CHANGE_CHAPTER_NAME = "Change chapter name",
   //   CHANGE_CHAPTER_DESC = "Change chapter description",
 }
 
@@ -46,6 +61,9 @@ export type SaveMutationDatas = NonNullable<
   | ({
       type: MutationType.STAGE_CHAPTER;
     } & typeof StageChapterMutation.prototype.data)
+  | ({
+      type: MutationType.CHANGE_CHAPTER_NAME;
+    } & typeof ChangeChapterNameMutation.prototype.data)
 >;
 
 export type SaveMutationData<

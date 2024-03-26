@@ -8,6 +8,7 @@ import {
   type SaveMutationDatas,
   type StoreChapter,
   type StoreNovel,
+  StoreTranslation,
 } from "./mutations/mutation";
 import {
   type MutationSavedType,
@@ -38,7 +39,13 @@ type NovelStore = {
   getMutated: () => StoreNovel[] | null;
 
   getNovel: (id: string) => StoreNovel | null;
+  getNovelBy: (
+    pred: (n: StoreNovel) => boolean,
+  ) => StoreNovel | null;
   getDBNovel: (id: string) => StoreNovel | null;
+  getDBNovelBy: (
+    pred: (n: StoreNovel) => boolean,
+  ) => StoreNovel | null;
   getNovelByURL: (url: string) => StoreNovel | null;
   getDBNovelByURL: (url: string) => StoreNovel | null;
 
@@ -67,6 +74,12 @@ type NovelStore = {
     novelID: string,
     predicate: (c: StoreChapter) => boolean,
   ) => StoreChapter | null;
+
+  getTranslationInfo: (tlID: string) => {
+    tl: StoreTranslation;
+    chap: StoreChapter;
+    novel: StoreNovel;
+  } | null;
 
   apply: () => Promise<(() => void)[]>;
 };
@@ -185,6 +198,31 @@ export const useNovelStore = create<NovelStore>()(
       get()
         .getDBNovel(nID)
         ?.chapters.find((c) => fn(c)) ?? null,
+    getTranslationInfo: (tlID) => {
+      let chap: StoreChapter | undefined;
+      const novel = get().getNovelBy((p) => {
+        const ch = p.chapters.find((c) =>
+          c.translations.find((t) => t.id === tlID),
+        );
+        return !!(chap = ch);
+      });
+      const novelID = novel?.id;
+      if (novelID && chap) {
+        const tl = get()
+          .getChapter(novelID, chap.id)
+          ?.translations.find((t) => t.id === tlID);
+        if (!chap || !tl) return null;
+        return {
+          tl,
+          chap,
+          novel,
+        };
+      }
+      return null;
+    },
+    getNovelBy: (by) =>
+      get().getMutated()?.find(by) ?? null,
+    getDBNovelBy: (by) => get().novels?.find(by) ?? null,
     loadData: (remote) =>
       set((s) => ({ ...s, novels: remote })),
     mutate: (t, o = false) => {

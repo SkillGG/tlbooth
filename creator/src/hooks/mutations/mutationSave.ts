@@ -1,3 +1,4 @@
+import { isChangeChapterNameSaveData } from "./chapterMutations/changeName";
 import { isStageChapterSaveData } from "./chapterMutations/stageChapter";
 import {
   MutationType,
@@ -56,6 +57,10 @@ const consistsOfValidMutationSaveData = (
         case MutationType.STAGE_CHAPTER:
           if (!isStageChapterSaveData(typedN))
             throw "STAGE_CHAPTER";
+          break;
+        case MutationType.CHANGE_CHAPTER_NAME:
+          if (!isChangeChapterNameSaveData(typedN))
+            throw "CHANGE_CHAPTER_NAME";
           break;
         default:
           typedN.type satisfies never;
