@@ -39,7 +39,7 @@ export const databaseRouter = createTRPCRouter({
     .input(ScrapperNovelInfo)
     .mutation(async ({ ctx, input }) => {
       const result = await ctx.db.novel.create({
-        data: { url: input.url, ogname: input.name },
+        data: { url: input.novelURL, ogname: input.novelName },
       });
       console.log(result);
       return;

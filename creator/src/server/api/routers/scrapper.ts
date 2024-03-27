@@ -125,6 +125,11 @@ export const scrapperRouter = createTRPCRouter({
             pages: ["search.php"],
           };
 
+          console.log(
+            "fetching from ",
+            isRemote ? "proxy" : "syo",
+          );
+
           const rS =
             isRemote ?
               await fetchFromProxy(syo)
