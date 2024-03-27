@@ -125,7 +125,7 @@ export const NovelCard = ({
                     true,
                   )
                 }
-                onReset={() => {
+                onRestore={() => {
                   removeMutation(
                     ChangeNovelNameMutation.getID({
                       novelID: novel.id,
@@ -164,7 +164,7 @@ export const NovelCard = ({
                     true,
                   )
                 }
-                onReset={() => {
+                onRestore={() => {
                   removeMutation(
                     ChangeNovelDescriptionMutation.getID({
                       novelID: novel.id,
@@ -200,7 +200,7 @@ export const NovelCard = ({
                     true,
                   );
                 }}
-                onReset={() => {
+                onRestore={() => {
                   removeMutation(
                     ChangeNovelDescriptionMutation.getID({
                       novelID: novel.id,

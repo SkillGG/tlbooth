@@ -17,7 +17,7 @@ enum LANG {
     JP
 }
 
-enum ChapterStatus {
+enum TLStatus {
     STAGED
     TL
     PR
@@ -35,6 +35,8 @@ model Translation {
 
     oglang LANG
     tllang LANG
+
+    status TLStatus
 
     Chapter   Chapter? @relation(fields: [chapterID], references: [id])
     chapterID String?  @map("chapterId")
@@ -75,8 +77,6 @@ model Chapter {
     url String @unique
 
     num String @default("1")
-
-    status ChapterStatus
 
     ogname String
     tlname String?

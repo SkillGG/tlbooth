@@ -25,7 +25,7 @@ export const isChangeChapterNameSaveData = (
 };
 
 export class ChangeChapterNameMutation extends Mutation<
-  MutationType.CHANGE_NAME,
+  MutationType.CHANGE_CHAPTER_NAME,
   SaveData
 > {
   static getID = ({
@@ -69,7 +69,7 @@ export class ChangeChapterNameMutation extends Mutation<
         );
       },
       name,
-      MutationType.CHANGE_NAME,
+      MutationType.CHANGE_CHAPTER_NAME,
       async () => {
         throw "TODO";
       },

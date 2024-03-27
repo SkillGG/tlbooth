@@ -4,7 +4,7 @@ import {
   MutationType,
   type StoreNovel,
 } from "../mutation";
-import { Optional } from "@/utils/utils";
+import { type Optional } from "@/utils/utils";
 
 export type SaveData = {
   novelURL: string;

@@ -1,31 +1,49 @@
-import { useNovelStore } from "@/hooks/novelStore";
+import { TranslationEditor } from "@/components/TranslationEdit";
+import {
+  type TLInfo,
+  useNovelStore,
+} from "@/hooks/novelStore";
+import Head from "next/head";
 import Link from "next/link";
 import { useParams } from "next/navigation";
+import { useEffect, useState } from "react";
 
 export default function EditTL() {
   const { tlid } = useParams();
 
   const { getTranslationInfo } = useNovelStore();
-  if (!tlid || !(typeof tlid === "string"))
-    return <>Wrong TL ID!</>;
-  const tlInfo = getTranslationInfo(tlid);
+  const tlinf =
+    tlid && typeof tlid === "string" ?
+      getTranslationInfo(tlid)
+    : null;
+
+  const [tlInfo, setTLInfo] = useState<TLInfo | null>(
+    tlinf,
+  );
+
+  useEffect(() => {
+    setTLInfo(tlinf);
+  }, [tlinf]);
 
   if (!tlInfo) return <>Loading...</>;
 
-  const { tl, novel, chap } = tlInfo;
+  const { novel, chap } = tlInfo;
 
   return (
-    <div>
+    <>
+      <Head>
+        <title>Editing translation</title>
+      </Head>
       <div>
-        <Link
-          href={`/edit/${encodeURIComponent(novel.id)}/${encodeURIComponent(chap.id)}`}
-        >
-          Go to Edit chapter
-        </Link>
+        <div>
+          <Link
+            href={`/edit/${encodeURIComponent(novel.id)}/${encodeURIComponent(chap.id)}`}
+          >
+            Back to Edit Chapter
+          </Link>
+        </div>
+        <TranslationEditor info={tlInfo} />
       </div>
-      Editing {tl.id} {tl.oglang}
-      {"=>"}
-      {tl.tllang}
-    </div>
+    </>
   );
 }

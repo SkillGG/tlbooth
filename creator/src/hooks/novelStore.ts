@@ -8,7 +8,7 @@ import {
   type SaveMutationDatas,
   type StoreChapter,
   type StoreNovel,
-  StoreTranslation,
+  type StoreTranslation,
 } from "./mutations/mutation";
 import {
   type MutationSavedType,
@@ -19,6 +19,15 @@ import { AddNovelMutation } from "./mutations/novelMutations/addNovel";
 import { ChangeNovelDescriptionMutation } from "./mutations/novelMutations/changeDescription";
 import { ChangeNovelNameMutation } from "./mutations/novelMutations/changeName";
 import { RemoveNovelMutation } from "./mutations/novelMutations/removeNovel";
+import { AddTranslationMutation } from "./mutations/chapterMutations/addTranslation";
+import { ChangeChapterNameMutation } from "./mutations/chapterMutations/changeName";
+import { RemoveTLMutation } from "./mutations/chapterMutations/removeTranslation";
+
+export type TLInfo = {
+  tl: StoreTranslation;
+  chap: StoreChapter;
+  novel: StoreNovel;
+} | null;
 
 type AnyMutation<T extends MutationType = MutationType> =
   Mutation<T, SaveMutationData<{ type: T }>>;
@@ -75,11 +84,7 @@ type NovelStore = {
     predicate: (c: StoreChapter) => boolean,
   ) => StoreChapter | null;
 
-  getTranslationInfo: (tlID: string) => {
-    tl: StoreTranslation;
-    chap: StoreChapter;
-    novel: StoreNovel;
-  } | null;
+  getTranslationInfo: (tlID: string) => TLInfo;
 
   apply: () => Promise<(() => void)[]>;
 };
@@ -112,6 +117,7 @@ export const useNovelStore = create<NovelStore>()(
           statics: {
             stageChapterID: StageChapterMutation.chapterID,
             addNovelID: AddNovelMutation.novelID,
+            addTLID: AddTranslationMutation.translationID,
           },
         } satisfies MutationSavedType),
       );
@@ -132,6 +138,12 @@ export const useNovelStore = create<NovelStore>()(
             return RemoveNovelMutation.fromData(rmd);
           case MutationType.STAGE_CHAPTER:
             return StageChapterMutation.fromData(rmd);
+          case MutationType.ADD_TRANSLATION:
+            return AddTranslationMutation.fromData(rmd);
+          case MutationType.CHANGE_CHAPTER_NAME:
+            return ChangeChapterNameMutation.fromData(rmd);
+          case MutationType.REMOVE_TRANSLATION:
+            return RemoveTLMutation.fromData(rmd);
           default:
             rmd satisfies never;
             throw "Unknown mutation type!";
@@ -144,11 +156,12 @@ export const useNovelStore = create<NovelStore>()(
           console.error("failed to parse savedData");
           return;
         }
-        console.log(savedData);
         AddNovelMutation.novelID =
           savedData.statics.addNovelID;
         StageChapterMutation.chapterID =
           savedData.statics.stageChapterID;
+        AddTranslationMutation.translationID =
+          savedData.statics.addTLID;
         set((p) => {
           return {
             ...p,
@@ -199,6 +212,7 @@ export const useNovelStore = create<NovelStore>()(
         .getDBNovel(nID)
         ?.chapters.find((c) => fn(c)) ?? null,
     getTranslationInfo: (tlID) => {
+      console.log("getting tlinfo for", tlID);
       let chap: StoreChapter | undefined;
       const novel = get().getNovelBy((p) => {
         const ch = p.chapters.find((c) =>

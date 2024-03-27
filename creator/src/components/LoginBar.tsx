@@ -5,8 +5,8 @@ import {
 } from "@clerk/nextjs";
 import Image from "next/image";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useRouter } from "next/router";
-import { NextResponse } from "next/server";
 import { useState } from "react";
 
 export default function LoginBar({
@@ -16,14 +16,11 @@ export default function LoginBar({
 }) {
   const { user } = useClerk();
 
+  const onDashboard = usePathname()?.includes("dashboard");
+
   const router = useRouter();
 
   const [showLogout, setShowLogout] = useState(false);
-
-  console.log(window.location.pathname);
-
-  const onDashboard =
-    window.location.pathname.includes("dashboard");
 
   return (
     <nav className="grid w-full min-w-12">

@@ -1,3 +1,4 @@
+import { isAddTranslationSaveData } from "./chapterMutations/addTranslation";
 import { isChangeChapterNameSaveData } from "./chapterMutations/changeName";
 import { isStageChapterSaveData } from "./chapterMutations/stageChapter";
 import {
@@ -12,7 +13,11 @@ import { isRemoveNovelSaveData } from "./novelMutations/removeNovel";
 export type MutationSavedType = {
   muts: SaveMutationDatas[];
   undoneMuts: SaveMutationDatas[];
-  statics: { stageChapterID: number; addNovelID: number };
+  statics: {
+    stageChapterID: number;
+    addNovelID: number;
+    addTLID: number;
+  };
 };
 export type MutationSaveData<
   T extends MutationType,
@@ -62,6 +67,14 @@ const consistsOfValidMutationSaveData = (
           if (!isChangeChapterNameSaveData(typedN))
             throw "CHANGE_CHAPTER_NAME";
           break;
+        case MutationType.ADD_TRANSLATION:
+          if (!isAddTranslationSaveData(typedN))
+            throw "ADD_TRANSLATION";
+          break;
+        case MutationType.REMOVE_TRANSLATION:
+          if (!isRemoveNovelSaveData(typedN))
+            throw "REMOVE_TL";
+          break;
         default:
           typedN.type satisfies never;
       }
@@ -90,7 +103,9 @@ export const isMutationSavedType = (
         "stageChapterID" in o.statics &&
         typeof o.statics.stageChapterID === "number" &&
         "addNovelID" in o.statics &&
-        typeof o.statics.addNovelID === "number"
+        typeof o.statics.addNovelID === "number" &&
+        "addTLID" in o.statics &&
+        typeof o.statics.addTLID === "number"
       )
     )
       throw "No statics";

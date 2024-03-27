@@ -9,7 +9,6 @@ import { useState } from "react";
 import { useNovelStore } from "@/hooks/novelStore";
 import { RefreshButton } from "../Icons/refreshButton";
 import { AddNovelMutation } from "@/hooks/mutations/novelMutations/addNovel";
-import { env } from "@/env";
 
 export const ScrapperFilterSelector = () => {
   const [showDialog, setShowDialog] = useState(false);

@@ -1,4 +1,4 @@
-import { Optional } from "@/utils/utils";
+import { type Optional } from "@/utils/utils";
 import { Mutation, MutationType } from "../mutation";
 
 type SaveData = {

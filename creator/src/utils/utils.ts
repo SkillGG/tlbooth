@@ -1,3 +1,4 @@
+import { LANG } from "@prisma/client";
 import { type CSSProperties } from "react";
 
 export const cssIf = (
@@ -25,3 +26,10 @@ export type Optional<T, K extends keyof T> = Pick<
   K
 > &
   Omit<T, K>;
+
+export const isLang = (o: unknown): o is LANG => {
+  return (
+    typeof o === "string" &&
+    Object.values(LANG).includes(o as LANG)
+  );
+};

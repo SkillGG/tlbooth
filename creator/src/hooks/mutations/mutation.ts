@@ -6,6 +6,8 @@ import { type ChangeNovelNameMutation } from "./novelMutations/changeName";
 import { type RemoveNovelMutation } from "./novelMutations/removeNovel";
 import { type StageChapterMutation } from "./chapterMutations/stageChapter";
 import { type ChangeChapterNameMutation } from "./chapterMutations/changeName";
+import { type AddTranslationMutation } from "./chapterMutations/addTranslation";
+import { type RemoveTLMutation } from "./chapterMutations/removeTranslation";
 
 type MakeLocalDeletable<T> = T & {
   forDeletion?: true;
@@ -41,7 +43,8 @@ export enum MutationType {
   REMOVE_NOVEL = "Delete Novel",
   CHANGE_DESC = "Change description",
   CHANGE_CHAPTER_NAME = "Change chapter name",
-  //   ADD_TRANSLATION = "Add translation",
+  ADD_TRANSLATION = "Add translation",
+  REMOVE_TRANSLATION = "Remove translation",
   //   CHANGE_CHAPTER_DESC = "Change chapter description",
 }
 
@@ -64,6 +67,12 @@ export type SaveMutationDatas = NonNullable<
   | ({
       type: MutationType.CHANGE_CHAPTER_NAME;
     } & typeof ChangeChapterNameMutation.prototype.data)
+  | ({
+      type: MutationType.ADD_TRANSLATION;
+    } & typeof AddTranslationMutation.prototype.data)
+  | ({
+      type: MutationType.REMOVE_TRANSLATION;
+    } & typeof RemoveTLMutation.prototype.data)
 >;
 
 export type SaveMutationData<

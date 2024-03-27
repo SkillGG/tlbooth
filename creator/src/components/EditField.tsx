@@ -35,7 +35,7 @@ type EditFieldProps = {
   onSave?: (s: string) => unknown;
   onCancel?: (s: string) => unknown;
   showRestore?: boolean;
-  onReset?: () => Promise<void> | void;
+  onRestore?: () => Promise<void> | void;
   className?: EditFieldCustomization<string>;
   style?: EditFieldCustomization<CSSProperties>;
   ref: {
@@ -64,7 +64,7 @@ export const EditField = React.forwardRef<
     fieldName,
     className,
     style,
-    onReset,
+    onRestore,
     undefinedIsEmpty = true,
   },
   ref,
@@ -113,7 +113,7 @@ export const EditField = React.forwardRef<
                     style={style?.header?.noEdit}
                     onClick={() => {
                       console.log("clicking restore");
-                      void onReset?.();
+                      void onRestore?.();
                       setEdit(false);
                     }}
                   >
