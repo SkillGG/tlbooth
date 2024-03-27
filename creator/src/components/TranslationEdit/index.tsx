@@ -6,6 +6,8 @@ import { ChapterEditCard } from "../ChapterEdit/ChapterEditCard";
 import { NovelEditCard } from "../ChapterEdit/NovelEditCard";
 import { cssIf } from "@/utils/utils";
 import { TextLine } from "@prisma/client";
+import { trpcClient } from "@/pages/_app";
+import { FetchLinesMutation } from "@/hooks/mutations/chapterMutations/fetchLines";
 
 function LineItem({
   line,
@@ -33,7 +35,7 @@ export function TranslationEditor({
 }) {
   const { tl, novel, chap } = info;
 
-  const { getChapter } = useNovelStore();
+  const { getChapter, mutate } = useNovelStore();
 
   const localChapter = !!getChapter(novel.id, chap.id)
     ?.local;
@@ -56,7 +58,16 @@ export function TranslationEditor({
       >
         <div className="px-2">
           Translation{" "}
-          <button className="text-white">
+          <button className="text-white" onClick={async () => {
+            if (!chap) return;
+            const ch = await trpcClient.scrapper.getChapter.query({ novelURL: novel.url, chapterURL: chap.url });
+            if (!ch) return;
+            if ("error" in ch) {
+              console.error(ch.error);
+              return;
+            }
+            mutate(new FetchLinesMutation({ chapterID: chap.id, lines: ch.lines, novelID: novel.id, tlID: tl.id }))
+          }}>
             Fetch lines
           </button>
         </div>

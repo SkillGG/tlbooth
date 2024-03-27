@@ -133,7 +133,7 @@ export const scrapperRouter = createTRPCRouter({
           const rS =
             isRemote ?
               await fetchFromProxy(syo)
-            : await fetchDirectly(syo);
+              : await fetchDirectly(syo);
 
           const parsed = parse(rS);
 
@@ -200,55 +200,26 @@ export const scrapperRouter = createTRPCRouter({
           };
         }
 
-        return {
-          info: {
-            novelURL: "https://testnovel.com/1",
-            novelName: "",
-            novelDescription: "",
-          },
-          chapters: [
-            {
-              name: "テスト章 1 Staged",
-              num: "1",
-              url: "https://testnovel.com/1/1",
-            },
-            {
-              name: "テスト章 1.5 PR",
-              num: "1.5",
-              url: "https://testnovel.com/1/1.5",
-            },
-            {
-              name: "テスト章 3 TLd",
-              num: "2",
-              url: "https://testnovel.com/1/3",
-            },
-            {
-              name: "Test chapter 2.5",
-              num: "2.5",
-              url: "https://testnovel.com/1/2.5",
-            },
-            {
-              name: "Test chapter 4",
-              num: "4",
-              url: "https://testnovel.com/1/4",
-            },
-            {
-              name: "Test chapter 5",
-              num: "5",
-              url: "https://testnovel.com/1/5",
-            },
-          ],
-        };
+        return { error: "TODO" };
       },
     ),
   getChapter: publicProcedure
-    .input(ScrapperChapterInfo)
+    .input(z.object({ novelURL: z.string(), chapterURL: z.string() }))
     .query(
       async ({
         ctx: _,
         input,
-      }): Promise<ScrapperChapter> => {
-        return { info: input, lines: [] };
+      }): Promise<ScrapperChapter | { error: string }> => {
+
+        if (input.novelURL.startsWith("http://dummy")) {
+          const novel = DummyNovels.find(n => n.info.novelURL === input.novelURL);
+          if (!novel) return { error: "Incorrect dummy novel" };
+          const chap = novel.chapters.find(ch => ch.info.url === input.chapterURL);
+          if (!chap) return { error: "Incorrect chapter url" }
+          return chap;
+        }
+
+        return { error: "TODO" };
       },
     ),
 });

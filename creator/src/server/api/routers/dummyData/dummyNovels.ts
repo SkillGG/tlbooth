@@ -11,9 +11,9 @@ export const DummyNovels: (Omit<
 })[] = [
   {
     info: {
-      name: "Dummy 1",
-      description: "A first dummy novel",
-      url: "http://dummy.com/1",
+      novelName: "Dummy 1",
+      novelDescription: "A first dummy novel",
+      novelURL: "http://dummy.com/1",
     },
     chapters: [
       {
@@ -74,9 +74,9 @@ export const DummyNovels: (Omit<
   },
   {
     info: {
-      name: "Dummy 2",
-      description: "A second dummy novel",
-      url: "http://dummy.com/2",
+      novelName: "Dummy 2",
+      novelDescription: "A second dummy novel",
+      novelURL: "http://dummy.com/2",
     },
     chapters: [
       {

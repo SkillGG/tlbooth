@@ -99,19 +99,19 @@ const NovelItem = ({
       {!novelStore?.find(
         (n) => n.url === novel.novelURL,
       ) && (
-        <div className="h-min w-min self-center px-4">
-          {
-            <button
-              className="h-full"
-              onClick={() => {
-                mutate(new AddNovelMutation(novel));
-              }}
-            >
-              Add
-            </button>
-          }
-        </div>
-      )}
+          <div className="h-min w-min self-center px-4">
+            {
+              <button
+                className="h-full"
+                onClick={() => {
+                  mutate(new AddNovelMutation(novel));
+                }}
+              >
+                Add
+              </button>
+            }
+          </div>
+        )}
     </div>
   );
 };
@@ -123,9 +123,9 @@ export const ScraperList = () => {
 
   const novels =
     useDummy ? api.scrapper.getListDummy.useQuery().data
-    : search.has("filters") ?
-      api.scrapper.getList.useQuery({}).data
-    : api.scrapper.getList.useQuery().data;
+      : search.has("filters") ?
+        api.scrapper.getList.useQuery({}).data
+        : api.scrapper.getList.useQuery().data;
 
   const [showSkeleton, setSkeleton] = useState(false);
 
@@ -149,8 +149,9 @@ export const ScraperList = () => {
             <button onClick={() => setSkeleton((p) => !p)}>
               Toggle skeleton
             </button>
+            <button onClick={() => { setUseDummy(p => !p) }}>Toggle dummy</button>
           </>
-        : <div className="min-h-6"></div>}
+          : <div className="min-h-6"></div>}
       </div>
       {novels && "error" in novels ?
         <div>
@@ -168,7 +169,7 @@ export const ScraperList = () => {
             </div>
           )}
         </div>
-      : <>
+        : <>
           <div className="flex h-full flex-col gap-1 overflow-auto">
             {!showSkeleton && novels ?
               novels.map((novel) => {
@@ -179,19 +180,18 @@ export const ScraperList = () => {
                   />
                 );
               })
-            : <>
+              : <>
                 {Array.from({ length: 30 }).map((_, i) => (
                   <Skeleton
                     key={`scraper_skeleton_${i}`}
-                    className={`${
-                      Math.random() > 0.7 ?
+                    className={`${Math.random() > 0.7 ?
                         Math.random() > 0.9 ?
                           Math.random() > 0.7 ?
                             "h-36"
-                          : "h-24"
-                        : "h-12"
-                      : "h-6"
-                    }`}
+                            : "h-24"
+                          : "h-12"
+                        : "h-6"
+                      }`}
                   />
                 ))}
               </>

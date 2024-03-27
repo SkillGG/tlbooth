@@ -53,8 +53,8 @@ model TextLine {
 
     status LineStatus @default(STAGED)
 
-    fullText Translation @relation(fields: [textID], references: [id], onDelete: Cascade)
-    textID   String      @map("textId")
+    Translation Translation? @relation(fields: [textID], references: [id])
+    textID      String?      @map("textId")
 }
 
 model Novel {
