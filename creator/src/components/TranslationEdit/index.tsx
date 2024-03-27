@@ -7,7 +7,7 @@ import { NovelEditCard } from "../ChapterEdit/NovelEditCard";
 import { cssIf } from "@/utils/utils";
 import { TextLine } from "@prisma/client";
 import { trpcClient } from "@/pages/_app";
-import { FetchLinesMutation } from "@/hooks/mutations/chapterMutations/fetchLines";
+// import { FetchLinesMutation } from "@/hooks/mutations/chapterMutations/fetchLines";
 
 function LineItem({
   line,
@@ -66,7 +66,7 @@ export function TranslationEditor({
               console.error(ch.error);
               return;
             }
-            mutate(new FetchLinesMutation({ chapterID: chap.id, lines: ch.lines, novelID: novel.id, tlID: tl.id }))
+            // mutate(new FetchLinesMutation({ chapterID: chap.id, lines: ch.lines, novelID: novel.id, tlID: tl.id }))
           }}>
             Fetch lines
           </button>

@@ -45,7 +45,7 @@ export enum MutationType {
   CHANGE_CHAPTER_NAME = "Change chapter name",
   ADD_TRANSLATION = "Add translation",
   REMOVE_TRANSLATION = "Remove translation",
-  FETCH_LINES = "Fetch lines"
+  // FETCH_LINES = "Fetch lines"
   //   CHANGE_CHAPTER_DESC = "Change chapter description",
 }
 
