@@ -1,5 +1,7 @@
 import { isAddTranslationSaveData } from "./chapterMutations/addTranslation";
+import { isChangeLineSaveData } from "./chapterMutations/changeLine";
 import { isChangeChapterNameSaveData } from "./chapterMutations/changeName";
+import { isFetchLineSaveData } from "./chapterMutations/fetchLines";
 import { isStageChapterSaveData } from "./chapterMutations/stageChapter";
 import {
   MutationType,
@@ -17,6 +19,7 @@ export type MutationSavedType = {
     stageChapterID: number;
     addNovelID: number;
     addTLID: number;
+    fetchID: number;
   };
 };
 export type MutationSaveData<
@@ -74,6 +77,14 @@ const consistsOfValidMutationSaveData = (
         case MutationType.REMOVE_TRANSLATION:
           if (!isRemoveNovelSaveData(typedN))
             throw "REMOVE_TL";
+          break;
+        case MutationType.FETCH_LINES:
+          if (!isFetchLineSaveData(typedN))
+            throw "FETCH_LINES";
+          break;
+        case MutationType.CHANGE_LINE:
+          if (!isChangeLineSaveData(typedN))
+            throw "CHANGE_LINE";
           break;
         default:
           typedN.type satisfies never;

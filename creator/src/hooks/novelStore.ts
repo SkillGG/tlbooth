@@ -22,6 +22,8 @@ import { RemoveNovelMutation } from "./mutations/novelMutations/removeNovel";
 import { AddTranslationMutation } from "./mutations/chapterMutations/addTranslation";
 import { ChangeChapterNameMutation } from "./mutations/chapterMutations/changeName";
 import { RemoveTLMutation } from "./mutations/chapterMutations/removeTranslation";
+import { FetchLinesMutation } from "./mutations/chapterMutations/fetchLines";
+import { ChangeLineMutation } from "./mutations/chapterMutations/changeLine";
 
 export type TLInfo = {
   tl: StoreTranslation;
@@ -118,6 +120,7 @@ export const useNovelStore = create<NovelStore>()(
             stageChapterID: StageChapterMutation.chapterID,
             addNovelID: AddNovelMutation.novelID,
             addTLID: AddTranslationMutation.translationID,
+            fetchID: FetchLinesMutation.fetchLineID,
           },
         } satisfies MutationSavedType),
       );
@@ -144,6 +147,10 @@ export const useNovelStore = create<NovelStore>()(
             return ChangeChapterNameMutation.fromData(rmd);
           case MutationType.REMOVE_TRANSLATION:
             return RemoveTLMutation.fromData(rmd);
+          case MutationType.FETCH_LINES:
+            return new FetchLinesMutation(rmd);
+          case MutationType.CHANGE_LINE:
+            return new ChangeLineMutation(rmd);
           default:
             rmd satisfies never;
             throw "Unknown mutation type!";
@@ -162,6 +169,8 @@ export const useNovelStore = create<NovelStore>()(
           savedData.statics.stageChapterID;
         AddTranslationMutation.translationID =
           savedData.statics.addTLID;
+        FetchLinesMutation.fetchLineID =
+          savedData.statics.fetchID;
         set((p) => {
           return {
             ...p,
@@ -370,7 +379,6 @@ export const useNovelStore = create<NovelStore>()(
       } catch (e) {
         console.error(e);
       }
-      get().saveMutations(localStorage);
       return sets;
     },
   }),

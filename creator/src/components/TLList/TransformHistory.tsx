@@ -18,6 +18,7 @@ export function TransformationHistory() {
     undo,
     redo,
     apply,
+    saveMutations,
   } = useNovelStore();
 
   const isAdmin = useAdmin();
@@ -71,6 +72,7 @@ export function TransformationHistory() {
                         for (const s of sets) {
                           s();
                         }
+                        saveMutations(localStorage);
                       });
                     })
                     .catch(console.error);

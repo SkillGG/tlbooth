@@ -96,7 +96,7 @@ export const EditField = React.forwardRef<
           className={`${cssDef(className?.header?.main)}`}
           style={style?.header?.main}
         >
-          {fieldName}:
+          {fieldName}{fieldName?":":""}
           {!lock &&
             (!edit ?
               <>

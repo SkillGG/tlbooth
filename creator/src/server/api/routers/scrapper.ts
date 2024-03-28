@@ -25,9 +25,14 @@ export const ScrapperChapterInfo = z.object({
   num: z.string(),
 });
 
+export const ScrapperTextLine = z.object({
+  pos: z.number(),
+  text: z.string(),
+});
+
 export const ScrapperChapter = z.object({
   info: ScrapperChapterInfo,
-  lines: z.array(z.string()),
+  lines: z.array(ScrapperTextLine),
 });
 
 export const ScrapperNovel = z.object({
@@ -46,6 +51,10 @@ export type ScrapperChapterInfo = z.infer<
   typeof ScrapperChapterInfo
 >;
 export type ScrapperNovel = z.infer<typeof ScrapperNovel>;
+
+export type ScrapperTextLine = z.infer<
+  typeof ScrapperTextLine
+>;
 
 const fetchDirectly = async ({
   syo,
@@ -133,7 +142,7 @@ export const scrapperRouter = createTRPCRouter({
           const rS =
             isRemote ?
               await fetchFromProxy(syo)
-              : await fetchDirectly(syo);
+            : await fetchDirectly(syo);
 
           const parsed = parse(rS);
 
@@ -204,18 +213,28 @@ export const scrapperRouter = createTRPCRouter({
       },
     ),
   getChapter: publicProcedure
-    .input(z.object({ novelURL: z.string(), chapterURL: z.string() }))
+    .input(
+      z.object({
+        novelURL: z.string(),
+        chapterURL: z.string(),
+      }),
+    )
     .query(
       async ({
         ctx: _,
         input,
       }): Promise<ScrapperChapter | { error: string }> => {
-
         if (input.novelURL.startsWith("http://dummy")) {
-          const novel = DummyNovels.find(n => n.info.novelURL === input.novelURL);
-          if (!novel) return { error: "Incorrect dummy novel" };
-          const chap = novel.chapters.find(ch => ch.info.url === input.chapterURL);
-          if (!chap) return { error: "Incorrect chapter url" }
+          const novel = DummyNovels.find(
+            (n) => n.info.novelURL === input.novelURL,
+          );
+          if (!novel)
+            return { error: "Incorrect dummy novel" };
+          const chap = novel.chapters.find(
+            (ch) => ch.info.url === input.chapterURL,
+          );
+          if (!chap)
+            return { error: "Incorrect chapter url" };
           return chap;
         }
 

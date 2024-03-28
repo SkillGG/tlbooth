@@ -8,6 +8,8 @@ import { type StageChapterMutation } from "./chapterMutations/stageChapter";
 import { type ChangeChapterNameMutation } from "./chapterMutations/changeName";
 import { type AddTranslationMutation } from "./chapterMutations/addTranslation";
 import { type RemoveTLMutation } from "./chapterMutations/removeTranslation";
+import { type FetchLinesMutation } from "./chapterMutations/fetchLines";
+import { ChangeLineMutation } from "./chapterMutations/changeLine";
 
 type MakeLocalDeletable<T> = T & {
   forDeletion?: true;
@@ -32,9 +34,10 @@ export type StoreTranslation =
 
 export type Dependency =
   | {
-    novelID: string;
-  }
-  | { chapterID: string } | { tlID: string };
+      novelID: string;
+    }
+  | { chapterID: string }
+  | { tlID: string };
 
 export enum MutationType {
   CHANGE_NAME = "Change Title",
@@ -45,35 +48,42 @@ export enum MutationType {
   CHANGE_CHAPTER_NAME = "Change chapter name",
   ADD_TRANSLATION = "Add translation",
   REMOVE_TRANSLATION = "Remove translation",
-  // FETCH_LINES = "Fetch lines"
+  FETCH_LINES = "Fetch lines",
+  CHANGE_LINE = "Change Text Line",
   //   CHANGE_CHAPTER_DESC = "Change chapter description",
 }
 
 export type SaveMutationDatas = NonNullable<
   | ({
-    type: MutationType.ADD_NOVEL;
-  } & typeof AddNovelMutation.prototype.data)
+      type: MutationType.ADD_NOVEL;
+    } & typeof AddNovelMutation.prototype.data)
   | ({
-    type: MutationType.CHANGE_DESC;
-  } & typeof ChangeNovelDescriptionMutation.prototype.data)
+      type: MutationType.CHANGE_DESC;
+    } & typeof ChangeNovelDescriptionMutation.prototype.data)
   | ({
-    type: MutationType.CHANGE_NAME;
-  } & typeof ChangeNovelNameMutation.prototype.data)
+      type: MutationType.CHANGE_NAME;
+    } & typeof ChangeNovelNameMutation.prototype.data)
   | ({
-    type: MutationType.REMOVE_NOVEL;
-  } & typeof RemoveNovelMutation.prototype.data)
+      type: MutationType.REMOVE_NOVEL;
+    } & typeof RemoveNovelMutation.prototype.data)
   | ({
-    type: MutationType.STAGE_CHAPTER;
-  } & typeof StageChapterMutation.prototype.data)
+      type: MutationType.STAGE_CHAPTER;
+    } & typeof StageChapterMutation.prototype.data)
   | ({
-    type: MutationType.CHANGE_CHAPTER_NAME;
-  } & typeof ChangeChapterNameMutation.prototype.data)
+      type: MutationType.CHANGE_CHAPTER_NAME;
+    } & typeof ChangeChapterNameMutation.prototype.data)
   | ({
-    type: MutationType.ADD_TRANSLATION;
-  } & typeof AddTranslationMutation.prototype.data)
+      type: MutationType.ADD_TRANSLATION;
+    } & typeof AddTranslationMutation.prototype.data)
   | ({
-    type: MutationType.REMOVE_TRANSLATION;
-  } & typeof RemoveTLMutation.prototype.data)
+      type: MutationType.REMOVE_TRANSLATION;
+    } & typeof RemoveTLMutation.prototype.data)
+  | ({
+      type: MutationType.FETCH_LINES;
+    } & typeof FetchLinesMutation.prototype.data)
+  | ({
+      type: MutationType.CHANGE_LINE;
+    } & typeof ChangeLineMutation.prototype.data)
 >;
 
 export type SaveMutationData<
@@ -114,7 +124,7 @@ export abstract class Mutation<
   }
   getDescription(n: StoreNovel[]) {
     return typeof this.desc === "function" ?
-      this.desc(n)
+        this.desc(n)
       : this.desc;
   }
 }

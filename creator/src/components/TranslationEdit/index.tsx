@@ -7,6 +7,9 @@ import { NovelEditCard } from "../ChapterEdit/NovelEditCard";
 import { cssIf } from "@/utils/utils";
 import { TextLine } from "@prisma/client";
 import { trpcClient } from "@/pages/_app";
+import { FetchLinesMutation } from "@/hooks/mutations/chapterMutations/fetchLines";
+import { EditField } from "../EditField";
+import { ChangeLineMutation } from "@/hooks/mutations/chapterMutations/changeLine";
 // import { FetchLinesMutation } from "@/hooks/mutations/chapterMutations/fetchLines";
 
 function LineItem({
@@ -16,13 +19,51 @@ function LineItem({
   line: TextLine;
   tlID: string;
 }) {
+  const { mutate, getTranslationInfo } = useNovelStore();
+
+  const tlInfo = getTranslationInfo(tlID);
+
+  if (!tlInfo) return <></>;
+
   return (
     <>
-      <div className="w-full justify-self-start text-center">
-        {line.ogline}
+      <div
+        className="w-min"
+        style={{ gridColumn: "1 / span 1" }}
+      >
+        #{line.pos}
       </div>
-      <div className="w-full justify-self-end text-center">
-        {line.tlline}
+      <div
+        className="grid justify-center"
+        style={{ gridColumn: "2 / span 1" }}
+      >
+        <EditField
+          fieldName=""
+          lock={true}
+          defaultValue={line.ogline}
+        />
+      </div>
+      <div
+        className="grid justify-center"
+        style={{ gridColumn: "3 / span 1" }}
+      >
+        <EditField
+          fieldName=""
+          lock={false}
+          defaultValue={line.tlline}
+          onSave={(value) => {
+            mutate(
+              new ChangeLineMutation({
+                chapterID: tlInfo.chap.id,
+                novelID: tlInfo.novel.id,
+                tlID: tlInfo.tl.id,
+                linePos: line.pos,
+                og: false,
+                value,
+              }),
+            );
+          }}
+        />
       </div>
     </>
   );
@@ -58,20 +99,39 @@ export function TranslationEditor({
       >
         <div className="px-2">
           Translation{" "}
-          <button className="text-white" onClick={async () => {
-            if (!chap) return;
-            const ch = await trpcClient.scrapper.getChapter.query({ novelURL: novel.url, chapterURL: chap.url });
-            if (!ch) return;
-            if ("error" in ch) {
-              console.error(ch.error);
-              return;
-            }
-            // mutate(new FetchLinesMutation({ chapterID: chap.id, lines: ch.lines, novelID: novel.id, tlID: tl.id }))
-          }}>
+          <button
+            className="text-white"
+            onClick={async () => {
+              if (!chap) return;
+              const ch =
+                await trpcClient.scrapper.getChapter.query({
+                  novelURL: novel.url,
+                  chapterURL: chap.url,
+                });
+              if (!ch) return;
+              if ("error" in ch) {
+                console.error(ch.error);
+                return;
+              }
+              mutate(
+                new FetchLinesMutation({
+                  chapterID: chap.id,
+                  lines: ch.lines,
+                  novelID: novel.id,
+                  tlID: tl.id,
+                }),
+              );
+            }}
+          >
             Fetch lines
           </button>
         </div>
-        <div className="grid w-full grid-cols-2 gap-3">
+        <div
+          className="grid px-2"
+          style={{
+            gridTemplateColumns: "min-content 1fr 1fr",
+          }}
+        >
           {tl.lines.map((line) => (
             <LineItem
               key={line.id}

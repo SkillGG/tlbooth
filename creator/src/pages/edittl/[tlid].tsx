@@ -1,12 +1,9 @@
+import { TransformationHistory } from "@/components/TLList/TransformHistory";
 import { TranslationEditor } from "@/components/TranslationEdit";
-import {
-  type TLInfo,
-  useNovelStore,
-} from "@/hooks/novelStore";
+import { useNovelStore } from "@/hooks/novelStore";
 import Head from "next/head";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { useEffect, useState } from "react";
 
 export default function EditTL() {
   const { tlid } = useParams();
@@ -17,17 +14,7 @@ export default function EditTL() {
       getTranslationInfo(tlid)
     : null;
 
-  const [tlInfo, setTLInfo] = useState<TLInfo | null>(
-    tlinf,
-  );
-
-  useEffect(() => {
-    setTLInfo(tlinf);
-  }, [tlinf]);
-
-  if (!tlInfo) return <>Loading...</>;
-
-  const { novel, chap } = tlInfo;
+  if (!tlinf) return <>Loading...</>;
 
   return (
     <>
@@ -36,13 +23,17 @@ export default function EditTL() {
       </Head>
       <div>
         <div>
-          <Link
-            href={`/edit/${encodeURIComponent(novel.id)}/${encodeURIComponent(chap.id)}`}
-          >
-            Back to Edit Chapter
-          </Link>
+          <TransformationHistory />
+          <br />
+          {tlinf && (
+            <Link
+              href={`/edit/${encodeURIComponent(tlinf.novel.id)}/${encodeURIComponent(tlinf.chap.id)}`}
+            >
+              Back to Edit Chapter
+            </Link>
+          )}
         </div>
-        <TranslationEditor info={tlInfo} />
+        {tlinf && <TranslationEditor info={tlinf} />}
       </div>
     </>
   );
