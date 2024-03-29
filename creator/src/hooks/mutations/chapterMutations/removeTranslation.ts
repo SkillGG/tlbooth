@@ -1,3 +1,4 @@
+import { type NovelStore } from "@/hooks/novelStore";
 import { Mutation, MutationType } from "../mutation";
 
 type SaveData = {
@@ -27,16 +28,16 @@ export class RemoveTLMutation extends Mutation<
       RemoveTLMutation.getID(tlID),
       (p) =>
         p.map((n) =>
-          n.id === novelID ?
+          n.id === this.data.novelID ?
             {
               ...n,
               chapters: n.chapters.map((ch) =>
-                ch.id === chapterID ?
+                ch.id === this.data.chapterID ?
                   {
                     ...ch,
                     translations: ch.translations.map(
                       (tl) =>
-                        tl.id === tlID ?
+                        tl.id === this.data.tlID ?
                           { ...tl, forDeletion: true }
                         : tl,
                     ),
@@ -47,16 +48,43 @@ export class RemoveTLMutation extends Mutation<
           : n,
         ),
       (p): string =>
-        p.find((x) => x.id === tlID)?.ogname ?? tlID,
+        p.find((x) => x.id === this.data.tlID)?.ogname ??
+        this.data.tlID,
       MutationType.REMOVE_TRANSLATION,
-      async () => {
-        throw "TODO";
+      async (store) => {
+        RemoveTLMutation.removeAllDependantMutations(
+          this.data.tlID,
+          store,
+          this,
+        );
+        throw "TODO _removeTL";
       },
-      [{ novelID }, { chapterID }],
       { tlID, novelID, chapterID },
     );
   }
-  static fromData(d: SaveData) {
-    return new RemoveTLMutation(d);
+  updateID(): void {
+    this.id = RemoveTLMutation.getID(this.data.tlID);
+  }
+  override onRemoved(): void {}
+  static removeAllDependantMutations(
+    tlID: string,
+    store: NovelStore,
+    callingMut: Mutation<MutationType, object>,
+  ) {
+    store.getMutations(true).forEach((mut) => {
+      if (!("tlID" in mut.data)) return;
+      if (
+        mut.data.tlID === tlID &&
+        callingMut.id !== mut.id
+      ) {
+        console.log(
+          "removing mutation",
+          mut,
+          "because it depended on tl",
+          tlID,
+        );
+        store.removeMutation(mut.id);
+      }
+    });
   }
 }

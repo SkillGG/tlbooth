@@ -1,8 +1,13 @@
 import Head from "next/head";
 import { TLList } from "@/components/TLList/TLList";
 import { ScraperList } from "@/components/Scrapper/ScraperList";
+import { useNovelStore } from "@/hooks/novelStore";
 
 export default function Dashboard() {
+  const { getMutations } = useNovelStore();
+
+  console.log("Mutations", getMutations());
+
   return (
     <>
       <Head>

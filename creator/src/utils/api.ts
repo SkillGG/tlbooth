@@ -4,7 +4,12 @@
  *
  * We also create a few inference helpers for input and output types.
  */
-import { httpBatchLink, loggerLink } from "@trpc/client";
+import {
+  httpBatchLink,
+  httpLink,
+  loggerLink,
+  splitLink,
+} from "@trpc/client";
 import { createTRPCNext } from "@trpc/next";
 import {
   type inferRouterInputs,
@@ -44,9 +49,7 @@ export const api = createTRPCNext<AppRouter>({
             (opts.direction === "down" &&
               opts.result instanceof Error),
         }),
-        httpBatchLink({
-          url: `${getBaseUrl()}/api/trpc`,
-        }),
+        httpLink({ url: `${getBaseUrl()}/api/trpc` }),
       ],
     };
   },

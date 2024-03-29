@@ -11,6 +11,8 @@ import { ChangeNovelNameMutation } from "@/hooks/mutations/novelMutations/change
 import { ChangeNovelDescriptionMutation } from "@/hooks/mutations/novelMutations/changeDescription";
 import { RemoveNovelMutation } from "@/hooks/mutations/novelMutations/removeNovel";
 import { AddNovelMutation } from "@/hooks/mutations/novelMutations/addNovel";
+import { WindowActionMenu } from "./ChapterActionMenu";
+import { createPortal } from "react-dom";
 
 export const compareChapterNums = (
   n: string,
@@ -29,6 +31,10 @@ export const NovelCard = ({
   const novelData = api.scrapper.getNovel.useQuery(
     novel.url,
   ).data;
+
+  const [showMenu, setShowMenu] = useState<
+    false | { x: number; y: number }
+  >(false);
 
   const show = unwrapped && !novel.forDeletion;
 
@@ -76,12 +82,38 @@ export const NovelCard = ({
       className="w-full justify-center rounded-xl border-2 border-gray-400"
       id={`novel_${novel.id}`}
     >
+      {showMenu &&
+        createPortal(
+          <WindowActionMenu
+            actions={[
+              {
+                label: "Go to page",
+                action() {
+                  if (novel.url)
+                    window.open(
+                      decodeURIComponent(novel.url),
+                      "_blank",
+                    );
+                },
+              },
+            ]}
+            hide={() => setShowMenu(false)}
+            x={showMenu.x}
+            y={showMenu.y}
+          />,
+          document.body,
+        )}
       <div
         className={`${cssIf(novel.local, novelItem.local)}
         ${cssIf(show, "border-b-2")}
         ${cssIf(novelData && "error" in novelData, "rounded-lg bg-red-300")}
         ${cssIf(novel.forDeletion, novelItem.forDeletion)}
         grid grid-flow-col text-balance border-gray-400 text-center text-sm`}
+        onContextMenu={(e) => {
+          console.log("showing context menu");
+          setShowMenu({ x: e.clientX, y: e.clientY });
+          e.preventDefault();
+        }}
       >
         <button
           className="grid w-full"
@@ -101,123 +133,129 @@ export const NovelCard = ({
       {show && (
         <>
           <div
-            className="box-content grid grid-flow-col gap-5 "
-            style={{ gridTemplateColumns: "1fr 1fr 2fr" }}
+            className="box-content grid"
+            style={{ gridTemplateColumns: "1fr 1fr" }}
           >
-            <div className="px-3 pb-1">
-              <EditField
-                fieldName="OGName"
-                lock={true}
-                defaultValue={novel.ogname}
-              />
-              <EditField
-                fieldName="TLName"
-                ref={nameEdit}
-                lock={!!novel.forDeletion}
-                showRestore={tlnameChanged}
-                onSave={(v) =>
-                  mutate(
-                    new ChangeNovelNameMutation({
-                      novelID: novel.id,
-                      name: v,
-                      og: false,
-                    }),
-                    true,
-                  )
-                }
-                onRestore={() => {
-                  removeMutation(
-                    ChangeNovelNameMutation.getID({
-                      novelID: novel.id,
-                      og: false,
-                    }),
-                  );
-                }}
-                defaultValue={novel.tlname ?? ""}
-                className={{
-                  staticField: {
-                    div: cssIf(
-                      !tlnameChanged,
-                      "rounded-lg",
-                    ),
-                  },
-                }}
-                style={{
-                  staticField: {
-                    div: cssPIf(tlnameChanged, {
-                      backgroundColor: "#ff02",
-                    }),
-                  },
-                }}
-              />
-            </div>
-            <div className="px-3 pb-1">
-              <EditField
-                fieldName="OGDesc"
-                onSave={(v) =>
-                  mutate(
-                    new ChangeNovelDescriptionMutation({
-                      novelID: novel.id,
-                      desc: v,
-                      og: true,
-                    }),
-                    true,
-                  )
-                }
-                onRestore={() => {
-                  removeMutation(
-                    ChangeNovelDescriptionMutation.getID({
-                      novelID: novel.id,
-                      og: true,
-                    }),
-                  );
-                }}
-                showRestore={ogdescChanged}
-                ref={ogdescEdit}
-                lock={!!novel.forDeletion}
-                defaultValue={novel.ogdesc}
-                className={{
-                  staticField: {
-                    div: cssIf(
-                      ogdescChanged,
-                      "rounded-lg bg-[#ff02]",
-                    ),
-                  },
-                }}
-              />
-              <EditField
-                fieldName="TLDesc"
-                ref={tldescEdit}
-                lock={!!novel.forDeletion}
-                showRestore={tldescChanged}
-                onSave={(v) => {
-                  mutate(
-                    new ChangeNovelDescriptionMutation({
-                      novelID: novel.id,
-                      desc: v,
-                      og: true,
-                    }),
-                    true,
-                  );
-                }}
-                onRestore={() => {
-                  removeMutation(
-                    ChangeNovelDescriptionMutation.getID({
-                      novelID: novel.id,
-                      og: false,
-                    }),
-                  );
-                }}
-                defaultValue={novel.tldesc ?? ""}
-                className={{
-                  staticField: {
-                    div: cssIf(
-                      tldescChanged,
-                      "rounded-lg bg-[#ff02]",
-                    ),
-                  },
-                }}
-              />
+            <div className="px-3 pt-1">
+              <div className="border-b-2">Novel info</div>
+              <div
+                className="grid grid-flow-col border-b-[1px] border-dotted px-3 pb-2"
+                style={{ gridAutoColumns: "1fr 1fr" }}
+              >
+                <EditField
+                  fieldName="OGName"
+                  lock={true}
+                  defaultValue={novel.ogname}
+                />
+                <EditField
+                  fieldName="TLName"
+                  ref={nameEdit}
+                  lock={!!novel.forDeletion}
+                  showRestore={tlnameChanged}
+                  onSave={(v) =>
+                    mutate(
+                      new ChangeNovelNameMutation({
+                        novelID: novel.id,
+                        name: v,
+                        og: false,
+                      }),
+                      true,
+                    )
+                  }
+                  onRestore={() => {
+                    removeMutation(
+                      ChangeNovelNameMutation.getID({
+                        novelID: novel.id,
+                        og: false,
+                      }),
+                    );
+                  }}
+                  defaultValue={novel.tlname ?? ""}
+                  className={{
+                    staticField: {
+                      div: cssIf(
+                        !tlnameChanged,
+                        "rounded-lg",
+                      ),
+                    },
+                  }}
+                  style={{
+                    staticField: {
+                      div: cssPIf(tlnameChanged, {
+                        backgroundColor: "#ff02",
+                      }),
+                    },
+                  }}
+                />
+              </div>
+              <div className="grid grid-flow-col border-b-[1px] border-dotted px-3 pb-1">
+                <EditField
+                  fieldName="OGDesc"
+                  onSave={(v) =>
+                    mutate(
+                      new ChangeNovelDescriptionMutation({
+                        novelID: novel.id,
+                        desc: v,
+                        og: true,
+                      }),
+                      true,
+                    )
+                  }
+                  onRestore={() => {
+                    removeMutation(
+                      ChangeNovelDescriptionMutation.getID({
+                        novelID: novel.id,
+                        og: true,
+                      }),
+                    );
+                  }}
+                  showRestore={ogdescChanged}
+                  ref={ogdescEdit}
+                  lock={!!novel.forDeletion}
+                  defaultValue={novel.ogdesc}
+                  className={{
+                    staticField: {
+                      div: cssIf(
+                        ogdescChanged,
+                        "rounded-lg bg-[#ff02]",
+                      ),
+                    },
+                  }}
+                />
+                <EditField
+                  fieldName="TLDesc"
+                  ref={tldescEdit}
+                  lock={!!novel.forDeletion}
+                  showRestore={tldescChanged}
+                  onSave={(v) => {
+                    mutate(
+                      new ChangeNovelDescriptionMutation({
+                        novelID: novel.id,
+                        desc: v,
+                        og: false,
+                      }),
+                      true,
+                    );
+                  }}
+                  onRestore={() => {
+                    removeMutation(
+                      ChangeNovelDescriptionMutation.getID({
+                        novelID: novel.id,
+                        og: false,
+                      }),
+                    );
+                  }}
+                  defaultValue={novel.tldesc ?? ""}
+                  className={{
+                    staticField: {
+                      div: cssIf(
+                        tldescChanged,
+                        "rounded-lg bg-[#ff02]",
+                      ),
+                    },
+                  }}
+                />
+              </div>
             </div>
 
             <div

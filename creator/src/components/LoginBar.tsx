@@ -39,7 +39,10 @@ export default function LoginBar({
               <SignOutButton
                 signOutCallback={() => {
                   void router.replace(
-                    new URL("/", window.location.href),
+                    new URL(
+                      "/dashboard",
+                      window.location.href,
+                    ),
                   );
                 }}
               >

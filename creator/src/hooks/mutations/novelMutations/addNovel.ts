@@ -5,6 +5,8 @@ import {
   type StoreNovel,
 } from "../mutation";
 import { type Optional } from "@/utils/utils";
+import { type NovelStore } from "@/hooks/novelStore";
+import { RemoveNovelMutation } from "./removeNovel";
 
 export type SaveData = {
   novelURL: string;
@@ -44,7 +46,9 @@ export class AddNovelMutation extends Mutation<
     novelID,
   }: Optional<SaveData, "novelID">) {
     const novel: StoreNovel = {
-      id: `localnovel_${novelID ?? ++AddNovelMutation.novelID}`,
+      id:
+        novelID ??
+        `localnovel_${++AddNovelMutation.novelID}`,
       chapters: [],
       ogname: novelName,
       tlname: "",
@@ -58,14 +62,23 @@ export class AddNovelMutation extends Mutation<
       (p) => [...p, novel],
       novelName,
       MutationType.ADD_NOVEL,
-      async () => {
-        await trpcClient.db.registerNovel.mutate({
-          novelName,
-          novelURL,
-          novelDescription,
+      async (novelStore) => {
+        const retNovel =
+          await trpcClient.db.registerNovel.mutate({
+            novelName,
+            novelURL,
+            novelDescription,
+          });
+        // update all novelIDs in every mutation with new novelID from database
+        novelStore.getMutations().forEach((n) => {
+          if (n.data) {
+            if (n.data.novelID === novel.id) {
+              n.data.novelID = retNovel.id;
+              n.updateID();
+            }
+          }
         });
       },
-      [{ novelID: novel.id }],
       {
         novelDescription,
         novelID: novel.id,
@@ -74,7 +87,14 @@ export class AddNovelMutation extends Mutation<
       },
     );
   }
-  static fromData(d: SaveData) {
-    return new AddNovelMutation(d);
+  updateID(): void {
+    this.id = AddNovelMutation.getID(this.data.novelID);
+  }
+  override onRemoved(store: NovelStore): void {
+    RemoveNovelMutation.removeMutationsDependingOnNovel(
+      this.data.novelID,
+      store,
+      this,
+    );
   }
 }

@@ -5,6 +5,8 @@ import {
   type StoreTranslation,
 } from "../mutation";
 import { type Optional, isLang } from "@/utils/utils";
+import { RemoveTLMutation } from "./removeTranslation";
+import { type NovelStore } from "@/hooks/novelStore";
 
 type SaveData = {
   novelID: string;
@@ -73,11 +75,11 @@ export class AddTranslationMutation extends Mutation<
           status: "STAGED",
         };
         return p.map((n) =>
-          n.id === novelID ?
+          n.id === this.data.novelID ?
             {
               ...n,
               chapters: n.chapters.map((ch) =>
-                ch.id === chapterID ?
+                ch.id === this.data.chapterID ?
                   {
                     ...ch,
                     translations: [
@@ -94,13 +96,19 @@ export class AddTranslationMutation extends Mutation<
       id,
       MutationType.ADD_TRANSLATION,
       async () => {
-        throw "TODO";
+        throw "TODO _addTL";
       },
-      [{ novelID }],
       { novelID, chapterID, from, tlID: id, to },
     );
   }
-  static fromData(d: SaveData) {
-    return new AddTranslationMutation(d);
+  updateID(): void {
+    this.id = AddTranslationMutation.getID(this.data);
+  }
+  override onRemoved(store: NovelStore): void {
+    RemoveTLMutation.removeAllDependantMutations(
+      this.data.tlID,
+      store,
+      this,
+    );
   }
 }

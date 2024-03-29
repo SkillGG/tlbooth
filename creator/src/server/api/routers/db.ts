@@ -4,7 +4,7 @@ import {
   createTRPCRouter,
   publicProcedure,
 } from "@/server/api/trpc";
-import { type Prisma } from "@prisma/client";
+import { type Novel, type Prisma } from "@prisma/client";
 import { ScrapperNovelInfo } from "./scrapper";
 
 export type DBNovel = Prisma.NovelGetPayload<{
@@ -18,11 +18,6 @@ export type DBNovel = Prisma.NovelGetPayload<{
 }>;
 
 export const databaseRouter = createTRPCRouter({
-  checkPass: publicProcedure
-    .input(z.string())
-    .mutation(({ input }) => {
-      return input == process.env.EDIT_PASS;
-    }),
   getFromDB: publicProcedure.query(async ({ ctx }) => {
     const novels = await ctx.db.novel.findMany({
       include: {
@@ -37,12 +32,14 @@ export const databaseRouter = createTRPCRouter({
   }),
   registerNovel: publicProcedure
     .input(ScrapperNovelInfo)
-    .mutation(async ({ ctx, input }) => {
+    .mutation(async ({ ctx, input }): Promise<Novel> => {
       const result = await ctx.db.novel.create({
-        data: { url: input.novelURL, ogname: input.novelName },
+        data: {
+          url: input.novelURL,
+          ogname: input.novelName,
+        },
       });
-      console.log(result);
-      return;
+      return result;
     }),
   removeNovel: publicProcedure
     .input(z.string())
@@ -53,9 +50,65 @@ export const databaseRouter = createTRPCRouter({
           chapters: { every: { novelID: input } },
         },
       });
-      console.log("=================");
-      console.log(result);
-      console.log("=================");
-      return "abd";
+      return result;
+    }),
+  changeNovelName: publicProcedure
+    .input(
+      z.object({
+        name: z.string(),
+        og: z.boolean(),
+        novelID: z.string(),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const result = await ctx.db.novel.update({
+        where: { id: input.novelID },
+        data:
+          input.og ?
+            { ogname: input.name }
+          : { tlname: input.name },
+      });
+      return result;
+    }),
+  changeNovelDescription: publicProcedure
+    .input(
+      z.object({
+        desc: z.string(),
+        og: z.boolean(),
+        novelID: z.string(),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const result = await ctx.db.novel.update({
+        where: { id: input.novelID },
+        data:
+          input.og ?
+            { ogdesc: input.desc }
+          : { tldesc: input.desc },
+      });
+      return result;
+    }),
+  addChapter: publicProcedure
+    .input(
+      z.object({
+        name: z.string(),
+        novelID: z.string(),
+        ognum: z.number(),
+        url: z.string(),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const { name, novelID, url, ognum } = input;
+      const result = await ctx.db.chapter.create({
+        data: {
+          ogname: name,
+          url,
+          novelID,
+          num: `${ognum}`,
+          ognum,
+        },
+      });
+      console.log("added chapter", result);
+      return result;
     }),
 });

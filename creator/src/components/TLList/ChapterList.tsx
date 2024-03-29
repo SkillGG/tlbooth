@@ -12,12 +12,13 @@ import deepEquals from "fast-deep-equal";
 import React, { useState } from "react";
 import { createPortal } from "react-dom";
 import {
-  ChapterActionMenu,
+  WindowActionMenu,
   type ChapterActionMenuItem,
 } from "./ChapterActionMenu";
 import { useRouter } from "next/router";
 import { StageChapterMutation } from "@/hooks/mutations/chapterMutations/stageChapter";
 import { type StoreNovel } from "@/hooks/mutations/mutation";
+import { Skeleton } from "../Skeleton/Skeleton";
 
 type StagedChapterInfo = ScrapperChapterInfo & {
   staged: boolean;
@@ -125,9 +126,15 @@ const ChapterItem = React.memo(function ChapterItem({
                   new StageChapterMutation({
                     ...local,
                     novelID,
-                    description: "",
                   }),
                 );
+              },
+            },
+            "-",
+            {
+              label: "Open Page",
+              action: () => {
+                window.open(local.url, "_blank");
               },
             },
           ]}
@@ -141,14 +148,14 @@ const ChapterItem = React.memo(function ChapterItem({
         novelID,
         (c) =>
           c.url === local.url &&
-          c.num === local.num &&
+          c.ognum === local.ognum &&
           c.ogname === local.name,
       );
       const dbChap = getDBChapterBy(
         novelID,
         (c) =>
           c.url === db.url &&
-          c.num === local.num &&
+          c.ognum === local.ognum &&
           c.ogname === local.name,
       );
       const isLocalFromMutation = !(localChap && dbChap);
@@ -238,7 +245,8 @@ export const ChapterList = ({
 
   const utils = api.useUtils();
 
-  const { getNovel } = useNovelStore();
+  const { getNovel, getChapterBy, getDBChapterBy } =
+    useNovelStore();
 
   const isPhone = useMediaQuery(
     "only screen and (max-width: 1024px)",
@@ -253,7 +261,7 @@ export const ChapterList = ({
       staged: true,
       name: u.ogname,
       url: u.url,
-      num: u.num,
+      ognum: u.ognum,
     })) ?? []),
   ];
 
@@ -271,9 +279,9 @@ export const ChapterList = ({
     if (n.staged)
       return {
         ...p,
-        [n.num]: { ...p[n.num], db: n },
+        [n.ognum]: { ...p[n.ognum], db: n },
       };
-    return { ...p, [n.num]: { ...p[n.num], local: n } };
+    return { ...p, [n.ognum]: { ...p[n.ognum], local: n } };
   }, {});
 
   return (
@@ -321,34 +329,54 @@ export const ChapterList = ({
             <small className="text-[0.7rem]">{erred}</small>
           )}
         </div>
-        {Object.entries(chapterInfos)
-          .sort((p, n) => compareChapterNums(p[0], n[0]))
-          .map(([num, chapterInfo]) => {
-            if (!chapterInfo) return null;
-            return (
-              <React.Fragment
-                key={`${novel.id}_chapter_${num}`}
-              >
-                <div
-                  className={`${novelItem.chapnum} px-1 text-center`}
+        {Object.entries(chapterInfos).length > 0 ?
+          Object.entries(chapterInfos)
+            .sort((p, n) => compareChapterNums(p[0], n[0]))
+            .map(([num, chapterInfo]) => {
+              if (!chapterInfo) return null;
+              const lNum =
+                getChapterBy(
+                  novel.id,
+                  (c) => c.url === chapterInfo.local?.url,
+                )?.num ??
+                getDBChapterBy(
+                  novel.id,
+                  (c) => c.url === chapterInfo.local?.url,
+                )?.num ??
+                null;
+              return (
+                <React.Fragment
+                  key={`${novel.id}_chapter_${num}`}
                 >
-                  {num}
-                </div>
-                <ChapterItem
-                  novelID={novel.id}
-                  db={chapterInfo.db}
-                  local={chapterInfo.local}
-                  openMenu={(data) => {
-                    setShowMenu(data);
-                  }}
-                />
-              </React.Fragment>
-            );
-          })}
+                  <div
+                    className={`${novelItem.chapnum} whitespace-nowrap px-1 text-center`}
+                  >
+                    {num}
+                    {lNum ? " / " + lNum : ""}
+                  </div>
+                  <ChapterItem
+                    novelID={novel.id}
+                    db={chapterInfo.db}
+                    local={chapterInfo.local}
+                    openMenu={(data) => {
+                      setShowMenu(data);
+                    }}
+                  />
+                </React.Fragment>
+              );
+            })
+        : Array.from({ length: 40 }).map((_, i) => (
+            <Skeleton
+              key={`scrap_chapter_skeleton_${i}`}
+              className="h-8 min-h-8 border-b-2"
+              style={{ gridColumn: "1 / span 4" }}
+            />
+          ))
+        }
 
         {showMenu &&
           createPortal(
-            <ChapterActionMenu
+            <WindowActionMenu
               hide={() => setShowMenu(() => false)}
               x={showMenu.x}
               y={showMenu.y}

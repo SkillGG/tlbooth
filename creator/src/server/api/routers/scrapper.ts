@@ -22,7 +22,7 @@ export const ScrapperNovelInfo = z.object({
 export const ScrapperChapterInfo = z.object({
   url: z.string().url(),
   name: z.string().min(1),
-  num: z.string(),
+  ognum: z.number(),
 });
 
 export const ScrapperTextLine = z.object({
@@ -64,7 +64,7 @@ const fetchDirectly = async ({
   pages: string[];
 }) => {
   const url = `https://${syo ? syo + "." : ""}syosetu.com${pages.reduce((p, n) => p + "/" + n, "")}`;
-  console.log("Fetching directly");
+  console.log("Fetching directly", url);
   const res = await fetch(url);
   if (!res.ok) {
     throw "Fetching data unsuccessful";
@@ -91,7 +91,45 @@ const fetchFromProxy = async (data: {
   return text;
 };
 
+const fetchSyo = async (syo: string, pages: string[]) => {
+  const isRemote = env.IS_REMOTE === "true";
+  const data = {
+    syo,
+    pages,
+  };
+
+  console.log("fetching from ", isRemote ? "proxy" : "syo");
+
+  const rS =
+    isRemote ?
+      await fetchFromProxy(data)
+    : await fetchDirectly(data);
+  return rS;
+};
+
+const syoifyURL = (
+  url: string,
+): { syo: string; pages: string[] } | { error: string } => {
+  const urlData = /\/\/(.*)\.syosetu.com\/(.*)/.exec(url);
+
+  if (!urlData) return { error: "Unknown novel link!" };
+  const [, syo, pages] = urlData;
+  if (!syo || !pages)
+    return { error: "Unknown novel link!" };
+  return { syo, pages: [pages] };
+};
+
+const getParsedSyo = async (
+  syo: string,
+  pages: string[],
+) => {
+  const rS = await fetchSyo(syo, pages);
+  const parsed = parse(rS);
+  return parsed;
+};
+
 const uri = (s: string) => encodeURIComponent(s);
+const unuri = (s: string) => decodeURIComponent(s);
 
 const isAdmin = async (auth?: string) => {
   console.log("auth", auth);
@@ -118,7 +156,7 @@ export const scrapperRouter = createTRPCRouter({
     .query(
       async ({
         ctx,
-        input: __,
+        input,
       }): Promise<
         | ScrapperNovelInfo[]
         | { error: string; allowTestData: boolean }
@@ -128,23 +166,19 @@ export const scrapperRouter = createTRPCRouter({
 
           if (!admin) throw "User is not an admin";
 
-          const isRemote = env.IS_REMOTE === "true";
-          const syo = {
-            syo: "yomou",
-            pages: ["search.php"],
-          };
+          let filterString = "";
 
-          console.log(
-            "fetching from ",
-            isRemote ? "proxy" : "syo",
-          );
+          if (input) {
+            const url = new URL("https://example.com");
+            if (input.search)
+              url.searchParams.set("word", input.search);
+            filterString = url.search;
+          }
+          console.log("input", input, filterString);
 
-          const rS =
-            isRemote ?
-              await fetchFromProxy(syo)
-            : await fetchDirectly(syo);
-
-          const parsed = parse(rS);
+          const parsed = await getParsedSyo("yomou", [
+            `search.php${filterString}`,
+          ]);
 
           const main = parsed.querySelectorAll(
             ".searchkekka_box",
@@ -158,7 +192,7 @@ export const scrapperRouter = createTRPCRouter({
               if (header && href) {
                 return {
                   novelName: header.text,
-                  novelURL: uri(href),
+                  novelURL: href,
                   novelDescription: "",
                 };
               } else {
@@ -209,7 +243,93 @@ export const scrapperRouter = createTRPCRouter({
           };
         }
 
-        return { error: "TODO" };
+        const url = unuri(input);
+
+        const syoified = syoifyURL(url);
+
+        if ("error" in syoified) throw syoified;
+
+        const parsed = await getParsedSyo(
+          syoified.syo,
+          syoified.pages,
+        );
+
+        let chapPageParsed = parsed;
+        const chaptersDLs: ReturnType<
+          (typeof chapPageParsed)["querySelectorAll"]
+        > = [];
+        let nextPageAnchor: ReturnType<
+          (typeof chapPageParsed)["querySelector"]
+        >;
+        do {
+          chaptersDLs.push(
+            ...chapPageParsed.querySelectorAll(
+              ".index_box > dl",
+            ),
+          );
+          nextPageAnchor = chapPageParsed.querySelector(
+            "a.novelview_pager-next",
+          );
+          if (nextPageAnchor) {
+            console.log("found next page!");
+            const href =
+              nextPageAnchor.getAttribute("href");
+            if (!href) break;
+            const syoed = syoifyURL(
+              new URL(href, url).href,
+            );
+            if ("error" in syoed) throw syoed;
+            chapPageParsed = await getParsedSyo(
+              syoed.syo,
+              syoed.pages,
+            );
+          }
+        } while (nextPageAnchor);
+        const chapters: ScrapperChapterInfo[] = [];
+        const name =
+          parsed.querySelector(".novel_title")?.innerText ??
+          "";
+        let desc = "";
+        if (chaptersDLs.length === 0) {
+          console.log("oneshot!");
+          chapters.push({
+            name: "Oneshot",
+            ognum: 0,
+            url,
+          });
+        } else {
+          const chs =
+            chaptersDLs.map<ScrapperChapterInfo | null>(
+              (elem, i) => {
+                const sub =
+                  elem.querySelector(".subtitle a");
+                if (!sub) return null;
+                const href = sub.getAttribute("href");
+                if (!href) return null;
+                return {
+                  name: sub.innerText,
+                  ognum: i + 1,
+                  url: new URL(href, url).href,
+                };
+              },
+            );
+          for (const ch of chs) {
+            if (ch) chapters.push(ch);
+          }
+
+          desc =
+            parsed.querySelector("#novel_ex")?.innerText ??
+            "";
+        }
+
+        return {
+          chapters,
+          info: {
+            novelURL: url,
+            novelDescription: desc,
+            novelName: name,
+          },
+        };
       },
     ),
   getChapter: publicProcedure

@@ -1,15 +1,19 @@
 import { type DBNovel } from "@/server/api/routers/db";
 import { type MutationSaveData } from "./mutationSave";
-import { type AddNovelMutation } from "./novelMutations/addNovel";
-import { type ChangeNovelDescriptionMutation } from "./novelMutations/changeDescription";
-import { type ChangeNovelNameMutation } from "./novelMutations/changeName";
-import { type RemoveNovelMutation } from "./novelMutations/removeNovel";
-import { type StageChapterMutation } from "./chapterMutations/stageChapter";
-import { type ChangeChapterNameMutation } from "./chapterMutations/changeName";
-import { type AddTranslationMutation } from "./chapterMutations/addTranslation";
-import { type RemoveTLMutation } from "./chapterMutations/removeTranslation";
-import { type FetchLinesMutation } from "./chapterMutations/fetchLines";
-import { ChangeLineMutation } from "./chapterMutations/changeLine";
+import { type NovelStore } from "../novelStore";
+import type {
+  AddNovelMutationData,
+  ChangeNovelDescriptionMutationData,
+  ChangeNovelNameMutationData,
+  RemoveNovelMutationData,
+  StageChapterMutationData,
+  ChangeChapterNameMutationData,
+  AddTranslationMutationData,
+  RemoveTLMutationData,
+  FetchLinesMutationData,
+  ChangeLineMutationData,
+  ChangeChapterNumMutationData,
+} from "./mutationTypes";
 
 type MakeLocalDeletable<T> = T & {
   forDeletion?: true;
@@ -32,13 +36,6 @@ export type StoreChapter = StoreNovel["chapters"][number];
 export type StoreTranslation =
   StoreNovel["chapters"][number]["translations"][number];
 
-export type Dependency =
-  | {
-      novelID: string;
-    }
-  | { chapterID: string }
-  | { tlID: string };
-
 export enum MutationType {
   CHANGE_NAME = "Change Title",
   ADD_NOVEL = "Add Novel",
@@ -50,40 +47,44 @@ export enum MutationType {
   REMOVE_TRANSLATION = "Remove translation",
   FETCH_LINES = "Fetch lines",
   CHANGE_LINE = "Change Text Line",
+  CHANGE_CHAPTER_NUMBER = "Change Chapter Number",
   //   CHANGE_CHAPTER_DESC = "Change chapter description",
 }
 
 export type SaveMutationDatas = NonNullable<
   | ({
       type: MutationType.ADD_NOVEL;
-    } & typeof AddNovelMutation.prototype.data)
+    } & AddNovelMutationData)
   | ({
       type: MutationType.CHANGE_DESC;
-    } & typeof ChangeNovelDescriptionMutation.prototype.data)
+    } & ChangeNovelDescriptionMutationData)
   | ({
       type: MutationType.CHANGE_NAME;
-    } & typeof ChangeNovelNameMutation.prototype.data)
+    } & ChangeNovelNameMutationData)
   | ({
       type: MutationType.REMOVE_NOVEL;
-    } & typeof RemoveNovelMutation.prototype.data)
+    } & RemoveNovelMutationData)
   | ({
       type: MutationType.STAGE_CHAPTER;
-    } & typeof StageChapterMutation.prototype.data)
+    } & StageChapterMutationData)
   | ({
       type: MutationType.CHANGE_CHAPTER_NAME;
-    } & typeof ChangeChapterNameMutation.prototype.data)
+    } & ChangeChapterNameMutationData)
   | ({
       type: MutationType.ADD_TRANSLATION;
-    } & typeof AddTranslationMutation.prototype.data)
+    } & AddTranslationMutationData)
   | ({
       type: MutationType.REMOVE_TRANSLATION;
-    } & typeof RemoveTLMutation.prototype.data)
+    } & RemoveTLMutationData)
   | ({
       type: MutationType.FETCH_LINES;
-    } & typeof FetchLinesMutation.prototype.data)
+    } & FetchLinesMutationData)
   | ({
       type: MutationType.CHANGE_LINE;
-    } & typeof ChangeLineMutation.prototype.data)
+    } & ChangeLineMutationData)
+  | ({
+      type: MutationType.CHANGE_CHAPTER_NUMBER;
+    } & ChangeChapterNumMutationData)
 >;
 
 export type SaveMutationData<
@@ -102,26 +103,25 @@ export abstract class Mutation<
   desc: MutationDescription;
   type: Q;
   id: string;
-  apiFn: () => Promise<void>;
-  dependencies: Dependency[];
-  data?: MutationSaveData<Q, C>;
+  apiFn: (store: NovelStore) => Promise<void>;
+  data: MutationSaveData<Q, C>;
   constructor(
     id: string,
     fn: (p: StoreNovel[]) => StoreNovel[],
     desc: MutationDescription,
     type: Q,
-    apiFn: () => Promise<void>,
-    dependencies: Dependency[],
-    data?: C,
+    apiFn: (store: NovelStore) => Promise<void>,
+    data: C,
   ) {
     this.fn = fn;
     this.id = id;
     this.desc = desc;
     this.type = type;
     this.apiFn = apiFn;
-    if (data) this.data = { type, ...data };
-    this.dependencies = dependencies;
+    this.data = { type, ...data };
   }
+  abstract updateID(): void;
+  abstract onRemoved(store: NovelStore): void;
   getDescription(n: StoreNovel[]) {
     return typeof this.desc === "function" ?
         this.desc(n)

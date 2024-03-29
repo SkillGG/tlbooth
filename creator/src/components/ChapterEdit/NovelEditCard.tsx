@@ -19,9 +19,11 @@ export function NovelEditCard({
 
   const localNovel = !getDBNovel(novelID);
 
+  console.log("localNovel", localNovel);
+
   return (
     <div
-      className={`border-2 ${localNovel ? "border-chapstate-localonly" : "border-chapstate-good"} w-[100%] pb-2`}
+      className={`border-2 ${localNovel ? "border-chapstate-localonly text-chapstate-localonly" : "border-chapstate-good text-chapstate-good"} w-[100%] pb-2`}
     >
       <div className="px-2">Novel:</div>
       <div className="flex w-full justify-evenly gap-3">

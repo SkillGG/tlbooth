@@ -1,5 +1,4 @@
 import { create } from "zustand";
-import deepEquals from "fast-deep-equal";
 
 import {
   type Mutation,
@@ -24,6 +23,7 @@ import { ChangeChapterNameMutation } from "./mutations/chapterMutations/changeNa
 import { RemoveTLMutation } from "./mutations/chapterMutations/removeTranslation";
 import { FetchLinesMutation } from "./mutations/chapterMutations/fetchLines";
 import { ChangeLineMutation } from "./mutations/chapterMutations/changeLine";
+import { ChangeChapterNumMutation } from "./mutations/chapterMutations/changeNum";
 
 export type TLInfo = {
   tl: StoreTranslation;
@@ -34,11 +34,13 @@ export type TLInfo = {
 type AnyMutation<T extends MutationType = MutationType> =
   Mutation<T, SaveMutationData<{ type: T }>>;
 
-type NovelStore = {
+export type NovelStore = {
   novels: StoreNovel[] | null;
   mutations: AnyMutation[];
   undoneMutations: AnyMutation[];
   loadData: (remote: NovelStore["novels"]) => void;
+
+  getMutations: (undone?: boolean) => AnyMutation[];
 
   loadMutations: (l: Storage) => void;
   saveMutations: (s: Storage) => void;
@@ -61,12 +63,17 @@ type NovelStore = {
   getDBNovelByURL: (url: string) => StoreNovel | null;
 
   isMutation: (id: string, undone?: boolean) => boolean;
+  isMutationWhere: (
+    p: (m: AnyMutation) => boolean,
+    undone?: boolean,
+  ) => boolean;
   findMutation: (
     id: string,
     undone?: boolean,
   ) => AnyMutation | null;
-  findMutationBy: (
-    n: (m: AnyMutation, undone?: boolean) => boolean,
+  findMutationWhere: (
+    n: (m: AnyMutation) => boolean,
+    undone?: boolean,
   ) => AnyMutation | null;
 
   getChapter: (
@@ -97,6 +104,11 @@ export const useNovelStore = create<NovelStore>()(
     mutations: [],
     undoneMutations: [],
 
+    getMutations: (u = true) => [
+      ...get().mutations,
+      ...(u ? [] : get().undoneMutations),
+    ],
+
     getDBNovel: (id) =>
       get().novels?.find((n) => n.id === id) ?? null,
     getNovel: (id) =>
@@ -107,10 +119,10 @@ export const useNovelStore = create<NovelStore>()(
     saveMutations: (s) => {
       const muts = get()
         .mutations.filter(({ data }) => data)
-        .map((mut) => mut.data!);
+        .map((mut) => mut.data);
       const undoneMuts = get()
         .undoneMutations.filter(({ data }) => data)
-        .map((mut) => mut.data!);
+        .map((mut) => mut.data);
       s.setItem(
         "mutations",
         JSON.stringify({
@@ -126,31 +138,35 @@ export const useNovelStore = create<NovelStore>()(
       );
     },
     loadMutations: (s) => {
+      if (get().getMutations().length > 0)
+        return void console.log(
+          "Cannot overwite existing mutations",
+        );
       console.log("loading mutations!");
       const rmd2mut = (rmd: SaveMutationDatas) => {
         switch (rmd.type) {
           case MutationType.ADD_NOVEL:
-            return AddNovelMutation.fromData(rmd);
+            return new AddNovelMutation(rmd);
           case MutationType.CHANGE_DESC:
-            return ChangeNovelDescriptionMutation.fromData(
-              rmd,
-            );
+            return new ChangeNovelDescriptionMutation(rmd);
           case MutationType.CHANGE_NAME:
-            return ChangeNovelNameMutation.fromData(rmd);
+            return new ChangeNovelNameMutation(rmd);
           case MutationType.REMOVE_NOVEL:
-            return RemoveNovelMutation.fromData(rmd);
+            return new RemoveNovelMutation(rmd.novelID);
           case MutationType.STAGE_CHAPTER:
-            return StageChapterMutation.fromData(rmd);
+            return new StageChapterMutation(rmd);
           case MutationType.ADD_TRANSLATION:
-            return AddTranslationMutation.fromData(rmd);
+            return new AddTranslationMutation(rmd);
           case MutationType.CHANGE_CHAPTER_NAME:
-            return ChangeChapterNameMutation.fromData(rmd);
+            return new ChangeChapterNameMutation(rmd);
           case MutationType.REMOVE_TRANSLATION:
-            return RemoveTLMutation.fromData(rmd);
+            return new RemoveTLMutation(rmd);
           case MutationType.FETCH_LINES:
             return new FetchLinesMutation(rmd);
           case MutationType.CHANGE_LINE:
             return new ChangeLineMutation(rmd);
+          case MutationType.CHANGE_CHAPTER_NUMBER:
+            return new ChangeChapterNumMutation(rmd);
           default:
             rmd satisfies never;
             throw "Unknown mutation type!";
@@ -192,12 +208,14 @@ export const useNovelStore = create<NovelStore>()(
         ...get().mutations,
         ...(undone ? get().undoneMutations : []),
       ].find((n) => n.id === id) ?? null,
-    findMutationBy: (fn, undone = true) =>
+    findMutationWhere: (fn, undone = true) =>
       [
         ...get().mutations,
         ...(undone ? get().undoneMutations : []),
       ].find((n) => fn(n)) ?? null,
-
+    isMutationWhere: (fn, undone) => {
+      return !!get().findMutationWhere(fn, undone);
+    },
     getDBNovelByURL: (url) =>
       get().novels?.find((n) => n.url === url) ?? null,
     getNovelByURL: (url) =>
@@ -270,54 +288,18 @@ export const useNovelStore = create<NovelStore>()(
       get().saveMutations(localStorage);
     },
     removeMutation: (id) => {
+      const mut = get().findMutation(id, true);
+      if (mut) mut.onRemoved(get());
+      else
+        console.error(
+          "Could not execute onRemove of mutation with ID: ",
+          id,
+        );
       set((s) => {
-        console.log("removing mutation", id);
-        const linkedMutations: AnyMutation[] = [];
-        const muts = [
-          ...get().mutations,
-          ...get().undoneMutations,
-        ];
-        const thisMut = muts.find((t) => t.id === id);
-        if (!thisMut) {
-          console.error(
-            "There is no mutation found with id",
-            id,
-            muts,
-          );
-          return s;
-        }
-        if (thisMut.type === MutationType.ADD_NOVEL) {
-          console.log("searching for linked mutations!");
-          const dependants = [];
-          for (const mut of muts) {
-            for (const dep of mut.dependencies) {
-              if (
-                thisMut.dependencies.find((d) =>
-                  deepEquals(d, dep),
-                )
-              )
-                dependants.push(mut);
-            }
-          }
-          if (dependants)
-            linkedMutations.push(...dependants);
-        }
-
-        console.log("linked", linkedMutations);
-
         const filterFn = (x: AnyMutation) => {
           if (x.id === id) return false;
-          if (linkedMutations.find((n) => n.id === x.id))
-            return false;
           return true;
         };
-
-        console.log(
-          "bef,aft",
-          s.mutations,
-          s.mutations.filter(filterFn),
-        );
-
         return {
           mutations: s.mutations.filter(filterFn),
           undoneMutations:
@@ -364,22 +346,32 @@ export const useNovelStore = create<NovelStore>()(
     },
     apply: async () => {
       console.log("applying mutations");
-      const sets: (() => void)[] = [];
+      const sets: [string, () => void][] = [];
       try {
         for (const mut of get().mutations) {
-          await mut.apiFn();
-          sets.push(() =>
-            set((st) => ({
-              mutations: st.mutations.filter(
-                (f) => f.id !== mut.id,
-              ),
-            })),
-          );
+          await mut.apiFn(get());
+          sets.push([
+            mut.type +
+              ": " +
+              mut.getDescription(get().getMutated() ?? []),
+            () =>
+              set((st) => ({
+                mutations: st.mutations.filter(
+                  (f) => f.id !== mut.id,
+                ),
+              })),
+          ]);
         }
       } catch (e) {
         console.error(e);
+        alert(
+          "Could not apply all mutations! Applied mutations:" +
+            sets
+              .map((v) => v[0])
+              .reduce((p, n) => p + "\n" + n, ""),
+        );
       }
-      return sets;
+      return sets.map((r) => r[1]);
     },
   }),
 );

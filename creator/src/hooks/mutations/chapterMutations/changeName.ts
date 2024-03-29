@@ -42,26 +42,14 @@ export class ChangeChapterNameMutation extends Mutation<
         og,
       }),
       (p) => {
-        if (og)
-          return p.map((n) =>
-            n.id === novelID ?
-              {
-                ...n,
-                chapters: n.chapters.map((ch) =>
-                  ch.id === chapterID ?
-                    { ...ch, ogname: name }
-                  : ch,
-                ),
-              }
-            : n,
-          );
         return p.map((n) =>
-          n.id === novelID ?
+          n.id === this.data.novelID ?
             {
               ...n,
               chapters: n.chapters.map((ch) =>
-                ch.id === chapterID ?
-                  { ...ch, tlname: name }
+                ch.id === this.data.chapterID ?
+                  og ? { ...ch, ogname: name }
+                  : { ...ch, tlname: name }
                 : ch,
               ),
             }
@@ -71,13 +59,13 @@ export class ChangeChapterNameMutation extends Mutation<
       name,
       MutationType.CHANGE_CHAPTER_NAME,
       async () => {
-        throw "TODO";
+        throw "TODO _changeChapterName";
       },
-      [{ novelID }],
       { novelID, name, og, chapterID },
     );
   }
-  static fromData(d: SaveData) {
-    return new ChangeChapterNameMutation(d);
+  updateID(): void {
+    this.id = ChangeChapterNameMutation.getID(this.data);
   }
+  override onRemoved(): void {}
 }

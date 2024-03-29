@@ -19,7 +19,7 @@ type ChapterActionMenuProps = {
   hide(): void;
 };
 
-export function ChapterActionMenu({
+export function WindowActionMenu({
   actions,
   hide,
   x,

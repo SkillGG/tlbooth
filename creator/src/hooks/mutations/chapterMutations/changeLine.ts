@@ -60,16 +60,18 @@ export class ChangeLineMutation extends Mutation<
       }),
       (p) => {
         return p.map((n) => {
-          return n.id === novelID ?
+          return n.id === this.data.novelID ?
               {
                 ...n,
                 chapters: n.chapters.map((ch) => {
-                  return ch.id === chapterID ?
+                  return ch.id === this.data.chapterID ?
                       {
                         ...ch,
                         translations: ch.translations.map(
                           (tl) => {
-                            return tl.id === tlID ?
+                            return (
+                                tl.id === this.data.tlID
+                              ) ?
                                 {
                                   ...tl,
                                   lines: tl.lines.map(
@@ -103,13 +105,13 @@ export class ChangeLineMutation extends Mutation<
       value,
       MutationType.CHANGE_LINE,
       async () => {
-        throw "TODO";
+        throw "TODO _changeLine";
       },
-      [{ novelID }],
       { novelID, og, chapterID, linePos, tlID, value },
     );
   }
-  static fromData(d: SaveData) {
-    return new ChangeLineMutation(d);
+  updateID(): void {
+    this.id = ChangeLineMutation.getID(this.data);
   }
+  override onRemoved(): void {}
 }

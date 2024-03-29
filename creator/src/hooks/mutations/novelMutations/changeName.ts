@@ -1,4 +1,5 @@
 import { Mutation, MutationType } from "../mutation";
+import { trpcClient } from "@/pages/_app";
 
 type SaveData = {
   og: boolean;
@@ -34,24 +35,25 @@ export class ChangeNovelNameMutation extends Mutation<
     super(
       ChangeNovelNameMutation.getID({ novelID, og }),
       (p) => {
-        if (og)
-          return p.map((n) =>
-            n.id === novelID ? { ...n, ogname: name } : n,
-          );
         return p.map((n) =>
-          n.id === novelID ? { ...n, tlname: name } : n,
+          n.id === this.data.novelID ?
+            og ? { ...n, ogname: name }
+            : { ...n, tlname: name }
+          : n,
         );
       },
       name,
       MutationType.CHANGE_NAME,
       async () => {
-        throw "TODO";
+        await trpcClient.db.changeNovelName.mutate(
+          this.data,
+        );
       },
-      [{ novelID }],
       { novelID, name, og },
     );
   }
-  static fromData(d: SaveData) {
-    return new ChangeNovelNameMutation(d);
+  updateID(): void {
+    this.id = ChangeNovelNameMutation.getID(this.data);
   }
+  override onRemoved(): void {}
 }

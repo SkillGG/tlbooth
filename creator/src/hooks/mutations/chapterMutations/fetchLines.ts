@@ -93,16 +93,16 @@ export class FetchLinesMutation extends Mutation<
       }),
       (p) => {
         return p.map((n) =>
-          n.id === novelID ?
+          n.id === this.data.novelID ?
             {
               ...n,
               chapters: n.chapters.map((ch) => {
-                return ch.id === chapterID ?
+                return ch.id === this.data.chapterID ?
                     {
                       ...ch,
                       translations: ch.translations.map(
                         (tl) => {
-                          return tl.id === tlID ?
+                          return tl.id === this.data.tlID ?
                               {
                                 ...tl,
                                 lines: textLines,
@@ -117,12 +117,12 @@ export class FetchLinesMutation extends Mutation<
           : n,
         );
       },
-      "",
+      () =>
+        `...${this.data.novelID.substring(this.data.novelID.length - 4)}/...${this.data.chapterID.substring(this.data.chapterID.length - 4)}/...${this.data.tlID.substring(this.data.tlID.length - 4)}`,
       MutationType.FETCH_LINES,
       async () => {
-        throw "TODO";
+        throw "TODO _fetchLine";
       },
-      [{ chapterID }, { novelID }, { tlID }],
       {
         chapterID,
         novelID,
@@ -132,4 +132,8 @@ export class FetchLinesMutation extends Mutation<
       },
     );
   }
+  updateID(): void {
+    this.id = FetchLinesMutation.getID(this.data);
+  }
+  override onRemoved(): void {}
 }

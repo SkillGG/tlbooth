@@ -1,5 +1,6 @@
 import { trpcClient } from "@/pages/_app";
 import { Mutation, MutationType } from "../mutation";
+import { type NovelStore } from "@/hooks/novelStore";
 
 type SaveData = { novelID: string };
 
@@ -23,23 +24,51 @@ export class RemoveNovelMutation extends Mutation<
   constructor(novelID: string) {
     super(
       RemoveNovelMutation.getID(novelID),
-      (p) =>
-        p.map((n) =>
-          n.id === novelID ?
+      (p) => {
+        return p.map((n) =>
+          n.id === this.data.novelID ?
             { ...n, forDeletion: true }
           : n,
-        ),
-      (p): string =>
-        p.find((x) => x.id === novelID)?.ogname ?? novelID,
-      MutationType.REMOVE_NOVEL,
-      async () => {
-        await trpcClient.db.removeNovel.mutate(novelID);
+        );
       },
-      [{ novelID }],
+      (p) =>
+        p.find((x) => x.id === this.data.novelID)?.ogname ??
+        this.data.novelID,
+      MutationType.REMOVE_NOVEL,
+      async (store) => {
+        await trpcClient.db.removeNovel.mutate(novelID);
+        // remove every mutation done to novel
+        RemoveNovelMutation.removeMutationsDependingOnNovel(
+          novelID,
+          store,
+          this,
+        );
+      },
       { novelID },
     );
   }
-  static fromData(d: SaveData) {
-    return new RemoveNovelMutation(d.novelID);
+  updateID(): void {
+    this.id = RemoveNovelMutation.getID(this.data.novelID);
+  }
+  override onRemoved(): void {}
+  static removeMutationsDependingOnNovel(
+    novelID: string,
+    store: NovelStore,
+    callingMut: Mutation<MutationType, object>,
+  ) {
+    store.getMutations(true).forEach((mut) => {
+      if (
+        mut.data.novelID === novelID &&
+        mut.id !== callingMut.id
+      ) {
+        console.log(
+          "removing mutation",
+          mut,
+          "because it depended on novel",
+          novelID,
+        );
+        store.removeMutation(mut.id);
+      }
+    });
   }
 }

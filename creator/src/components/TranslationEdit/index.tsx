@@ -5,7 +5,7 @@ import {
 import { ChapterEditCard } from "../ChapterEdit/ChapterEditCard";
 import { NovelEditCard } from "../ChapterEdit/NovelEditCard";
 import { cssIf } from "@/utils/utils";
-import { TextLine } from "@prisma/client";
+import { type TextLine } from "@prisma/client";
 import { trpcClient } from "@/pages/_app";
 import { FetchLinesMutation } from "@/hooks/mutations/chapterMutations/fetchLines";
 import { EditField } from "../EditField";
@@ -19,7 +19,12 @@ function LineItem({
   line: TextLine;
   tlID: string;
 }) {
-  const { mutate, getTranslationInfo } = useNovelStore();
+  const {
+    mutate,
+    getTranslationInfo,
+    removeMutation,
+    isMutation,
+  } = useNovelStore();
 
   const tlInfo = getTranslationInfo(tlID);
 
@@ -28,13 +33,13 @@ function LineItem({
   return (
     <>
       <div
-        className="w-min"
+        className="grid w-min content-center justify-center"
         style={{ gridColumn: "1 / span 1" }}
       >
         #{line.pos}
       </div>
       <div
-        className="grid justify-center"
+        className="grid content-center justify-center"
         style={{ gridColumn: "2 / span 1" }}
       >
         <EditField
@@ -49,8 +54,31 @@ function LineItem({
       >
         <EditField
           fieldName=""
+          className={{
+            editField: { span: "break-normal" },
+          }}
           lock={false}
           defaultValue={line.tlline}
+          onRestore={() => {
+            removeMutation(
+              ChangeLineMutation.getID({
+                chapterID: tlInfo.chap.id,
+                novelID: tlInfo.novel.id,
+                tlID: tlInfo.tl.id,
+                linePos: line.pos,
+                og: false,
+              }),
+            );
+          }}
+          showRestore={isMutation(
+            ChangeLineMutation.getID({
+              chapterID: tlInfo.chap.id,
+              novelID: tlInfo.novel.id,
+              tlID: tlInfo.tl.id,
+              linePos: line.pos,
+              og: false,
+            }),
+          )}
           onSave={(value) => {
             mutate(
               new ChangeLineMutation({
@@ -61,6 +89,7 @@ function LineItem({
                 og: false,
                 value,
               }),
+              true,
             );
           }}
         />

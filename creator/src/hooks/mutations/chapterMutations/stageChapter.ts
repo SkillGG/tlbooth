@@ -1,12 +1,12 @@
 import { type Optional } from "@/utils/utils";
 import { Mutation, MutationType } from "../mutation";
+import { trpcClient } from "@/pages/_app";
 
 type SaveData = {
   novelID: string;
   url: string;
   name: string;
-  num: string;
-  description: string;
+  ognum: number;
   chapterID: string;
 };
 
@@ -22,12 +22,10 @@ export const isStageChapterSaveData = (
     typeof o.novelID === "string" &&
     "url" in o &&
     typeof o.url === "string" &&
-    "num" in o &&
-    typeof o.num === "string" &&
+    "ognum" in o &&
+    typeof o.ognum === "number" &&
     "name" in o &&
-    typeof o.name === "string" &&
-    "description" in o &&
-    typeof o.description === "string"
+    typeof o.name === "string"
   );
 };
 
@@ -47,9 +45,8 @@ export class StageChapterMutation extends Mutation<
   static chapterID = 0;
   constructor({
     novelID,
-    description,
     name,
-    num,
+    ognum,
     url,
     chapterID,
   }: Optional<SaveData, "chapterID">) {
@@ -63,7 +60,7 @@ export class StageChapterMutation extends Mutation<
       }),
       (p) =>
         p.map((n) => {
-          return n.id === novelID ?
+          return n.id === this.data.novelID ?
               {
                 ...n,
                 chapters: [
@@ -71,10 +68,10 @@ export class StageChapterMutation extends Mutation<
                   {
                     id,
                     novelID: novelID,
-                    num: num,
+                    num: `${ognum}`,
                     ogname: name,
+                    ognum,
                     url: url,
-                    status: "STAGED",
                     tlname: "",
                     translations: [],
                   },
@@ -84,21 +81,29 @@ export class StageChapterMutation extends Mutation<
         }),
       name,
       MutationType.STAGE_CHAPTER,
-      async () => {
-        throw "ERROR";
+      async (store) => {
+        const result =
+          await trpcClient.db.addChapter.mutate(this.data);
+        if (result) {
+          store.getMutations().forEach((mut) => {
+            if ("chapterID" in mut.data) {
+              mut.data.chapterID = result.id;
+              mut.updateID();
+            }
+          });
+        }
       },
-      [{ novelID }],
       {
-        description,
         chapterID: id,
         name,
         novelID,
-        num,
+        ognum,
         url,
       },
     );
   }
-  static fromData(o: SaveData) {
-    return new StageChapterMutation(o);
+  updateID(): void {
+    this.id = StageChapterMutation.getID(this.data);
   }
+  override onRemoved(): void {}
 }

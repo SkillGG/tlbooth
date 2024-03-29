@@ -1,6 +1,7 @@
 import { isAddTranslationSaveData } from "./chapterMutations/addTranslation";
 import { isChangeLineSaveData } from "./chapterMutations/changeLine";
 import { isChangeChapterNameSaveData } from "./chapterMutations/changeName";
+import { isChangeChapterNumSaveData } from "./chapterMutations/changeNum";
 import { isFetchLineSaveData } from "./chapterMutations/fetchLines";
 import { isStageChapterSaveData } from "./chapterMutations/stageChapter";
 import {
@@ -85,6 +86,10 @@ const consistsOfValidMutationSaveData = (
         case MutationType.CHANGE_LINE:
           if (!isChangeLineSaveData(typedN))
             throw "CHANGE_LINE";
+          break;
+        case MutationType.CHANGE_CHAPTER_NUMBER:
+          if (!isChangeChapterNumSaveData(typedN))
+            throw "CHANGE_CHAPTER_NUMBER";
           break;
         default:
           typedN.type satisfies never;

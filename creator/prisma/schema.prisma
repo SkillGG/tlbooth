@@ -76,7 +76,8 @@ model Chapter {
 
     url String @unique
 
-    num String @default("1")
+    num   String @default("1")
+    ognum Int    @default(1)
 
     ogname String
     tlname String?

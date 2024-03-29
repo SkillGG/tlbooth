@@ -22,10 +22,16 @@ function TranslationItem({ tl }: { tl: StoreTranslation }) {
 
   return (
     <div
-      className={`${tl.forDeletion ? "text-red-300" : ""} grid w-[50%] grid-flow-col px-4`}
+      className={`${tl.forDeletion ? "text-red-300" : ""} ${
+        tl.status === "STAGED" ? "text-chapstate-localonly"
+        : tl.status === "PR" || tl.status === "TL" ?
+          "text-chapstate-dbonly"
+        : "text-chapstate-good"
+      } grid w-[50%] grid-flow-col px-4`}
     >
       <div>
-        {tl.id} ({tl.oglang} {"=>"} {tl.tllang})
+        {tl.id} ({tl.oglang} {"=>"} {tl.tllang}) [
+        {tl.status}]
       </div>
       <div className="flex gap-2 justify-self-end">
         {!tl.forDeletion && (

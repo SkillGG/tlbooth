@@ -9,7 +9,7 @@ import { databaseRouter } from "./routers/db";
  */
 export const appRouter = createTRPCRouter({
   scrapper: scrapperRouter,
-  db: databaseRouter
+  db: databaseRouter,
 });
 
 // export type definition of API

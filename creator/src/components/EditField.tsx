@@ -42,6 +42,7 @@ type EditFieldProps = {
     hide(): void;
     show(): void;
   } | null;
+  verifyValue?: (b: string) => boolean;
   undefinedIsEmpty?: boolean;
 };
 
@@ -65,11 +66,14 @@ export const EditField = React.forwardRef<
     className,
     style,
     onRestore,
+    verifyValue = () => true,
     undefinedIsEmpty = true,
   },
   ref,
 ) {
   const [edit, setEdit] = useState(false);
+
+  const [prevValue, setPrevValue] = useState(defaultValue);
 
   const textRef = useRef<HTMLSpanElement>(null);
   const saveRef = useRef<HTMLButtonElement>(null);
@@ -96,7 +100,8 @@ export const EditField = React.forwardRef<
           className={`${cssDef(className?.header?.main)}`}
           style={style?.header?.main}
         >
-          {fieldName}{fieldName?":":""}
+          {fieldName}
+          {fieldName ? ":" : ""}
           {!lock &&
             (!edit ?
               <>
@@ -182,6 +187,17 @@ export const EditField = React.forwardRef<
                 }
               }}
               ref={textRef}
+              onInput={() => {
+                const val = textRef.current?.innerText;
+                if (!val) return;
+                if (!verifyValue(val)) {
+                  if (textRef.current)
+                    textRef.current.innerText =
+                      prevValue ?? "";
+                } else {
+                  setPrevValue(val);
+                }
+              }}
             ></span>
           </div>
         : <div

@@ -1,21 +1,29 @@
 import { api } from "@/utils/api";
-import { useSearchParams } from "next/navigation";
 import { Skeleton } from "../Skeleton/Skeleton";
 import type {
   ScrapperNovelInfo,
   ScrapperFilter,
 } from "@/server/api/routers/scrapper";
-import { useState } from "react";
+import {
+  type Dispatch,
+  type SetStateAction,
+  useState,
+} from "react";
 import { useNovelStore } from "@/hooks/novelStore";
 import { RefreshButton } from "../Icons/refreshButton";
 import { AddNovelMutation } from "@/hooks/mutations/novelMutations/addNovel";
 
-export const ScrapperFilterSelector = () => {
+export const ScrapperFilterSelector = ({
+  filters: orgFilts,
+  setFilters: setOrgFilts,
+}: {
+  filters: ScrapperFilter;
+  setFilters: Dispatch<SetStateAction<ScrapperFilter>>;
+}) => {
   const [showDialog, setShowDialog] = useState(false);
 
-  const [filters, setFilters] = useState<ScrapperFilter>(
-    {},
-  );
+  const [filters, setFilters] =
+    useState<ScrapperFilter>(orgFilts);
 
   return (
     <div className="grid">
@@ -30,7 +38,7 @@ export const ScrapperFilterSelector = () => {
         className={`${showDialog ? "block" : "hidden"} absolute left-0 top-0 z-10 grid h-full w-full bg-transparent text-black`}
       >
         <div className="z-20 mt-5 grid h-fit w-fit items-center justify-center justify-self-center bg-white p-5">
-          <div className="grid grid-flow-col">
+          <div className="grid select-none grid-flow-col">
             <input
               type="checkbox"
               id="filterCheckbox"
@@ -49,20 +57,38 @@ export const ScrapperFilterSelector = () => {
               }}
               checked={"search" in filters}
             />
-            <label htmlFor="filterCheckbox">
+            <label
+              htmlFor="filterCheckbox"
+              className="select-none"
+            >
               Search
               <input
                 onClick={(e) => {
-                  e.stopPropagation();
+                  e.preventDefault();
                 }}
-                className="ml-2 border-b-2 border-black outline-none"
+                className="ml-2 select-none border-b-2 border-black outline-none"
                 type="text"
                 id="searchbox"
                 disabled={!("search" in filters)}
+                value={filters.search ?? ""}
+                onChange={(e) => {
+                  const val = e.currentTarget.value;
+                  if (typeof val === "string")
+                    setFilters((p) => ({
+                      ...p,
+                      search: val,
+                    }));
+                }}
               />
             </label>
           </div>
-          <button className="border-2">
+          <button
+            className="border-2"
+            onClick={() => {
+              setOrgFilts(filters);
+              setShowDialog(false);
+            }}
+          >
             Apply filters
           </button>
         </div>
@@ -99,33 +125,34 @@ const NovelItem = ({
       {!novelStore?.find(
         (n) => n.url === novel.novelURL,
       ) && (
-          <div className="h-min w-min self-center px-4">
-            {
-              <button
-                className="h-full"
-                onClick={() => {
-                  mutate(new AddNovelMutation(novel));
-                }}
-              >
-                Add
-              </button>
-            }
-          </div>
-        )}
+        <div className="h-min w-min self-center px-4">
+          {
+            <button
+              className="h-full"
+              onClick={() => {
+                mutate(new AddNovelMutation(novel));
+              }}
+            >
+              Add
+            </button>
+          }
+        </div>
+      )}
     </div>
   );
 };
 
 export const ScraperList = () => {
-  const search = useSearchParams();
-
   const [useDummy, setUseDummy] = useState(false);
 
+  const [filters, setFilters] = useState<ScrapperFilter>(
+    {},
+  );
+
   const novels =
-    useDummy ? api.scrapper.getListDummy.useQuery().data
-      : search.has("filters") ?
-        api.scrapper.getList.useQuery({}).data
-        : api.scrapper.getList.useQuery().data;
+    useDummy ?
+      api.scrapper.getListDummy.useQuery().data
+    : api.scrapper.getList.useQuery(filters).data;
 
   const [showSkeleton, setSkeleton] = useState(false);
 
@@ -145,13 +172,22 @@ export const ScraperList = () => {
                   await utils.scrapper.getListDummy.invalidate();
               }}
             />
-            <ScrapperFilterSelector />
+            <ScrapperFilterSelector
+              filters={filters}
+              setFilters={setFilters}
+            />
             <button onClick={() => setSkeleton((p) => !p)}>
               Toggle skeleton
             </button>
-            <button onClick={() => { setUseDummy(p => !p) }}>Toggle dummy</button>
+            <button
+              onClick={() => {
+                setUseDummy((p) => !p);
+              }}
+            >
+              Toggle dummy
+            </button>
           </>
-          : <div className="min-h-6"></div>}
+        : <div className="min-h-6"></div>}
       </div>
       {novels && "error" in novels ?
         <div>
@@ -169,7 +205,7 @@ export const ScraperList = () => {
             </div>
           )}
         </div>
-        : <>
+      : <>
           <div className="flex h-full flex-col gap-1 overflow-auto">
             {!showSkeleton && novels ?
               novels.map((novel) => {
@@ -180,18 +216,19 @@ export const ScraperList = () => {
                   />
                 );
               })
-              : <>
+            : <>
                 {Array.from({ length: 30 }).map((_, i) => (
                   <Skeleton
                     key={`scraper_skeleton_${i}`}
-                    className={`${Math.random() > 0.7 ?
+                    className={`${
+                      Math.random() > 0.7 ?
                         Math.random() > 0.9 ?
                           Math.random() > 0.7 ?
                             "h-36"
-                            : "h-24"
-                          : "h-12"
-                        : "h-6"
-                      }`}
+                          : "h-24"
+                        : "h-12"
+                      : "h-6"
+                    }`}
                   />
                 ))}
               </>

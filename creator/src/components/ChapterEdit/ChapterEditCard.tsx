@@ -3,6 +3,7 @@ import { EditField } from "../EditField";
 import { cssIf } from "@/utils/utils";
 import { useNovelStore } from "@/hooks/novelStore";
 import { ChangeChapterNameMutation } from "@/hooks/mutations/chapterMutations/changeName";
+import { ChangeChapterNumMutation } from "@/hooks/mutations/chapterMutations/changeNum";
 
 export function ChapterEditCard({
   novelID,
@@ -35,6 +36,31 @@ export function ChapterEditCard({
     >
       <div className="px-2">Chapter</div>
       <div className="flex w-full justify-evenly gap-3">
+        <EditField
+          fieldName="Number"
+          lock={false}
+          defaultValue={chapter?.num}
+          verifyValue={(v) => {
+            return !!/^\d+(\.\d*)?$/.exec(v);
+          }}
+          showRestore={isMutation(
+            ChangeChapterNumMutation.getID({
+              novelID,
+              chapterID,
+            }),
+          )}
+          onSave={(val) => {
+            if (chapter)
+              mutate(
+                new ChangeChapterNumMutation({
+                  chapterID,
+                  novelID,
+                  ognum: chapter.ognum,
+                  num: val,
+                }),
+              );
+          }}
+        />
         <EditField
           fieldName="Original name"
           lock={false}
