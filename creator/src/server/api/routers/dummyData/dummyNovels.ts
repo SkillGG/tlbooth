@@ -19,7 +19,7 @@ export const DummyNovels: (Omit<
       {
         info: {
           name: "DN1 Chapter 1",
-          num: "1",
+          ognum: 1,
           url: "http://dummy.com/1/1",
         },
         lines: [
@@ -37,7 +37,7 @@ export const DummyNovels: (Omit<
       {
         info: {
           name: "DN1 Chapter 2",
-          num: "2",
+          ognum: 2,
           url: "http://dummy.com/1/2",
         },
         lines: [
@@ -56,7 +56,7 @@ export const DummyNovels: (Omit<
       {
         info: {
           name: "DN1 Chapter 1.5",
-          num: "1.5",
+          ognum: 1.5,
           url: "http://dummy.com/1/1.5",
         },
         lines: [
@@ -83,7 +83,7 @@ export const DummyNovels: (Omit<
       {
         info: {
           name: "DN2 Chapter 1",
-          num: "1",
+          ognum: 1,
           url: "http://dummy.com/2/1",
         },
         lines: [
@@ -101,7 +101,7 @@ export const DummyNovels: (Omit<
       {
         info: {
           name: "DN1 Chapter 2",
-          num: "2",
+          ognum: 2,
           url: "http://dummy.com/2/2",
         },
         lines: [
@@ -119,7 +119,7 @@ export const DummyNovels: (Omit<
       {
         info: {
           name: "DN1 Chapter 1.5",
-          num: "1.5",
+          ognum: 1.5,
           url: "http://dummy.com/2/1.5",
         },
         lines: [
