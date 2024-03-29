@@ -188,12 +188,16 @@ export const scrapperRouter = createTRPCRouter({
             (p) => {
               const header = p.querySelector(".novel_h");
               const anchor = header?.querySelector("a");
+              const descTable =
+                p.querySelector("table .ex");
               const href = anchor?.getAttribute("href");
               if (header && href) {
+                console.log(descTable?.innerText);
                 return {
                   novelName: header.text,
                   novelURL: href,
-                  novelDescription: "",
+                  novelDescription:
+                    descTable?.innerText ?? "",
                 };
               } else {
                 return null;

@@ -286,7 +286,7 @@ export const ChapterList = ({
 
   return (
     <div
-      className="flex h-full max-h-64 flex-col"
+      className="sm:max-h-[24rem] flex h-full max-h-64 flex-col"
       id={`chapter_list_${novel.id}`}
     >
       <div className="mt-1">

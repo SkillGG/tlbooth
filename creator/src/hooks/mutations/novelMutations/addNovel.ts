@@ -47,8 +47,8 @@ export class AddNovelMutation extends Mutation<
   }: Optional<SaveData, "novelID">) {
     const novel: StoreNovel = {
       id:
-        novelID ??
-        `localnovel_${++AddNovelMutation.novelID}`,
+      novelID ??
+      `localnovel_${++AddNovelMutation.novelID}`,
       chapters: [],
       ogname: novelName,
       tlname: "",
@@ -57,6 +57,7 @@ export class AddNovelMutation extends Mutation<
       ogdesc: novelDescription,
       tldesc: "",
     };
+    console.log("adding novel", novel)
     super(
       AddNovelMutation.getID(novel.id),
       (p) => [...p, novel],

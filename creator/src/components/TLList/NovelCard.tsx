@@ -132,20 +132,19 @@ export const NovelCard = ({
       </div>
       {show && (
         <>
-          <div
-            className="box-content grid"
-            style={{ gridTemplateColumns: "1fr 1fr" }}
-          >
+          <div className="sm:grid-cols-[1fr] box-content grid grid-cols-[1fr_1fr]">
             <div className="px-3 pt-1">
               <div className="border-b-2">Novel info</div>
-              <div
-                className="grid grid-flow-col border-b-[1px] border-dotted px-3 pb-2"
-                style={{ gridAutoColumns: "1fr 1fr" }}
-              >
+              <div className="grid grid-flow-col grid-cols-[1fr_1fr] border-b-[1px] border-dotted px-3 pb-2">
                 <EditField
                   fieldName="OGName"
                   lock={true}
                   defaultValue={novel.ogname}
+                  className={{
+                    staticField: {
+                      div: `max-h-40 overflow-y-auto`,
+                    },
+                  }}
                 />
                 <EditField
                   fieldName="TLName"
@@ -173,22 +172,18 @@ export const NovelCard = ({
                   defaultValue={novel.tlname ?? ""}
                   className={{
                     staticField: {
-                      div: cssIf(
+                      div: `max-h-40 overflow-y-auto ${cssIf(
                         !tlnameChanged,
                         "rounded-lg",
-                      ),
-                    },
-                  }}
-                  style={{
-                    staticField: {
-                      div: cssPIf(tlnameChanged, {
-                        backgroundColor: "#ff02",
-                      }),
+                        "bg-[#ff02]",
+                      )}`,
                     },
                   }}
                 />
               </div>
-              <div className="grid grid-flow-col border-b-[1px] border-dotted px-3 pb-1">
+              <div
+                className="grid grid-flow-col border-b-[1px] border-dotted px-3 pb-1 grid-cols-[1fr_1fr]"
+              >
                 <EditField
                   fieldName="OGDesc"
                   onSave={(v) =>
@@ -215,10 +210,10 @@ export const NovelCard = ({
                   defaultValue={novel.ogdesc}
                   className={{
                     staticField: {
-                      div: cssIf(
+                      div: `max-h-40 overflow-y-scroll ${cssIf(
                         ogdescChanged,
                         "rounded-lg bg-[#ff02]",
-                      ),
+                      )}`,
                     },
                   }}
                 />
@@ -248,10 +243,10 @@ export const NovelCard = ({
                   defaultValue={novel.tldesc ?? ""}
                   className={{
                     staticField: {
-                      div: cssIf(
+                      div: `max-h-40 overflow-y-scroll ${cssIf(
                         tldescChanged,
                         "rounded-lg bg-[#ff02]",
-                      ),
+                      )}`,
                     },
                   }}
                 />

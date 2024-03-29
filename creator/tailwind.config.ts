@@ -17,9 +17,10 @@ export default {
           good: colors.green[400],
         },
       },
-    },
-    screens: {
-      lg: "1050px",
+      screens: {
+        lg: { max: "1050px" },
+        sm: { max: "600px" },
+      },
     },
   },
   plugins: [],
