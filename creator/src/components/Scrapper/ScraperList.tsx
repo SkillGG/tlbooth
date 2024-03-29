@@ -160,7 +160,7 @@ export const ScraperList = () => {
   const utils = api.useUtils();
 
   return (
-    <div className="flex max-h-full flex-col overflow-hidden">
+    <div className="sm:px-5 sm:mt-4 flex max-h-full flex-col overflow-hidden">
       <div className="grid w-fit grid-flow-col gap-3">
         {novels && !("error" in novels) ?
           <>
