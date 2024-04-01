@@ -105,7 +105,7 @@ export function ChapterEdit(props: {
             return <TranslationItem key={tl.id} tl={tl} />;
           })}
           <div
-            className="grid w-[50%] grid-flow-col gap-4 px-4 text-white"
+            className="mt-2 grid w-[50%] grid-flow-col gap-4 border-t-2 border-dotted px-4 pt-2 text-white"
             style={{
               gridTemplateColumns:
                 "min-content min-content min-content auto",

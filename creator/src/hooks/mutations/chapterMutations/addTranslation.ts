@@ -65,6 +65,8 @@ export class AddTranslationMutation extends Mutation<
       tllang: to,
       local: true,
       status: "STAGED",
+      editdate: `${Date.now()}`,
+      publishdate: `${Date.now()}`,
     };
     super(
       AddTranslationMutation.getID({

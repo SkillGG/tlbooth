@@ -6,6 +6,8 @@ type SaveData = {
   novelID: string;
   chapterID: string;
   tlID: string;
+  publishdate?: string;
+  editdate?: string;
   status: TLStatus;
 };
 
@@ -24,7 +26,15 @@ export const isChangeTLStatusSaveData = (
     "lineID" in o &&
     typeof o.lineID === "string" &&
     "status" in o &&
-    Object.values(TLStatus).includes(o.status as TLStatus)
+    Object.values(TLStatus).includes(
+      o.status as TLStatus,
+    ) &&
+    ("publishdate" in o ?
+      typeof o.publishdate === "string"
+    : true) &&
+    ("editdate" in o ?
+      typeof o.editdate === "string"
+    : true)
   );
 };
 
@@ -36,13 +46,17 @@ export class ChangeTLStatusMutation extends Mutation<
     novelID,
     chapterID,
     tlID,
-  }: Omit<SaveData, "status">) =>
-    `change_tl_status_${novelID}_${chapterID}_${tlID}`;
+  }: Omit<
+    SaveData,
+    "status" | "publishdate" | "editdate"
+  >) => `change_tl_status_${novelID}_${chapterID}_${tlID}`;
   constructor({
     novelID,
     chapterID,
     tlID,
     status,
+    publishdate,
+    editdate,
   }: SaveData) {
     super(
       ChangeTLStatusMutation.getID({
@@ -91,6 +105,8 @@ export class ChangeTLStatusMutation extends Mutation<
         chapterID,
         tlID,
         status,
+        publishdate,
+        editdate,
       },
     );
   }

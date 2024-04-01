@@ -31,11 +31,19 @@ export function NovelEditCard({
           lock={true}
           fieldName="Original name"
           defaultValue={novel?.ogname}
+          className={{
+            editField: { div: "text-center" },
+            staticField: { div: "text-center" },
+          }}
         />
         <EditField
           fieldName="Translated name"
           defaultValue={novel?.tlname}
           lock={false}
+          className={{
+            editField: { div: "text-center" },
+            staticField: { div: "text-center" },
+          }}
           onSave={(v) => {
             mutate(
               new ChangeNovelNameMutation({

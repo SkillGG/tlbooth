@@ -34,7 +34,7 @@ const getChapterDate = (d: number | string) => {
 
   if (dayDiff > 5) {
     console.log("nore than 5 days");
-    return numjs.format("D-MM-YYYY");
+    return numjs.format("DD-MM-YYYY");
   } else {
     if (dayDiff >= 2) return `${dayDiff} days ago`;
     if (dayDiff === 1) return `yesterday`;

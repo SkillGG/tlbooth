@@ -145,11 +145,11 @@ export const NovelCard = ({
                   defaultValue={novel.ogname}
                   className={{
                     staticField: {
-                      div: `h-full max-h-40 overflow-y-auto text-balance leading-[normal]`,
+                      div: `max-h-40 overflow-y-auto text-balance leading-[normal]`,
                       span: `text-center`,
                     },
                     editField: {
-                      div: `h-full max-h-40 overflow-y-auto text-center leading-[normal]`,
+                      div: `max-h-40 overflow-y-auto text-center leading-[normal]`,
                     },
                   }}
                 />
@@ -179,14 +179,14 @@ export const NovelCard = ({
                   defaultValue={novel.tlname ?? ""}
                   className={{
                     staticField: {
-                      div: `h-full max-h-40 overflow-y-auto text-balance leading-[normal] ${cssIf(
+                      div: `max-h-40 overflow-y-auto text-balance leading-[normal] ${cssIf(
                         tlnameChanged,
                         "rounded-lg bg-[#ff02]",
                       )}`,
                       span: `text-center`,
                     },
                     editField: {
-                      div: `h-full max-h-40 overflow-y-auto text-center leading-[normal]`,
+                      div: `max-h-40 overflow-y-auto text-center leading-[normal]`,
                     },
                   }}
                 />
@@ -218,14 +218,14 @@ export const NovelCard = ({
                   defaultValue={novel.ogdesc}
                   className={{
                     staticField: {
-                      div: `h-full max-h-40 overflow-y-auto leading-[normal] ${cssIf(
+                      div: `max-h-40 overflow-y-auto leading-[normal] ${cssIf(
                         ogdescChanged,
                         "rounded-lg bg-[#ff02]",
                       )}`,
                       span: `text-center`,
                     },
                     editField: {
-                      div: `h-full max-h-40 overflow-y-auto text-center leading-[normal]`,
+                      div: `max-h-40 overflow-y-auto text-center leading-[normal]`,
                     },
                   }}
                 />
@@ -255,14 +255,14 @@ export const NovelCard = ({
                   defaultValue={novel.tldesc ?? ""}
                   className={{
                     staticField: {
-                      div: `h-full max-h-40 overflow-y-auto leading-[normal] ${cssIf(
+                      div: `max-h-40 overflow-y-auto leading-[normal] ${cssIf(
                         tldescChanged,
                         "rounded-lg bg-[#ff02]",
                       )}`,
                       span: `text-center`,
                     },
                     editField: {
-                      div: `h-full max-h-40 overflow-y-auto text-center leading-[normal]`,
+                      div: `max-h-40 overflow-y-auto text-center leading-[normal]`,
                     },
                   }}
                 />
@@ -270,7 +270,7 @@ export const NovelCard = ({
             </div>
 
             <div
-              className="grid h-full min-h-24 overflow-hidden px-5"
+              className="grid min-h-24 overflow-hidden px-5"
               style={{ gridAutoRows: "min-content" }}
             >
               <div className="relative right-0 justify-self-end">

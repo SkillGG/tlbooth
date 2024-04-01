@@ -250,6 +250,7 @@ export function TranslationEditor({
               chapterID: chap.id,
               tlID: tl.id,
               status: "STAGED",
+              editdate: `${Date.now()}`,
             }),
             true,
           );
@@ -352,6 +353,7 @@ export function TranslationEditor({
                     novelID: novel.id,
                     status: "PUBLISH",
                     tlID: tl.id,
+                    publishdate: `${Date.now()}`,
                   }),
                   true,
                 );
