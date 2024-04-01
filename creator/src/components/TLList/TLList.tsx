@@ -11,7 +11,7 @@ interface TLListProps {
 }
 
 export const TLList: FC<TLListProps> = () => {
-  const [skeleton, setSkeleton] = useState(false);
+  const [skeleton] = useState(false);
 
   const { getMutated } = useNovelStore();
 
@@ -21,13 +21,13 @@ export const TLList: FC<TLListProps> = () => {
 
   return (
     <div className="flex max-h-full flex-col overflow-hidden px-5">
-      <div className="">
-        <button
+      <div>
+        {/* <button
           className="mr-2"
           onClick={() => setSkeleton((p) => !p)}
         >
           Toggle skeleton
-        </button>
+        </button> */}
         <TransformationHistory />
       </div>
       <div

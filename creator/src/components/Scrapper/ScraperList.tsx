@@ -155,7 +155,7 @@ export const ScraperList = () => {
       api.scrapper.getListDummy.useQuery().data
     : api.scrapper.getList.useQuery(filters).data;
 
-  const [showSkeleton, setSkeleton] = useState(false);
+  const [showSkeleton] = useState(false);
 
   const utils = api.useUtils();
 
@@ -179,7 +179,7 @@ export const ScraperList = () => {
               filters={filters}
               setFilters={setFilters}
             />
-            <button onClick={() => setSkeleton((p) => !p)}>
+            {/* <button onClick={() => setSkeleton((p) => !p)}>
               Toggle skeleton
             </button>
             <button
@@ -188,7 +188,7 @@ export const ScraperList = () => {
               }}
             >
               Toggle dummy
-            </button>
+            </button> */}
           </>
         : <div className="min-h-6"></div>}
       </div>
