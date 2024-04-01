@@ -15,7 +15,6 @@ type SaveData = {
 export function isScrapperTextLine(
   d: unknown,
 ): d is ScrapperTextLine {
-  console.log("Checking if is line", d);
   return (
     typeof d === "object" &&
     !!d &&
@@ -29,7 +28,6 @@ export function isScrapperTextLine(
 export function isFetchLineSaveData(
   d: unknown,
 ): d is SaveData {
-  console.log(d);
   return (
     !!d &&
     typeof d === "object" &&

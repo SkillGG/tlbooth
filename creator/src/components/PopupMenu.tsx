@@ -117,6 +117,8 @@ export function WindowActionMenu({
     };
   }, [hide]);
 
+  console.log(innerHeight);
+
   return (
     <div
       id="Popupmenu"
@@ -128,7 +130,9 @@ export function WindowActionMenu({
     >
       <div
         className="flex flex-col rounded-b-lg rounded-t-lg text-black"
-        style={{ transform: "translate(-100%)" }}
+        style={{
+          transform: `translateX(-100%) ${y > innerHeight - actions.length * 30 ? "translateY(-100%)" : ""}`,
+        }}
       >
         {actions
           .map((action, i) => {
