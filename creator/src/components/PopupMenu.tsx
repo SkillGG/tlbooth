@@ -117,8 +117,6 @@ export function WindowActionMenu({
     };
   }, [hide]);
 
-  console.log(innerHeight);
-
   return (
     <div
       id="Popupmenu"
@@ -146,7 +144,7 @@ export function WindowActionMenu({
               );
             return (
               <div
-                key={action.label}
+                key={`${i}_${action.label}`}
                 className="overflow-hidden bg-blue-300 first:rounded-t-lg last:rounded-b-lg"
               >
                 <button
@@ -160,8 +158,10 @@ export function WindowActionMenu({
                     {reactStringReplace(
                       action.label,
                       /(\n)/g,
-                      () => (
-                        <br />
+                      (_, inx) => (
+                        <br
+                          key={`br_${inx}_${action.label}`}
+                        />
                       ),
                     )}
                   </span>
