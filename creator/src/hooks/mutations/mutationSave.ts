@@ -1,13 +1,13 @@
 import { isAddTranslationSaveData } from "./chapterMutations/addTranslation";
 import { isChangeLineSaveData } from "./chapterMutations/changeLine";
+import { isChangeLineStatusSaveData } from "./chapterMutations/changeLineStatus";
 import { isChangeChapterNameSaveData } from "./chapterMutations/changeName";
 import { isChangeChapterNumSaveData } from "./chapterMutations/changeNum";
+import { isChangeTLStatusSaveData } from "./chapterMutations/changeTLStatus";
 import { isFetchLineSaveData } from "./chapterMutations/fetchLines";
 import { isStageChapterSaveData } from "./chapterMutations/stageChapter";
-import {
-  MutationType,
-  type SaveMutationDatas,
-} from "./mutation";
+import { MutationType } from "./mutation";
+import { type SaveMutationDatas } from "./mutationTypes";
 import { isAddNovelMutationSaveData } from "./novelMutations/addNovel";
 import { isChangeNovelDescriptionSaveData } from "./novelMutations/changeDescription";
 import { isChangeNovelNameSaveData } from "./novelMutations/changeName";
@@ -90,6 +90,14 @@ const consistsOfValidMutationSaveData = (
         case MutationType.CHANGE_CHAPTER_NUMBER:
           if (!isChangeChapterNumSaveData(typedN))
             throw "CHANGE_CHAPTER_NUMBER";
+          break;
+        case MutationType.CHANGE_LINE_STATUS:
+          if (!isChangeLineStatusSaveData(typedN))
+            throw "CHANGE_LINE_STATUS";
+          break;
+        case MutationType.CHANGE_TL_STATUS:
+          if (!isChangeTLStatusSaveData(typedN))
+            throw "CHANGE_TL_STATUS";
           break;
         default:
           typedN.type satisfies never;

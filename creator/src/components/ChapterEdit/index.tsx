@@ -7,6 +7,7 @@ import { AddTranslationMutation } from "@/hooks/mutations/chapterMutations/addTr
 import { RemoveTLMutation } from "@/hooks/mutations/chapterMutations/removeTranslation";
 import { NovelEditCard } from "./NovelEditCard";
 import { ChapterEditCard } from "./ChapterEditCard";
+import Head from "next/head";
 
 function TranslationItem({ tl }: { tl: StoreTranslation }) {
   const {
@@ -90,6 +91,9 @@ export function ChapterEdit(props: {
     <div
       className={`grid px-2 ${localNovel ? "text-chapstate-localonly" : "text-chapstate-good"} mx-auto max-w-[90%]`}
     >
+      <Head>
+        <title>Editing chapter {chapter?.ogname}</title>
+      </Head>
       <NovelEditCard id={novelID} />
       <ChapterEditCard
         novelID={novelID}

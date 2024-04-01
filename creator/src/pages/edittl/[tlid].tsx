@@ -19,7 +19,7 @@ export default function EditTL() {
   return (
     <>
       <Head>
-        <title>Editing translation</title>
+        <title>Loading translation</title>
       </Head>
       <div>
         <div>

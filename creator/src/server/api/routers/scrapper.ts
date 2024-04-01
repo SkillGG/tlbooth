@@ -128,8 +128,21 @@ const getParsedSyo = async (
   return parsed;
 };
 
+const fetchSyoURL = async (url: string) => {
+  const syo = syoifyURL(url);
+  if ("error" in syo) return syo;
+  return await fetchSyo(syo.syo, syo.pages);
+};
+
+const getParsedSyoURL = async (url: string) => {
+  const rS = await fetchSyoURL(url);
+  if (typeof rS === "object") return rS;
+  const parsed = parse(rS);
+  return parsed;
+};
+
 // const uri = (s: string) => encodeURIComponent(s);
-const unuri = (s: string) => decodeURIComponent(s);
+const deuri = (s: string) => decodeURIComponent(s);
 
 const toHTR = (html: string) =>
   SanitizedText.fromHTML(html).htr;
@@ -252,16 +265,11 @@ export const scrapperRouter = createTRPCRouter({
               "That part is only available in admin mode!",
           };
 
-        const url = unuri(input);
+        const url = deuri(input);
 
-        const syoified = syoifyURL(url);
+        const parsed = await getParsedSyoURL(url);
 
-        if ("error" in syoified) return syoified;
-
-        const parsed = await getParsedSyo(
-          syoified.syo,
-          syoified.pages,
-        );
+        if ("error" in parsed) return parsed;
 
         let chapPageParsed = parsed;
         const chaptersDLs: ReturnType<
@@ -355,7 +363,7 @@ export const scrapperRouter = createTRPCRouter({
         };
       },
     ),
-  getChapter: publicProcedure
+  getChapterLines: publicProcedure
     .input(
       z.object({
         novelURL: z.string(),
@@ -365,28 +373,64 @@ export const scrapperRouter = createTRPCRouter({
     .query(
       async ({
         ctx,
-        input,
-      }): Promise<ScrapperChapter | { error: string }> => {
-        if (input.novelURL.startsWith("http://dummy")) {
+        input: { chapterURL, novelURL },
+      }): Promise<
+        ScrapperChapter["lines"] | { error: string }
+      > => {
+        if (novelURL.startsWith("http://dummy")) {
+          console.log("getting dummy chapter");
           const novel = DummyNovels.find(
-            (n) => n.info.novelURL === input.novelURL,
+            (n) => n.info.novelURL === novelURL,
           );
           if (!novel)
             return { error: "Incorrect dummy novel" };
           const chap = novel.chapters.find(
-            (ch) => ch.info.url === input.chapterURL,
+            (ch) => ch.info.url === chapterURL,
           );
           if (!chap)
             return { error: "Incorrect chapter url" };
-          return chap;
+          return chap.lines;
         }
 
         if (!(await isAdmin(ctx.id)))
           return {
-            error: "You have to be admin to get it!",
+            error:
+              "You have to be admin to fetch the chapter!",
           };
 
-        return { error: "TODO" };
+        const parsed = await getParsedSyoURL(
+          deuri(chapterURL),
+        );
+
+        if ("error" in parsed) return parsed;
+
+        // oneshot
+        const honbun =
+          parsed.querySelector("#novel_honbun");
+        if (!honbun)
+          return {
+            error: "Unable to find the chapter's content!",
+          };
+
+        const linePs = honbun.querySelectorAll("p");
+        if (!linePs)
+          return {
+            error: "Unable to find lines on the page!",
+          };
+
+        const lines: ScrapperTextLine[] = [];
+        linePs.forEach((line, i) => {
+          const text = toHTR(line.innerHTML).trim();
+          const id = line.id.match(/L(\d+)/);
+          let pos = i;
+          if (id?.[1]) {
+            const parsedInt = parseInt(id[1]);
+            if (!isNaN(parsedInt)) pos = parsedInt;
+          }
+          lines.push({ text, pos });
+        });
+
+        return lines;
       },
     ),
 });

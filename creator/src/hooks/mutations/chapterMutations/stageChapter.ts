@@ -97,6 +97,10 @@ export class StageChapterMutation extends Mutation<
               mut.updateID();
             }
           });
+          return (path) =>
+            path.includes(id) ?
+              path.replace(id, this.data.chapterID)
+            : null;
         }
       },
       {

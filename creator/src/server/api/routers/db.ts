@@ -22,12 +22,13 @@ export type DBNovel = Prisma.NovelGetPayload<{
 }>;
 
 const langEnum = z.enum(["PL", "EN", "JP"]);
-const tlStageEnum = z.enum([
+const tlStatusEnum = z.enum([
   "STAGED",
   "TL",
   "PR",
   "PUBLISH",
 ]);
+const lineStatusEnum = z.enum(["STAGED", "TL", "PR"]);
 
 export const databaseRouter = createTRPCRouter({
   getFromDB: publicProcedure.query(async ({ ctx }) => {
@@ -168,7 +169,7 @@ export const databaseRouter = createTRPCRouter({
     .input(
       z.object({
         oglang: langEnum,
-        status: tlStageEnum,
+        status: tlStatusEnum,
         tllang: langEnum,
         chapterID: z.string(),
       }),
@@ -197,6 +198,73 @@ export const databaseRouter = createTRPCRouter({
           id: input,
           lines: { every: { textID: input } },
         },
+      });
+      return result;
+    }),
+  initLines: publicProcedure
+    .input(
+      z.object({
+        lines: z.array(
+          z.object({
+            ogline: z.string(),
+            pos: z.number(),
+          }),
+        ),
+        tlID: z.string(),
+      }),
+    )
+    .mutation(async ({ ctx, input: { lines, tlID } }) => {
+      await ctx.db.textLine.deleteMany({
+        where: { textID: tlID },
+      });
+      const result = await ctx.db.translation.update({
+        where: { id: tlID },
+        data: {
+          lines: {
+            create: lines.map((line) => ({
+              ...line,
+              tlline: "",
+              status: "STAGED",
+            })),
+          },
+        },
+      });
+      return result;
+    }),
+  changeLine: publicProcedure
+    .input(
+      z.object({
+        lineID: z.string(),
+        value: z
+          .object({ text: z.string(), og: z.boolean() })
+          .optional(),
+        status: lineStatusEnum.optional(),
+      }),
+    )
+    .mutation(
+      async ({ ctx, input: { lineID, status, value } }) => {
+        const result = await ctx.db.textLine.update({
+          where: { id: lineID },
+          data: {
+            status,
+            ...(value ?
+              value.og ?
+                { ogline: value.text }
+              : { tlline: value.text }
+            : undefined),
+          },
+        });
+        return result;
+      },
+    ),
+  changeTLStatus: publicProcedure
+    .input(
+      z.object({ tlID: z.string(), status: tlStatusEnum }),
+    )
+    .mutation(async ({ ctx, input: { tlID, status } }) => {
+      const result = await ctx.db.translation.update({
+        where: { id: tlID },
+        data: { status },
       });
       return result;
     }),

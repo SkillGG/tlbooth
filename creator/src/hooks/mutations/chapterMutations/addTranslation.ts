@@ -112,6 +112,10 @@ export class AddTranslationMutation extends Mutation<
             }
           }
         });
+        return (path) =>
+          path.includes(newTL.id) ?
+            path.replace(newTL.id, this.data.tlID)
+          : null;
       },
       { novelID, chapterID, from, tlID: id, to },
     );

@@ -10,6 +10,7 @@ import Head from "next/head";
 import { AdminCheckProvider } from "@/hooks/admin";
 import { useEffect, useState } from "react";
 import { useNovelStore } from "@/hooks/novelStore";
+import { PopupMenuProvider } from "@/components/PopupMenu";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -31,9 +32,7 @@ const MyApp: AppType = ({ Component, pageProps }) => {
 
   useEffect(() => {
     if (novels) {
-      console.log("loading novels", novels);
-      loadData(novels); 
-      console.log("loading mutations");
+      loadData(novels);
       loadMutations(localStorage);
     }
   }, [novels, loadData, loadMutations]);
@@ -50,12 +49,16 @@ const MyApp: AppType = ({ Component, pageProps }) => {
       </Head>
       <ClerkProvider {...pageProps}>
         <AdminCheckProvider>
-          <LoginBar setLoaded={setNavLoaded} />
-          {navLoaded ?
-            <main className={`font-sans ${inter.variable}`}>
-              <Component {...pageProps} />
-            </main>
-          : <></>}
+          <PopupMenuProvider>
+            <LoginBar setLoaded={setNavLoaded} />
+            {navLoaded ?
+              <main
+                className={`font-sans ${inter.variable}`}
+              >
+                <Component {...pageProps} />
+              </main>
+            : <></>}
+          </PopupMenuProvider>
         </AdminCheckProvider>
       </ClerkProvider>
     </>

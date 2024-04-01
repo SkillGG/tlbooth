@@ -43,6 +43,10 @@ export function ChapterEditCard({
           verifyValue={(v) => {
             return !!/^\d+(\.\d*)?$/.exec(v);
           }}
+          className={{
+            editField: { div: "text-center" },
+            staticField: { div: "text-center" },
+          }}
           showRestore={isMutation(
             ChangeChapterNumMutation.getID({
               novelID,
@@ -65,7 +69,11 @@ export function ChapterEditCard({
         <EditField
           fieldName="Original name"
           lock={false}
-          className={{ main: "mx-4 inline-block" }}
+          className={{
+            main: "mx-4 inline-block",
+            editField: { div: "text-center" },
+            staticField: { div: "text-center" },
+          }}
           defaultValue={chapter?.ogname}
           showRestore={isMutation(
             ChangeChapterNameMutation.getID({
@@ -98,7 +106,11 @@ export function ChapterEditCard({
         <EditField
           fieldName="Translated name"
           lock={false}
-          className={{ main: "mx-4 inline-block" }}
+          className={{
+            main: "mx-4 inline-block",
+            editField: { div: "text-center" },
+            staticField: { div: "text-center" },
+          }}
           defaultValue={chapter?.tlname ?? ""}
           showRestore={isMutation(
             ChangeChapterNameMutation.getID({

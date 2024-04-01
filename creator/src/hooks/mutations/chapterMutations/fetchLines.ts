@@ -2,6 +2,7 @@ import { type Optional } from "@/utils/utils";
 import { Mutation, MutationType } from "../mutation";
 import { type TextLine } from "@prisma/client";
 import { type ScrapperTextLine } from "@/server/api/routers/scrapper";
+import { trpcClient } from "@/pages/_app";
 
 type SaveData = {
   lines: ScrapperTextLine[];
@@ -61,6 +62,21 @@ export class FetchLinesMutation extends Mutation<
   }: Optional<SaveData, "lines">) {
     return `fetch_${novelID}_${chapterID}_${tlID}_${fetchID}`;
   }
+  static toTextLines(
+    tlID: string,
+    lines: SaveData["lines"],
+  ) {
+    return lines.map<TextLine>((l) => {
+      return {
+        id: `textline_${tlID}_${l.pos}`,
+        pos: l.pos,
+        ogline: l.text,
+        status: "STAGED",
+        textID: tlID,
+        tlline: "",
+      } satisfies TextLine;
+    });
+  }
   constructor({
     chapterID,
     novelID,
@@ -71,19 +87,6 @@ export class FetchLinesMutation extends Mutation<
     const id =
       fetchID ??
       `fetch_lines_${++FetchLinesMutation.fetchLineID}`;
-
-    const textLines: TextLine[] = lines.map<TextLine>(
-      (l) => {
-        return {
-          id: `textline_${tlID}_${l.pos}`,
-          pos: l.pos,
-          ogline: l.text,
-          status: "STAGED",
-          textID: tlID,
-          tlline: "",
-        } satisfies TextLine;
-      },
-    );
     super(
       FetchLinesMutation.getID({
         chapterID,
@@ -105,7 +108,11 @@ export class FetchLinesMutation extends Mutation<
                           return tl.id === this.data.tlID ?
                               {
                                 ...tl,
-                                lines: textLines,
+                                lines:
+                                  FetchLinesMutation.toTextLines(
+                                    this.data.tlID,
+                                    this.data.lines,
+                                  ),
                               }
                             : tl;
                         },
@@ -121,7 +128,13 @@ export class FetchLinesMutation extends Mutation<
         `...${this.data.novelID.substring(this.data.novelID.length - 4)}/...${this.data.chapterID.substring(this.data.chapterID.length - 4)}/...${this.data.tlID.substring(this.data.tlID.length - 4)}`,
       MutationType.FETCH_LINES,
       async () => {
-        throw "TODO _fetchLine";
+        await trpcClient.db.initLines.mutate({
+          tlID: this.data.tlID,
+          lines: this.data.lines.map((f) => ({
+            ogline: f.text,
+            pos: f.pos,
+          })),
+        });
       },
       {
         chapterID,

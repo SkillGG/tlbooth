@@ -18,7 +18,7 @@ export const cssPIf = (
 };
 
 export const cssDef = (condidion?: string) => {
-  return cssIf(condidion, condidion);
+  return cssIf(!!condidion, condidion, "");
 };
 
 export type Optional<T, K extends keyof T> = Pick<

@@ -1,69 +1,63 @@
 import { LineStatus } from "@prisma/client";
 import { Mutation, MutationType } from "../mutation";
 import { trpcClient } from "@/pages/_app";
+import { type NovelStore } from "@/hooks/novelStore";
 
 type SaveData = {
-  value: string;
+  status: LineStatus;
   novelID: string;
   chapterID: string;
   tlID: string;
-  og: boolean;
   lineID: string;
-  status?: LineStatus;
 };
 
-export const isChangeLineSaveData = (
+export const isChangeLineStatusSaveData = (
   o: unknown,
 ): o is SaveData => {
   return (
     !!o &&
     typeof o === "object" &&
-    "value" in o &&
-    typeof o.value === "string" &&
     "novelID" in o &&
     typeof o.novelID === "string" &&
-    "og" in o &&
-    typeof o.og === "boolean" &&
     "chapterID" in o &&
     typeof o.chapterID === "string" &&
     "tlID" in o &&
     typeof o.tlID === "string" &&
-    ("status" in o ?
-      Object.values(LineStatus).includes(
-        o.status as LineStatus,
-      )
-    : true)
+    "lineID" in o &&
+    typeof o.lineID === "string" &&
+    "status" in o &&
+    Object.values(LineStatus).includes(
+      o.status as LineStatus,
+    )
   );
 };
 
-export class ChangeLineMutation extends Mutation<
-  MutationType.CHANGE_LINE,
+export class ChangeLineStatusMutation extends Mutation<
+  MutationType.CHANGE_LINE_STATUS,
   SaveData
 > {
   static getID = ({
     novelID,
     chapterID,
-    tlID,
     lineID,
-    og,
-  }: Omit<SaveData, "value" | "status" | "linePos">) =>
-    `change_line_${og ? "og" : "tl"}_${novelID}_${chapterID}_${tlID}_${lineID}`;
+    tlID,
+    status,
+  }: SaveData) =>
+    `change_line_status_${novelID}_${chapterID}_${tlID}_${lineID}_${status}`;
   constructor({
     novelID,
     chapterID,
-    og,
     tlID,
-    value,
     lineID,
     status,
   }: SaveData) {
     super(
-      ChangeLineMutation.getID({
+      ChangeLineStatusMutation.getID({
         novelID,
         chapterID,
         tlID,
         lineID,
-        og,
+        status,
       }),
       (p) => {
         return p.map((n) => {
@@ -84,26 +78,13 @@ export class ChangeLineMutation extends Mutation<
                                   lines: tl.lines.map(
                                     (l) => {
                                       return (
-                                        l.id === lineID ?
-                                          og ?
-                                            {
-                                              ...l,
-                                              ogline: value,
-                                              status:
-                                                status ?
-                                                  status
-                                                : l.status,
-                                            }
-                                          : {
-                                              ...l,
-                                              tlline: value,
-                                              status:
-                                                status ?
-                                                  status
-                                                : l.status,
-                                            }
-                                        : l
-                                      );
+                                          l.id === lineID
+                                        ) ?
+                                          {
+                                            ...l,
+                                            status,
+                                          }
+                                        : l;
                                     },
                                   ),
                                 }
@@ -117,31 +98,37 @@ export class ChangeLineMutation extends Mutation<
             : n;
         });
       },
-      value,
-      MutationType.CHANGE_LINE,
+      status,
+      MutationType.CHANGE_LINE_STATUS,
       async () => {
         await trpcClient.db.changeLine.mutate({
           lineID: this.data.lineID,
           status: this.data.status,
-          value: {
-            og: this.data.og,
-            text: this.data.value,
-          },
         });
       },
       {
         novelID,
-        og,
-        lineID,
         chapterID,
+        lineID,
         tlID,
-        value,
         status,
       },
     );
   }
   updateID(): void {
-    this.id = ChangeLineMutation.getID(this.data);
+    this.id = ChangeLineStatusMutation.getID(this.data);
   }
-  override onRemoved(): void {}
+  override onRemoved(store: NovelStore): void {
+    if (this.data.status === "TL") {
+      store.removeMutation(
+        ChangeLineStatusMutation.getID({
+          novelID: this.data.novelID,
+          chapterID: this.data.chapterID,
+          lineID: this.data.lineID,
+          tlID: this.data.tlID,
+          status: "PR",
+        }),
+      );
+    }
+  }
 }

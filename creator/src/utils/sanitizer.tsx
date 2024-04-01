@@ -38,6 +38,9 @@ const deepReplace = (
 };
 
 export class SanitizedText {
+  /**
+   * HyperText Ruby
+   */
   htr: string;
 
   constructor({ htr }: { htr: string }) {
@@ -139,16 +142,28 @@ export class SanitizedText {
     return replaced;
   }
   toJSX(onlyBRs = false): ReactNode {
-    const deruby = this.deRubify([this.htr]);
+    const deruby =
+      onlyBRs ? [this.htr] : this.deRubify([this.htr]);
 
     const formatted =
       onlyBRs ? deruby : this.formatText(deruby).flat(3);
 
-    const deBRd = formatted.map((node) =>
-      deepReplace(node, (n) =>
-        replace(n, /(\[\/])/g, (_, i) => <br key={i} />),
-      ),
-    );
+    const deBRd = formatted
+      .flatMap((node) =>
+        deepReplace(node, (n) =>
+          replace(n, /(\[\/])/g, (_, i) => <br key={i} />),
+        ),
+      )
+      .flatMap((node) =>
+        deepReplace(node, (n) =>
+          replace(n, /(\&gt;)/g, () => ">"),
+        ),
+      )
+      .flatMap((node) =>
+        deepReplace(node, (n) =>
+          replace(n, /(\&lt;)/g, () => "<"),
+        ),
+      );
 
     return <>{...deBRd}</>;
   }

@@ -38,7 +38,7 @@ model Translation {
 
     status TLStatus
 
-    Chapter   Chapter? @relation(fields: [chapterID], references: [id])
+    Chapter   Chapter? @relation(fields: [chapterID], references: [id], onDelete: Cascade)
     chapterID String?  @map("chapterId")
 
     lines TextLine[]
@@ -53,7 +53,7 @@ model TextLine {
 
     status LineStatus @default(STAGED)
 
-    Translation Translation? @relation(fields: [textID], references: [id])
+    Translation Translation? @relation(fields: [textID], references: [id], onDelete: Cascade)
     textID      String?      @map("textId")
 }
 

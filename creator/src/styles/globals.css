@@ -7,5 +7,5 @@
 }
 
 body {
-  @apply bg-gray-800 text-white;
+  @apply h-[100vh] bg-gray-800 text-white;
 }

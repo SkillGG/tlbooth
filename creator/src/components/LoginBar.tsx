@@ -42,7 +42,7 @@ export default function LoginBar({
                     new URL(
                       "/dashboard",
                       window.location.href,
-                    ),
+                    ).href,
                   );
                 }}
               >

@@ -70,15 +70,17 @@ export function TransformationHistory() {
                 className="text-center"
                 refreshFn={async () => {
                   try {
-                    const sets = await apply();
-                    const goBack = sets.length > 0;
+                    const { storeChanges, locationChange } =
+                      await apply();
+                    // const goBack = sets.length > 0;
+
                     await invalidateList();
-                    for (const s of sets) {
-                      s();
+                    for (const storeChange of storeChanges) {
+                      storeChange();
                     }
                     saveMutations(localStorage);
-                    if (goBack)
-                      await router.push("/dashboard");
+                    const newPath = locationChange();
+                    if (newPath) void router.push(newPath);
                   } catch (e) {
                     throw e;
                   }

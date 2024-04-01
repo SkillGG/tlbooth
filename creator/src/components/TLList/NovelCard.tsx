@@ -11,9 +11,8 @@ import { ChangeNovelNameMutation } from "@/hooks/mutations/novelMutations/change
 import { ChangeNovelDescriptionMutation } from "@/hooks/mutations/novelMutations/changeDescription";
 import { RemoveNovelMutation } from "@/hooks/mutations/novelMutations/removeNovel";
 import { AddNovelMutation } from "@/hooks/mutations/novelMutations/addNovel";
-import { WindowActionMenu } from "./ChapterActionMenu";
-import { createPortal } from "react-dom";
 import { HTRText } from "../htrLabel";
+import { usePopupMenu } from "../PopupMenu";
 
 export const compareChapterNums = (
   n: string,
@@ -33,9 +32,7 @@ export const NovelCard = ({
     novel.url,
   ).data;
 
-  const [showMenu, setShowMenu] = useState<
-    false | { x: number; y: number }
-  >(false);
+  const popupMenu = usePopupMenu();
 
   const show = unwrapped && !novel.forDeletion;
 
@@ -78,41 +75,12 @@ export const NovelCard = ({
       ],
       [isMutation, novel.id, mutations],
     );
+
   return (
     <div
       className="w-full justify-center rounded-xl border-2 border-gray-400"
       id={`novel_${novel.id}`}
     >
-      {showMenu &&
-        createPortal(
-          <WindowActionMenu
-            actions={[
-              {
-                label: "Go to page",
-                action() {
-                  if (novel.url)
-                    window.open(
-                      decodeURIComponent(novel.url),
-                      "_blank",
-                    );
-                },
-              },
-              {
-                label: "Copy original name",
-                action() {
-                  if (novel.ogname)
-                    void navigator.clipboard.writeText(
-                      novel.ogname,
-                    );
-                },
-              },
-            ]}
-            hide={() => setShowMenu(false)}
-            x={showMenu.x}
-            y={showMenu.y}
-          />,
-          document.body,
-        )}
       <div
         className={`${cssIf(novel.local, novelItem.local)}
         ${cssIf(show, "border-b-2")}
@@ -120,7 +88,27 @@ export const NovelCard = ({
         ${cssIf(novel.forDeletion, novelItem.forDeletion)}
         grid grid-flow-col text-balance border-gray-400 text-center text-sm`}
         onContextMenu={(e) => {
-          setShowMenu({ x: e.clientX, y: e.clientY });
+          popupMenu.show(e.clientX, e.clientY, [
+            {
+              label: "Go to page",
+              action() {
+                if (novel.url)
+                  window.open(
+                    decodeURIComponent(novel.url),
+                    "_blank",
+                  );
+              },
+            },
+            {
+              label: "Copy original name",
+              action() {
+                if (novel.ogname)
+                  void navigator.clipboard.writeText(
+                    novel.ogname,
+                  );
+              },
+            },
+          ]);
           e.preventDefault();
         }}
       >
@@ -157,7 +145,11 @@ export const NovelCard = ({
                   defaultValue={novel.ogname}
                   className={{
                     staticField: {
-                      div: `h-full max-h-40 overflow-y-auto leading-[normal]`,
+                      div: `h-full max-h-40 overflow-y-auto text-balance leading-[normal]`,
+                      span: `text-center`,
+                    },
+                    editField: {
+                      div: `h-full max-h-40 overflow-y-auto text-center leading-[normal]`,
                     },
                   }}
                 />
@@ -187,10 +179,14 @@ export const NovelCard = ({
                   defaultValue={novel.tlname ?? ""}
                   className={{
                     staticField: {
-                      div: `h-full max-h-40 overflow-y-auto leading-[normal] ${cssIf(
+                      div: `h-full max-h-40 overflow-y-auto text-balance leading-[normal] ${cssIf(
                         tlnameChanged,
                         "rounded-lg bg-[#ff02]",
                       )}`,
+                      span: `text-center`,
+                    },
+                    editField: {
+                      div: `h-full max-h-40 overflow-y-auto text-center leading-[normal]`,
                     },
                   }}
                 />
@@ -226,6 +222,10 @@ export const NovelCard = ({
                         ogdescChanged,
                         "rounded-lg bg-[#ff02]",
                       )}`,
+                      span: `text-center`,
+                    },
+                    editField: {
+                      div: `h-full max-h-40 overflow-y-auto text-center leading-[normal]`,
                     },
                   }}
                 />
@@ -259,6 +259,10 @@ export const NovelCard = ({
                         tldescChanged,
                         "rounded-lg bg-[#ff02]",
                       )}`,
+                      span: `text-center`,
+                    },
+                    editField: {
+                      div: `h-full max-h-40 overflow-y-auto text-center leading-[normal]`,
                     },
                   }}
                 />

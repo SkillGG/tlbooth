@@ -47,8 +47,8 @@ export class AddNovelMutation extends Mutation<
   }: Optional<SaveData, "novelID">) {
     const novel: StoreNovel = {
       id:
-      novelID ??
-      `localnovel_${++AddNovelMutation.novelID}`,
+        novelID ??
+        `localnovel_${++AddNovelMutation.novelID}`,
       chapters: [],
       ogname: novelName,
       tlname: "",
@@ -57,13 +57,14 @@ export class AddNovelMutation extends Mutation<
       ogdesc: novelDescription,
       tldesc: "",
     };
-    console.log("adding novel", novel)
+    console.log("adding novel", novel);
     super(
       AddNovelMutation.getID(novel.id),
       (p) => [...p, novel],
       novelName,
       MutationType.ADD_NOVEL,
       async (novelStore) => {
+        console.log("applying add novel");
         const retNovel =
           await trpcClient.db.registerNovel.mutate({
             novelName,
@@ -79,6 +80,10 @@ export class AddNovelMutation extends Mutation<
             }
           }
         });
+        return (path) =>
+          path.includes(novel.id) ?
+            path.replace(novel.id, this.data.novelID)
+          : null;
       },
       {
         novelDescription,

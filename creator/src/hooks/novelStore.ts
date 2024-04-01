@@ -1,10 +1,9 @@
 import { create } from "zustand";
 
 import {
+  type MutationType,
   type Mutation,
-  MutationType,
   type SaveMutationData,
-  type SaveMutationDatas,
   type StoreChapter,
   type StoreNovel,
   type StoreTranslation,
@@ -15,15 +14,9 @@ import {
 } from "./mutations/mutationSave";
 import { StageChapterMutation } from "./mutations/chapterMutations/stageChapter";
 import { AddNovelMutation } from "./mutations/novelMutations/addNovel";
-import { ChangeNovelDescriptionMutation } from "./mutations/novelMutations/changeDescription";
-import { ChangeNovelNameMutation } from "./mutations/novelMutations/changeName";
-import { RemoveNovelMutation } from "./mutations/novelMutations/removeNovel";
 import { AddTranslationMutation } from "./mutations/chapterMutations/addTranslation";
-import { ChangeChapterNameMutation } from "./mutations/chapterMutations/changeName";
-import { RemoveTLMutation } from "./mutations/chapterMutations/removeTranslation";
 import { FetchLinesMutation } from "./mutations/chapterMutations/fetchLines";
-import { ChangeLineMutation } from "./mutations/chapterMutations/changeLine";
-import { ChangeChapterNumMutation } from "./mutations/chapterMutations/changeNum";
+import { MutationFromData } from "./mutations/mutationTypes";
 
 export type TLInfo = {
   tl: StoreTranslation;
@@ -95,7 +88,10 @@ export type NovelStore = {
 
   getTranslationInfo: (tlID: string) => TLInfo;
 
-  apply: () => Promise<(() => void)[]>;
+  apply: () => Promise<{
+    storeChanges: (() => void)[];
+    locationChange: () => string | null;
+  }>;
 };
 
 export const useNovelStore = create<NovelStore>()(
@@ -139,39 +135,9 @@ export const useNovelStore = create<NovelStore>()(
     },
     loadMutations: (s) => {
       if (get().getMutations().length > 0)
-        return void console.log(
+        return void console.warn(
           "Cannot overwite existing mutations",
         );
-      console.log("loading mutations!");
-      const rmd2mut = (rmd: SaveMutationDatas) => {
-        switch (rmd.type) {
-          case MutationType.ADD_NOVEL:
-            return new AddNovelMutation(rmd);
-          case MutationType.CHANGE_DESC:
-            return new ChangeNovelDescriptionMutation(rmd);
-          case MutationType.CHANGE_NAME:
-            return new ChangeNovelNameMutation(rmd);
-          case MutationType.REMOVE_NOVEL:
-            return new RemoveNovelMutation(rmd.novelID);
-          case MutationType.STAGE_CHAPTER:
-            return new StageChapterMutation(rmd);
-          case MutationType.ADD_TRANSLATION:
-            return new AddTranslationMutation(rmd);
-          case MutationType.CHANGE_CHAPTER_NAME:
-            return new ChangeChapterNameMutation(rmd);
-          case MutationType.REMOVE_TRANSLATION:
-            return new RemoveTLMutation(rmd);
-          case MutationType.FETCH_LINES:
-            return new FetchLinesMutation(rmd);
-          case MutationType.CHANGE_LINE:
-            return new ChangeLineMutation(rmd);
-          case MutationType.CHANGE_CHAPTER_NUMBER:
-            return new ChangeChapterNumMutation(rmd);
-          default:
-            rmd satisfies never;
-            throw "Unknown mutation type!";
-        }
-      };
       const str = s.getItem("mutations");
       if (str) {
         const savedData = JSON.parse(str) as unknown;
@@ -190,9 +156,10 @@ export const useNovelStore = create<NovelStore>()(
         set((p) => {
           return {
             ...p,
-            mutations: savedData.muts.map(rmd2mut),
-            undoneMutations:
-              savedData.undoneMuts.map(rmd2mut),
+            mutations: savedData.muts.map(MutationFromData),
+            undoneMutations: savedData.undoneMuts.map(
+              MutationFromData,
+            ),
           };
         });
       }
@@ -239,7 +206,6 @@ export const useNovelStore = create<NovelStore>()(
         .getDBNovel(nID)
         ?.chapters.find((c) => fn(c)) ?? null,
     getTranslationInfo: (tlID) => {
-      console.log("getting tlinfo for", tlID);
       let chap: StoreChapter | undefined;
       const novel = get().getNovelBy((p) => {
         const ch = p.chapters.find((c) =>
@@ -268,7 +234,6 @@ export const useNovelStore = create<NovelStore>()(
       set((s) => ({ ...s, novels: remote })),
     mutate: (t, o = false) => {
       set((s) => {
-        console.log("adding mutation", t.id);
         const muts = [
           ...get().mutations,
           ...get().undoneMutations,
@@ -346,9 +311,14 @@ export const useNovelStore = create<NovelStore>()(
     },
     apply: async () => {
       const sets: [string, () => void][] = [];
+      let locChangeFunc: () => string | null = () => null;
       try {
+        const locationChanges: (
+          | void
+          | ((s: string) => string | null)
+        )[] = [];
         for (const mut of get().mutations) {
-          await mut.apiFn(get());
+          locationChanges.push(await mut.apiFn(get()));
           sets.push([
             mut.type +
               ": " +
@@ -361,6 +331,17 @@ export const useNovelStore = create<NovelStore>()(
               })),
           ]);
         }
+        const actualLCs = locationChanges.filter((f) => f);
+        locChangeFunc = () => {
+          if (actualLCs.length === 0) return null;
+          const newpath = actualLCs.reduce<string>(
+            (p, f) => f?.(p) ?? p,
+            window.location.pathname,
+          );
+          if (newpath === window.location.pathname)
+            return null;
+          return newpath;
+        };
       } catch (e) {
         console.error(e);
         const getErrorMsg = (x: unknown): string => {
@@ -386,7 +367,10 @@ export const useNovelStore = create<NovelStore>()(
               .reduce((p, n) => p + "\n" + n, ""),
         );
       }
-      return sets.map((r) => r[1]);
+      return {
+        storeChanges: sets.map((r) => r[1]),
+        locationChange: locChangeFunc,
+      };
     },
   }),
 );

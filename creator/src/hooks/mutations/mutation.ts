@@ -1,19 +1,7 @@
 import { type DBNovel } from "@/server/api/routers/db";
 import { type MutationSaveData } from "./mutationSave";
 import { type NovelStore } from "../novelStore";
-import type {
-  AddNovelMutationData,
-  ChangeNovelDescriptionMutationData,
-  ChangeNovelNameMutationData,
-  RemoveNovelMutationData,
-  StageChapterMutationData,
-  ChangeChapterNameMutationData,
-  AddTranslationMutationData,
-  RemoveTLMutationData,
-  FetchLinesMutationData,
-  ChangeLineMutationData,
-  ChangeChapterNumMutationData,
-} from "./mutationTypes";
+import type { SaveMutationDatas } from "./mutationTypes";
 
 type MakeLocalDeletable<T> = T & {
   forDeletion?: true;
@@ -48,44 +36,10 @@ export enum MutationType {
   FETCH_LINES = "Fetch lines",
   CHANGE_LINE = "Change Text Line",
   CHANGE_CHAPTER_NUMBER = "Change Chapter Number",
-  //   CHANGE_CHAPTER_DESC = "Change chapter description",
+  CHANGE_LINE_STATUS = "Change Line Status",
+  CHANGE_TL_STATUS = "Change TL Status",
+  // CHANGE_CHAPTER_DESC = "Change chapter description",
 }
-
-export type SaveMutationDatas = NonNullable<
-  | ({
-      type: MutationType.ADD_NOVEL;
-    } & AddNovelMutationData)
-  | ({
-      type: MutationType.CHANGE_DESC;
-    } & ChangeNovelDescriptionMutationData)
-  | ({
-      type: MutationType.CHANGE_NAME;
-    } & ChangeNovelNameMutationData)
-  | ({
-      type: MutationType.REMOVE_NOVEL;
-    } & RemoveNovelMutationData)
-  | ({
-      type: MutationType.STAGE_CHAPTER;
-    } & StageChapterMutationData)
-  | ({
-      type: MutationType.CHANGE_CHAPTER_NAME;
-    } & ChangeChapterNameMutationData)
-  | ({
-      type: MutationType.ADD_TRANSLATION;
-    } & AddTranslationMutationData)
-  | ({
-      type: MutationType.REMOVE_TRANSLATION;
-    } & RemoveTLMutationData)
-  | ({
-      type: MutationType.FETCH_LINES;
-    } & FetchLinesMutationData)
-  | ({
-      type: MutationType.CHANGE_LINE;
-    } & ChangeLineMutationData)
-  | ({
-      type: MutationType.CHANGE_CHAPTER_NUMBER;
-    } & ChangeChapterNumMutationData)
->;
 
 export type SaveMutationData<
   T extends { type: MutationType },
@@ -103,14 +57,18 @@ export abstract class Mutation<
   desc: MutationDescription;
   type: Q;
   id: string;
-  apiFn: (store: NovelStore) => Promise<void>;
+  apiFn: (
+    store: NovelStore,
+  ) => Promise<((url: string) => string | null) | void>;
   data: MutationSaveData<Q, C>;
   constructor(
     id: string,
     fn: (p: StoreNovel[]) => StoreNovel[],
     desc: MutationDescription,
     type: Q,
-    apiFn: (store: NovelStore) => Promise<void>,
+    apiFn: (
+      store: NovelStore,
+    ) => Promise<((url: string) => string | null) | void>,
     data: C,
   ) {
     this.fn = fn;

@@ -8,27 +8,21 @@ import type {
 } from "@/server/api/routers/scrapper";
 import { useMediaQuery } from "@uidotdev/usehooks";
 import { compareChapterNums } from "./NovelCard";
-import React, { useState } from "react";
-import { createPortal } from "react-dom";
-import {
-  WindowActionMenu,
-  type ChapterActionMenuItem,
-} from "./ChapterActionMenu";
+import React from "react";
 import { useRouter } from "next/router";
 import { StageChapterMutation } from "@/hooks/mutations/chapterMutations/stageChapter";
 import { type StoreNovel } from "@/hooks/mutations/mutation";
 import { Skeleton } from "../Skeleton/Skeleton";
 
 import dayjs from "dayjs";
+import {
+  type ChapterActionMenuItem,
+  type PopupMenuObject,
+  usePopupMenu,
+} from "../PopupMenu";
 
 type StagedChapterInfo = ScrapperChapterInfo & {
   staged: boolean;
-};
-
-type ActionMenuData = {
-  x: number;
-  y: number;
-  actions: ChapterActionMenuItem[];
 };
 
 const getChapterDate = (d: number | string) => {
@@ -68,20 +62,16 @@ function ChapterMenuButton({
   ...props
 }: React.ComponentPropsWithoutRef<"button"> & {
   actions: ChapterActionMenuItem[];
-  openMenu?(d: ActionMenuData): void;
+  openMenu?: PopupMenuObject["show"];
 }) {
   return (
     <button
       {...props}
-      data-ismenubutton="true"
+      data-openspopup
       onClick={(e) => {
         onClick?.(e);
         if (e.defaultPrevented) return;
-        openMenu?.({
-          x: e.clientX,
-          y: e.clientY,
-          actions,
-        });
+        openMenu?.(e.clientX, e.clientY, actions);
       }}
     >
       ...
@@ -98,7 +88,7 @@ const ChapterItem = React.memo(function ChapterItem({
   db?: StagedChapterInfo;
   novelID: string;
   local?: StagedChapterInfo;
-  openMenu?(d: ActionMenuData): void;
+  openMenu?: PopupMenuObject["show"];
 }): React.ReactElement {
   const toEdit = useGotoEdit();
 
@@ -252,7 +242,7 @@ const ChapterItem = React.memo(function ChapterItem({
               : {
                   label: "Remove",
                   action() {
-                    throw "TODO";
+                    throw "TODO _removeChapterAction";
                   },
                 },
             ]}
@@ -301,14 +291,12 @@ export const ChapterList = ({
   novelData?: ScrapperNovel;
   erred?: string | false;
 }) => {
-  const [showMenu, setShowMenu] = useState<
-    false | ActionMenuData
-  >(false);
-
   const utils = api.useUtils();
 
   const { getNovel, getChapterBy, getDBChapterBy } =
     useNovelStore();
+
+  const popupMenu = usePopupMenu();
 
   const isPhone = useMediaQuery(
     "only screen and (max-width: 1024px)",
@@ -371,9 +359,7 @@ export const ChapterList = ({
       </div>
       <div
         className={`${isPhone ? novelItem.phonechaps : novelItem.pcchaps} grid h-full max-h-full grid-flow-row overflow-y-auto`}
-        onScroll={() =>
-          showMenu && setShowMenu(() => false)
-        }
+        onScroll={() => popupMenu.hide()}
       >
         <div
           className={`${novelItem.chapnum} text-center font-bold`}
@@ -423,9 +409,7 @@ export const ChapterList = ({
                     novelID={novel.id}
                     db={chapterInfo.db}
                     local={chapterInfo.local}
-                    openMenu={(data) => {
-                      setShowMenu(data);
-                    }}
+                    openMenu={popupMenu.show}
                   />
                 </React.Fragment>
               );
@@ -438,17 +422,6 @@ export const ChapterList = ({
             />
           ))
         }
-
-        {showMenu &&
-          createPortal(
-            <WindowActionMenu
-              hide={() => setShowMenu(() => false)}
-              x={showMenu.x}
-              y={showMenu.y}
-              actions={showMenu.actions}
-            />,
-            document.body,
-          )}
       </div>
     </div>
   );

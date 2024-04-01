@@ -46,6 +46,7 @@ type EditFieldProps = {
   } | null;
   verifyValue?: (b: string) => boolean;
   undefinedIsEmpty?: boolean;
+  rawHTR?: true;
 };
 
 type EditFieldRef = { show: () => void; hide: () => void };
@@ -68,6 +69,7 @@ export const EditField = React.forwardRef<
     className,
     style,
     onRestore,
+    rawHTR,
     verifyValue = () => true,
     undefinedIsEmpty = true,
   },
@@ -90,7 +92,7 @@ export const EditField = React.forwardRef<
   return (
     <>
       <div
-        className={`${cssDef(className?.main)} h-min text-sm`}
+        className={`${cssDef(className?.main)}`}
         style={style?.main}
       >
         <small
@@ -170,15 +172,14 @@ export const EditField = React.forwardRef<
         {edit ?
           <div
             key="editfield"
-            className={`${cssDef(className?.editField?.div)} grid grid-flow-col gap-x-2`}
+            className={`${cssDef(className?.editField?.div)}`}
             style={{
               ...style?.editField?.div,
-              gridTemplateColumns: "auto min-content",
             }}
           >
             <span
               contentEditable
-              className={`${className?.editField?.span} block min-w-4 border-b-2 text-center`}
+              className={`${className?.editField?.span} block`}
               style={style?.editField?.span}
               onKeyDown={(e) => {
                 if (e.code === "Enter" && !e.shiftKey) {
@@ -199,21 +200,24 @@ export const EditField = React.forwardRef<
                 }
               }}
               dangerouslySetInnerHTML={{
-                __html: renderToStaticMarkup(
-                  new SanitizedText({
-                    htr: defaultValue ?? "",
-                  }).toJSX(true),
-                ),
+                __html:
+                  rawHTR ?
+                    defaultValue ?? ""
+                  : renderToStaticMarkup(
+                      new SanitizedText({
+                        htr: defaultValue ?? "",
+                      }).toJSX(true),
+                    ),
               }}
             ></span>
           </div>
         : <div
             key="nonEditField"
-            className={`${cssDef(className?.staticField?.div)} min-h-5 text-center`}
+            className={`${cssDef(className?.staticField?.div)}`}
             style={style?.staticField?.div}
           >
             <div
-              className={`${cssDef(className?.staticField?.span)} min-w-4 text-center`}
+              className={`${cssDef(className?.staticField?.span)}`}
               style={style?.staticField?.span}
             >
               <HTRText htr={defaultValue ?? ""} />

@@ -1,6 +1,5 @@
 import { ChapterEdit } from "@/components/ChapterEdit";
 import { TransformationHistory } from "@/components/TLList/TransformHistory";
-import Head from "next/head";
 import { useParams } from "next/navigation";
 import { useRouter } from "next/router";
 
@@ -19,9 +18,6 @@ export default function EditChapterPage() {
 
   return (
     <>
-      <Head>
-        <title>Editing chapter</title>
-      </Head>
       <div className="px-4">
         <TransformationHistory />
       </div>
