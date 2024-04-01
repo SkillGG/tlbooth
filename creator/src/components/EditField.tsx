@@ -8,12 +8,17 @@ import React, {
   useState,
 } from "react";
 import { HTRText } from "./htrLabel";
+import { useNovelStore } from "@/hooks/novelStore";
+import { twMerge } from "tailwind-merge";
 
 type EditFieldCustomization<T> = {
   main?: T;
   header?: {
     main?: T;
-    noEdit?: T;
+    noEdit?: {
+      restore?: T;
+      edit?: T;
+    };
     edit?: {
       main?: T;
       save?: T;
@@ -82,12 +87,18 @@ export const EditField = React.forwardRef<
   const textRef = useRef<HTMLSpanElement>(null);
   const saveRef = useRef<HTMLButtonElement>(null);
 
+  const {
+    settings: { alwaysRawEdit },
+  } = useNovelStore();
+
   useImperativeHandle(ref, () => {
     return {
       show: () => setEdit(true),
       hide: () => setEdit(false),
     };
   });
+
+  const raw = alwaysRawEdit ? true : rawHTR;
 
   return (
     <>
@@ -105,16 +116,29 @@ export const EditField = React.forwardRef<
             (!edit ?
               <>
                 <button
-                  className={`${cssDef(className?.header?.noEdit)} ml-1`}
-                  style={style?.header?.noEdit}
-                  onClick={() => setEdit((p) => !p)}
+                  className={twMerge(
+                    `ml-1`,
+                    cssDef(className?.header?.noEdit?.edit),
+                  )}
+                  style={style?.header?.noEdit?.edit}
+                  onClick={() => {
+                    setEdit((p) => !p);
+                    setTimeout(() => {
+                      textRef.current?.focus();
+                    });
+                  }}
                 >
                   Edit
                 </button>
                 {showRestore && (
                   <button
-                    className={`${cssDef(className?.header?.noEdit)} ml-1`}
-                    style={style?.header?.noEdit}
+                    className={twMerge(
+                      `ml-1`,
+                      cssDef(
+                        className?.header?.noEdit?.restore,
+                      ),
+                    )}
+                    style={style?.header?.noEdit?.restore}
                     onClick={() => {
                       console.log("clicking restore");
                       void onRestore?.();
@@ -126,20 +150,28 @@ export const EditField = React.forwardRef<
                 )}
               </>
             : <div
-                className={`${cssDef(className?.header?.edit?.main)} inline-grid grid-flow-col gap-x-1`}
+                className={twMerge(
+                  `inline-grid grid-flow-col gap-x-1`,
+                  cssDef(className?.header?.edit?.main),
+                )}
                 style={style?.header?.edit?.main}
               >
                 <button
                   ref={saveRef}
-                  className={`${cssDef(className?.header?.edit?.save)} text-green-300`}
+                  className={twMerge(
+                    `text-green-300`,
+                    cssDef(className?.header?.edit?.save),
+                  )}
                   style={style?.header?.edit?.save}
                   onClick={async () => {
                     if (textRef.current) {
                       const value =
                         textRef.current.innerHTML.trim() ??
                         "";
-                      const text =
-                        SanitizedText.fromHTML(value).htr;
+                      const text = SanitizedText.fromHTML(
+                        value,
+                        !raw,
+                      ).htr;
                       if (
                         text === defaultValue ||
                         (undefinedIsEmpty &&
@@ -155,7 +187,10 @@ export const EditField = React.forwardRef<
                   Save
                 </button>
                 <button
-                  className={`${cssDef(className?.header?.edit?.cancel)} text-red-400`}
+                  className={twMerge(
+                    `text-red-400`,
+                    cssDef(className?.header?.edit?.cancel),
+                  )}
                   style={style?.header?.edit?.cancel}
                   onClick={() => {
                     setEdit((p) => !p);
@@ -172,14 +207,20 @@ export const EditField = React.forwardRef<
         {edit ?
           <div
             key="editfield"
-            className={`${cssDef(className?.editField?.div)}`}
+            className={twMerge(
+              ``,
+              cssDef(className?.editField?.div),
+            )}
             style={{
               ...style?.editField?.div,
             }}
           >
             <span
               contentEditable
-              className={`${className?.editField?.span} block`}
+              className={twMerge(
+                `block`,
+                cssDef(className?.editField?.span),
+              )}
               style={style?.editField?.span}
               onKeyDown={(e) => {
                 if (e.code === "Enter" && !e.shiftKey) {
@@ -201,7 +242,7 @@ export const EditField = React.forwardRef<
               }}
               dangerouslySetInnerHTML={{
                 __html:
-                  rawHTR ?
+                  raw ?
                     defaultValue ?? ""
                   : renderToStaticMarkup(
                       new SanitizedText({
@@ -213,11 +254,17 @@ export const EditField = React.forwardRef<
           </div>
         : <div
             key="nonEditField"
-            className={`${cssDef(className?.staticField?.div)}`}
+            className={twMerge(
+              ``,
+              cssDef(className?.staticField?.div),
+            )}
             style={style?.staticField?.div}
           >
             <div
-              className={`${cssDef(className?.staticField?.span)}`}
+              className={twMerge(
+                ``,
+                cssDef(className?.staticField?.span),
+              )}
               style={style?.staticField?.span}
             >
               <HTRText htr={defaultValue ?? ""} />

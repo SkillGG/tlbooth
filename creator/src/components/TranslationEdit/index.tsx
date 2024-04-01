@@ -4,26 +4,28 @@ import {
 } from "@/hooks/novelStore";
 import { ChapterEditCard } from "../ChapterEdit/ChapterEditCard";
 import { NovelEditCard } from "../ChapterEdit/NovelEditCard";
-import {
-  type LineStatus,
-  type TextLine,
-} from "@prisma/client";
+import { type LineStatus } from "@prisma/client";
 import { trpcClient } from "@/pages/_app";
 import { FetchLinesMutation } from "@/hooks/mutations/chapterMutations/fetchLines";
 import { EditField } from "../EditField";
 import { ChangeLineMutation } from "@/hooks/mutations/chapterMutations/changeLine";
-import { usePopupMenu } from "../PopupMenu";
+import {
+  type ChapterActionMenuItem,
+  usePopupMenu,
+} from "../PopupMenu";
 import { ChangeLineStatusMutation } from "@/hooks/mutations/chapterMutations/changeLineStatus";
 import Head from "next/head";
 import { ChangeTLStatusMutation } from "@/hooks/mutations/chapterMutations/changeTLStatus";
 import { useEffect, useMemo, useState } from "react";
+import { type StoreTextLine } from "@/hooks/mutations/mutation";
+import { RemoveLineMutation } from "@/hooks/mutations/chapterMutations/removeLine";
 
 function LineItem({
   line,
   tlID,
   lock,
 }: {
-  line: TextLine;
+  line: StoreTextLine;
   tlID: string;
   lock: boolean;
 }) {
@@ -62,11 +64,15 @@ function LineItem({
     chap: { id: chapterID },
   } = tlInfo;
 
-  const textStyle = `${
-    line.status === "STAGED" ? "text-chapstate-localonly"
-    : line.status === "TL" ? "text-chapstate-dbonly"
-    : "text-chapstate-good"
-  }`;
+  const textStyle =
+    line.forDeletion ? `text-red-400` : (
+      `${
+        line.status === "STAGED" ?
+          "text-chapstate-localonly"
+        : line.status === "TL" ? "text-chapstate-dbonly"
+        : "text-chapstate-good"
+      }`
+    );
 
   const changeStateTo = (status: LineStatus) => {
     mutate(
@@ -94,36 +100,67 @@ function LineItem({
         <button
           data-openspopup
           onClick={(e) => {
-            popup.show(e.clientX, e.clientY, [
-              line.status === "STAGED" && {
-                label: "Mark as\ntranslated",
-                action() {
-                  changeStateTo("TL");
-                },
-              },
-              ...(line.status === "TL" ?
-                [
-                  {
-                    label: "Approve",
-                    action() {
-                      changeStateTo("PR");
-                    },
+            if (!line.forDeletion)
+              popup.show(e.clientX, e.clientY, [
+                line.status === "STAGED" && {
+                  label: "Mark as\ntranslated",
+                  action() {
+                    changeStateTo("TL");
                   },
-                  {
-                    label: "Reject",
-                    action() {
-                      changeStateTo("STAGED");
-                    },
-                  },
-                ]
-              : []),
-              {
-                label: raw ? "HTML Edit" : "Raw edit",
-                action() {
-                  setRaw((p) => !p);
                 },
-              },
-            ]);
+                ...(line.status === "TL" ?
+                  ([
+                    {
+                      label: "Approve",
+                      className:
+                        "bg-green-300 hover:bg-green-600",
+                      action() {
+                        changeStateTo("PR");
+                      },
+                    },
+                    {
+                      label: "Reject",
+                      className:
+                        "bg-orange-300 hover:bg-red-300",
+                      action() {
+                        changeStateTo("STAGED");
+                      },
+                    },
+                  ] as ChapterActionMenuItem[])
+                : []),
+                {
+                  label: raw ? "HTML Edit" : "Raw edit",
+                  action() {
+                    setRaw((p) => !p);
+                  },
+                },
+                {
+                  label: "Remove",
+                  className: "bg-red-400 hover:bg-red-600",
+                  action() {
+                    mutate(
+                      new RemoveLineMutation({
+                        tlID: tlID,
+                        chapterID,
+                        lineID: line.id,
+                        novelID,
+                      }),
+                    );
+                  },
+                },
+              ]);
+            else
+              popup.show(e.clientX, e.clientY, [
+                {
+                  label: "Undo",
+                  className:"bg-green-300 hover:bg-green-500",
+                  action() {
+                    removeMutation(
+                      RemoveLineMutation.getID(line.id),
+                    );
+                  },
+                },
+              ]);
           }}
         >
           {raw ? "[" : "("}
@@ -148,7 +185,7 @@ function LineItem({
         className={`${textStyle} col-[4/span_1] flex align-middle`}
       >
         <button
-          disabled={lock}
+          disabled={lock || line.forDeletion}
           onClick={() => {
             mutate(
               new ChangeLineMutation({
@@ -177,7 +214,7 @@ function LineItem({
             },
             staticField: { span: "min-h-6 text-center" },
           }}
-          lock={lock}
+          lock={line.forDeletion ?? lock}
           defaultValue={line.tlline}
           onRestore={() => {
             removeMutation(
@@ -366,14 +403,16 @@ export function TranslationEditor({
         <div
           className={`grid grid-cols-[min-content_min-content_1fr_min-content_1fr] px-2 `}
         >
-          {tl.lines.map((line) => (
-            <LineItem
-              key={line.id}
-              line={line}
-              tlID={tl.id}
-              lock={tl.status === "PUBLISH"}
-            />
-          ))}
+          {tl.lines
+            .sort((p, n) => p.pos - n.pos)
+            .map((line) => (
+              <LineItem
+                key={line.id}
+                line={line}
+                tlID={tl.id}
+                lock={tl.status === "PUBLISH"}
+              />
+            ))}
         </div>
       </div>
     </div>

@@ -268,4 +268,12 @@ export const databaseRouter = createTRPCRouter({
       });
       return result;
     }),
+  removeLine: publicProcedure
+    .input(z.string())
+    .mutation(async ({ ctx, input: lineID }) => {
+      const result = await ctx.db.textLine.delete({
+        where: { id: lineID },
+      });
+      return result;
+    }),
 });

@@ -6,10 +6,4 @@
     "editor.defaultFormatter": "denoland.vscode-deno"
   },
   "typescript.tsserver.experimental.enableProjectDiagnostics": true,
-  "tailwindCSS.classAttributes": [
-    "class",
-    "className",
-    "ngClass",
-    ".*Styles"
-  ]
 }

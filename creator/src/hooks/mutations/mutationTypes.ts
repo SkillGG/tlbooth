@@ -5,6 +5,7 @@ import { ChangeChapterNameMutation } from "./chapterMutations/changeName";
 import { ChangeChapterNumMutation } from "./chapterMutations/changeNum";
 import { ChangeTLStatusMutation } from "./chapterMutations/changeTLStatus";
 import { FetchLinesMutation } from "./chapterMutations/fetchLines";
+import { RemoveLineMutation } from "./chapterMutations/removeLine";
 import { RemoveTLMutation } from "./chapterMutations/removeTranslation";
 import { StageChapterMutation } from "./chapterMutations/stageChapter";
 import { MutationType } from "./mutation";
@@ -39,6 +40,8 @@ export type ChangeLineStatusMutationData =
   typeof ChangeLineStatusMutation.prototype.data;
 export type ChangeTLStatusMutationData =
   typeof ChangeTLStatusMutation.prototype.data;
+export type RemoveLineMutationData =
+  typeof RemoveLineMutation.prototype.data;
 
 export type SaveMutationDatas = NonNullable<
   | ({
@@ -80,6 +83,9 @@ export type SaveMutationDatas = NonNullable<
   | ({
       type: MutationType.CHANGE_TL_STATUS;
     } & ChangeTLStatusMutationData)
+  | ({
+      type: MutationType.REMOVE_LINE;
+    } & RemoveLineMutationData)
 >;
 
 export const MutationFromData = (
@@ -112,6 +118,8 @@ export const MutationFromData = (
       return new ChangeLineStatusMutation(rmd);
     case MutationType.CHANGE_TL_STATUS:
       return new ChangeTLStatusMutation(rmd);
+    case MutationType.REMOVE_LINE:
+      return new RemoveLineMutation(rmd);
     default:
       rmd satisfies never;
       throw "Unknown mutation type!";

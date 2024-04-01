@@ -1,3 +1,4 @@
+import { cssDef } from "@/utils/utils";
 import {
   createContext,
   useContext,
@@ -6,9 +7,11 @@ import {
 } from "react";
 import { createPortal } from "react-dom";
 import reactStringReplace from "react-string-replace";
+import { twMerge } from "tailwind-merge";
 
 type ChapterAction = {
   label: string;
+  className?: string;
   action?(): void | Promise<void>;
 };
 
@@ -145,14 +148,17 @@ export function WindowActionMenu({
             return (
               <div
                 key={`${i}_${action.label}`}
-                className="overflow-hidden bg-blue-300 first:rounded-t-lg last:rounded-b-lg"
+                className={twMerge(
+                  `overflow-hidden bg-blue-300 first:rounded-t-lg last:rounded-b-lg hover:bg-blue-600`,
+                  cssDef(action.className),
+                )}
               >
                 <button
                   onClick={async () => {
                     await action.action?.();
                     hide();
                   }}
-                  className="grid w-full content-center justify-center whitespace-nowrap px-1 py-[3px] hover:bg-blue-600"
+                  className="grid w-full content-center justify-center whitespace-nowrap px-1 py-[3px]"
                 >
                   <span className="px-2">
                     {reactStringReplace(

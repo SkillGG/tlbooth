@@ -12,9 +12,13 @@ export type StoreNovel = MakeLocalDeletable<
   DBNovel & {
     chapters: MakeLocalDeletable<
       DBNovel["chapters"][number] & {
-        translations: MakeLocalDeletable<
+        translations: (MakeLocalDeletable<
           DBNovel["chapters"][number]["translations"][number]
-        >[];
+        > & {
+          lines: MakeLocalDeletable<
+            DBNovel["chapters"][number]["translations"][number]["lines"][number]
+          >[];
+        })[];
       }
     >[];
   }
@@ -22,7 +26,9 @@ export type StoreNovel = MakeLocalDeletable<
 
 export type StoreChapter = StoreNovel["chapters"][number];
 export type StoreTranslation =
-  StoreNovel["chapters"][number]["translations"][number];
+  StoreChapter["translations"][number];
+export type StoreTextLine =
+  StoreTranslation["lines"][number];
 
 export enum MutationType {
   CHANGE_NAME = "Change Title",
@@ -33,6 +39,7 @@ export enum MutationType {
   CHANGE_CHAPTER_NAME = "Change chapter name",
   ADD_TRANSLATION = "Add translation",
   REMOVE_TRANSLATION = "Remove translation",
+  REMOVE_LINE = "Remove line",
   FETCH_LINES = "Fetch lines",
   CHANGE_LINE = "Change Text Line",
   CHANGE_CHAPTER_NUMBER = "Change Chapter Number",

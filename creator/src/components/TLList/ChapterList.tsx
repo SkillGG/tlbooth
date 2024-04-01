@@ -131,6 +131,7 @@ const ChapterItem = React.memo(function ChapterItem({
             !dbChap ?
               {
                 label: "Unstage",
+                className: "bg-red-300 hover:bg-red-600",
                 action() {
                   localChap &&
                     removeMutation(
@@ -143,6 +144,7 @@ const ChapterItem = React.memo(function ChapterItem({
               }
             : {
                 label: "Remove",
+                className: "bg-red-300 hover:bg-red-600",
                 action() {
                   throw "TODO _removeChapterAction";
                 },
@@ -165,6 +167,7 @@ const ChapterItem = React.memo(function ChapterItem({
           actions={[
             {
               label: "Add",
+              className: "bg-green-400 hover:bg-green-600",
               action: async () => {
                 console.log("Staging chapter", local);
                 mutate(
@@ -228,6 +231,7 @@ const ChapterItem = React.memo(function ChapterItem({
               isLocalFromMutation ?
                 {
                   label: "Unstage",
+                  className: "bg-red-300 hover:bg-red-600",
                   action() {
                     if (localChap) {
                       removeMutation(
@@ -241,6 +245,7 @@ const ChapterItem = React.memo(function ChapterItem({
                 }
               : {
                   label: "Remove",
+                  className: "bg-red-300 hover:bg-red-600",
                   action() {
                     throw "TODO _removeChapterAction";
                   },

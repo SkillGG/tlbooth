@@ -5,6 +5,7 @@ import { isChangeChapterNameSaveData } from "./chapterMutations/changeName";
 import { isChangeChapterNumSaveData } from "./chapterMutations/changeNum";
 import { isChangeTLStatusSaveData } from "./chapterMutations/changeTLStatus";
 import { isFetchLineSaveData } from "./chapterMutations/fetchLines";
+import { isRemoveLineSaveData } from "./chapterMutations/removeLine";
 import { isStageChapterSaveData } from "./chapterMutations/stageChapter";
 import { MutationType } from "./mutation";
 import { type SaveMutationDatas } from "./mutationTypes";
@@ -98,6 +99,10 @@ const consistsOfValidMutationSaveData = (
         case MutationType.CHANGE_TL_STATUS:
           if (!isChangeTLStatusSaveData(typedN))
             throw "CHANGE_TL_STATUS";
+          break;
+        case MutationType.REMOVE_LINE:
+          if (!isRemoveLineSaveData(typedN))
+            throw "REMOVE_LINE";
           break;
         default:
           typedN.type satisfies never;

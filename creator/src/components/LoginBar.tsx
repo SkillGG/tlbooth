@@ -1,3 +1,4 @@
+import { useNovelStore } from "@/hooks/novelStore";
 import {
   SignInButton,
   SignOutButton,
@@ -22,6 +23,8 @@ export default function LoginBar({
 
   const [showLogout, setShowLogout] = useState(false);
 
+  const { settings, toggleAlwaysRawEdit } = useNovelStore();
+
   return (
     <nav className="grid w-full min-w-12">
       {!user ?
@@ -36,20 +39,31 @@ export default function LoginBar({
           )}
           <div className="grid h-fit w-fit grid-flow-col justify-self-end">
             {showLogout && (
-              <SignOutButton
-                signOutCallback={() => {
-                  void router.replace(
-                    new URL(
-                      "/dashboard",
-                      window.location.href,
-                    ).href,
-                  );
-                }}
-              >
-                <button className="m-0 h-10 w-full border-2 border-red-500 pl-3 pr-3 text-white">
-                  Sign out
-                </button>
-              </SignOutButton>
+              <>
+                <div className="mr-2 grid place-content-center">
+                  <button
+                    onClick={() => toggleAlwaysRawEdit()}
+                  >
+                    {settings.alwaysRawEdit ?
+                      "HTR"
+                    : "HTML"}
+                  </button>
+                </div>
+                <SignOutButton
+                  signOutCallback={() => {
+                    void router.replace(
+                      new URL(
+                        "/dashboard",
+                        window.location.href,
+                      ).href,
+                    );
+                  }}
+                >
+                  <button className="m-0 h-10 w-full border-2 border-red-500 pl-3 pr-3 text-white">
+                    Sign out
+                  </button>
+                </SignOutButton>
+              </>
             )}
             <Image
               onClick={() => {

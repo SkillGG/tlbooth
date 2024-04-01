@@ -5,6 +5,8 @@ import { parse } from "node-html-parser";
 import replace from "react-string-replace";
 import React from "react";
 
+import he from "he";
+
 const deepReplace = (
   node: ReactNode,
   r: (s: ReactNode[]) => ReactNode[],
@@ -46,7 +48,10 @@ export class SanitizedText {
   constructor({ htr }: { htr: string }) {
     this.htr = htr;
   }
-  static fromHTML(html: string): SanitizedText {
+  static fromHTML(
+    html: string,
+    decode = true,
+  ): SanitizedText {
     const parsed = parse(html);
 
     parsed.querySelectorAll("br").forEach((el) => {
@@ -58,12 +63,15 @@ export class SanitizedText {
         "[$1r$2]",
       );
       el.replaceWith(
-        el.outerHTML.replace(/<(\/)ruby>/i, "[$1r]"),
+        el.outerHTML.replace(/<(\/)?ruby>/gi, "[$1r]"),
       );
     });
 
     return new SanitizedText({
-      htr: parsed.outerHTML.replace(/\n/g, ""),
+      htr:
+        decode ?
+          he.decode(parsed.outerHTML)
+        : parsed.outerHTML,
     });
   }
   deRubify(r: ReactNode[]): ReactNode[] {

@@ -27,7 +27,15 @@ export type TLInfo = {
 type AnyMutation<T extends MutationType = MutationType> =
   Mutation<T, SaveMutationData<{ type: T }>>;
 
+type Settings = {
+  alwaysRawEdit: boolean;
+};
+
 export type NovelStore = {
+  settings: Settings;
+
+  toggleAlwaysRawEdit: () => void;
+
   novels: StoreNovel[] | null;
   mutations: AnyMutation[];
   undoneMutations: AnyMutation[];
@@ -99,6 +107,16 @@ export const useNovelStore = create<NovelStore>()(
     novels: null,
     mutations: [],
     undoneMutations: [],
+
+    settings: { alwaysRawEdit: false },
+    toggleAlwaysRawEdit: () =>
+      set((p) => ({
+        ...p,
+        settings: {
+          ...p.settings,
+          alwaysRawEdit: !p.settings.alwaysRawEdit,
+        },
+      })),
 
     getMutations: (u = true) => [
       ...get().mutations,

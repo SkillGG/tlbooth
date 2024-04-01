@@ -6,9 +6,10 @@ type SaveData = {
   tlID: string;
   novelID: string;
   chapterID: string;
+  lineID: string;
 };
 
-export const isRemoveTLSaveData = (
+export const isRemoveLineSaveData = (
   o: unknown,
 ): o is SaveData => {
   return (
@@ -19,18 +20,25 @@ export const isRemoveTLSaveData = (
     "chapterID" in o &&
     typeof o.chapterID === "string" &&
     "novelID" in o &&
-    typeof o.novelID === "string"
+    typeof o.novelID === "string" &&
+    "lineID" in o &&
+    typeof o.lineID === "string"
   );
 };
 
-export class RemoveTLMutation extends Mutation<
-  MutationType.REMOVE_TRANSLATION,
+export class RemoveLineMutation extends Mutation<
+  MutationType.REMOVE_LINE,
   SaveData
 > {
-  static getID = (tlID: string) => `remove_tl_${tlID}`;
-  constructor({ tlID, novelID, chapterID }: SaveData) {
+  static getID = (lineID: string) => `remove_tl_${lineID}`;
+  constructor({
+    tlID,
+    novelID,
+    chapterID,
+    lineID,
+  }: SaveData) {
     super(
-      RemoveTLMutation.getID(tlID),
+      RemoveLineMutation.getID(lineID),
       (p) =>
         p.map((n) =>
           n.id === this.data.novelID ?
@@ -43,7 +51,17 @@ export class RemoveTLMutation extends Mutation<
                     translations: ch.translations.map(
                       (tl) =>
                         tl.id === this.data.tlID ?
-                          { ...tl, forDeletion: true }
+                          {
+                            ...tl,
+                            lines: tl.lines.map((line) =>
+                              line.id === lineID ?
+                                {
+                                  ...line,
+                                  forDeletion: true,
+                                }
+                              : line,
+                            ),
+                          }
                         : tl,
                     ),
                   }
@@ -52,41 +70,41 @@ export class RemoveTLMutation extends Mutation<
             }
           : n,
         ),
-      (p): string =>
-        p.find((x) => x.id === this.data.tlID)?.ogname ??
-        this.data.tlID,
-      MutationType.REMOVE_TRANSLATION,
-      async function (this: RemoveTLMutation, store) {
-        await trpcClient.db.removeTL.mutate(this.data.tlID);
-        RemoveTLMutation.removeAllDependantMutations(
-          this.data.tlID,
+      () => this.data.lineID,
+      MutationType.REMOVE_LINE,
+      async function (this: RemoveLineMutation, store) {
+        await trpcClient.db.removeLine.mutate(
+          this.data.lineID,
+        );
+        RemoveLineMutation.removeAllDependantMutations(
+          this.data.lineID,
           store,
           this,
         );
       },
-      { tlID, novelID, chapterID },
+      { tlID, novelID, chapterID, lineID },
     );
   }
   updateID(): void {
-    this.id = RemoveTLMutation.getID(this.data.tlID);
+    this.id = RemoveLineMutation.getID(this.data.lineID);
   }
   override onRemoved(): void {}
   static removeAllDependantMutations(
-    tlID: string,
+    lineID: string,
     store: NovelStore,
     callingMut: Mutation<MutationType, object>,
   ) {
     store.getMutations(true).forEach((mut) => {
-      if (!("tlID" in mut.data)) return;
+      if (!("lineID" in mut.data)) return;
       if (
-        mut.data.tlID === tlID &&
+        mut.data.lineID === lineID &&
         callingMut.id !== mut.id
       ) {
         console.log(
           "removing mutation",
           mut,
           "because it depended on tl",
-          tlID,
+          lineID,
         );
         store.removeMutation(mut.id);
       }
