@@ -1,6 +1,7 @@
 import { type Optional } from "@/utils/utils";
 import { Mutation, MutationType } from "../mutation";
 import { trpcClient } from "@/pages/_app";
+import { type NovelStore } from "@/hooks/novelStore";
 
 type SaveData = {
   novelID: string;
@@ -8,6 +9,7 @@ type SaveData = {
   name: string;
   ognum: number;
   chapterID: string;
+  date: string;
 };
 
 export const isStageChapterSaveData = (
@@ -25,7 +27,9 @@ export const isStageChapterSaveData = (
     "ognum" in o &&
     typeof o.ognum === "number" &&
     "name" in o &&
-    typeof o.name === "string"
+    typeof o.name === "string" &&
+    "date" in o &&
+    typeof o.date === "string"
   );
 };
 
@@ -49,6 +53,7 @@ export class StageChapterMutation extends Mutation<
     ognum,
     url,
     chapterID,
+    date,
   }: Optional<SaveData, "chapterID">) {
     const id =
       chapterID ??
@@ -74,6 +79,7 @@ export class StageChapterMutation extends Mutation<
                     url: url,
                     tlname: "",
                     translations: [],
+                    publishdate: date,
                   },
                 ],
               }
@@ -97,6 +103,7 @@ export class StageChapterMutation extends Mutation<
         chapterID: id,
         name,
         novelID,
+        date,
         ognum,
         url,
       },
@@ -105,5 +112,21 @@ export class StageChapterMutation extends Mutation<
   updateID(): void {
     this.id = StageChapterMutation.getID(this.data);
   }
-  override onRemoved(): void {}
+  override onRemoved(store: NovelStore): void {
+    store.getMutations(true).forEach((mut) => {
+      if (!("chapterID" in mut.data)) return;
+      if (
+        mut.data.chapterID === this.data.chapterID &&
+        this.id !== mut.id
+      ) {
+        console.log(
+          "removing mutation",
+          mut,
+          "because it depended on chapter",
+          this.data.chapterID,
+        );
+        store.removeMutation(mut.id);
+      }
+    });
+  }
 }

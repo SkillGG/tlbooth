@@ -1,11 +1,13 @@
+import { SanitizedText } from "@/utils/sanitizer";
 import { cssDef } from "@/utils/utils";
+import { renderToStaticMarkup } from "react-dom/server";
 import React, {
   type CSSProperties,
-  useEffect,
   useImperativeHandle,
   useRef,
   useState,
 } from "react";
+import { HTRText } from "./htrLabel";
 
 type EditFieldCustomization<T> = {
   main?: T;
@@ -85,11 +87,6 @@ export const EditField = React.forwardRef<
     };
   });
 
-  useEffect(() => {
-    if (textRef.current)
-      textRef.current.innerText = defaultValue ?? "";
-  }, [defaultValue, edit]);
-
   return (
     <>
       <div
@@ -137,16 +134,18 @@ export const EditField = React.forwardRef<
                   onClick={async () => {
                     if (textRef.current) {
                       const value =
-                        textRef.current.innerText.trim() ??
+                        textRef.current.innerHTML.trim() ??
                         "";
+                      const text =
+                        SanitizedText.fromHTML(value).htr;
                       if (
-                        value === defaultValue ||
+                        text === defaultValue ||
                         (undefinedIsEmpty &&
-                          !value &&
+                          !text &&
                           !defaultValue)
                       )
                         return void setEdit(false);
-                      await onSave?.(value.trim());
+                      await onSave?.(text.trim());
                       setEdit(false);
                     }
                   }}
@@ -182,7 +181,8 @@ export const EditField = React.forwardRef<
               className={`${className?.editField?.span} block min-w-4 border-b-2 text-center`}
               style={style?.editField?.span}
               onKeyDown={(e) => {
-                if (e.code === "Enter") {
+                if (e.code === "Enter" && !e.shiftKey) {
+                  e.preventDefault();
                   saveRef.current?.click();
                 }
               }}
@@ -198,6 +198,13 @@ export const EditField = React.forwardRef<
                   setPrevValue(val);
                 }
               }}
+              dangerouslySetInnerHTML={{
+                __html: renderToStaticMarkup(
+                  new SanitizedText({
+                    htr: defaultValue ?? "",
+                  }).toJSX(true),
+                ),
+              }}
             ></span>
           </div>
         : <div
@@ -205,12 +212,12 @@ export const EditField = React.forwardRef<
             className={`${cssDef(className?.staticField?.div)} min-h-5 text-center`}
             style={style?.staticField?.div}
           >
-            <span
-              className={`${cssDef(className?.staticField?.span)}`}
+            <div
+              className={`${cssDef(className?.staticField?.span)} min-w-4 text-center`}
               style={style?.staticField?.span}
             >
-              {defaultValue}
-            </span>
+              <HTRText htr={defaultValue ?? ""} />
+            </div>
           </div>
         }
       </div>

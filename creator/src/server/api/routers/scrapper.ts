@@ -8,6 +8,7 @@ import { parse } from "node-html-parser";
 import { DummyNovels } from "./dummyData/dummyNovels";
 import { env } from "@/env";
 import { Clerk } from "@clerk/nextjs/server";
+import { SanitizedText } from "@/utils/sanitizer";
 
 export const ScrapperFilter = z.object({
   search: z.string().optional(),
@@ -23,6 +24,7 @@ export const ScrapperChapterInfo = z.object({
   url: z.string().url(),
   name: z.string().min(1),
   ognum: z.number(),
+  date: z.string(),
 });
 
 export const ScrapperTextLine = z.object({
@@ -98,8 +100,6 @@ const fetchSyo = async (syo: string, pages: string[]) => {
     pages,
   };
 
-  console.log("fetching from ", isRemote ? "proxy" : "syo");
-
   const rS =
     isRemote ?
       await fetchFromProxy(data)
@@ -128,11 +128,13 @@ const getParsedSyo = async (
   return parsed;
 };
 
-const uri = (s: string) => encodeURIComponent(s);
+// const uri = (s: string) => encodeURIComponent(s);
 const unuri = (s: string) => decodeURIComponent(s);
 
+const toHTR = (html: string) =>
+  SanitizedText.fromHTML(html).htr;
+
 const isAdmin = async (auth?: string) => {
-  console.log("auth", auth);
   if (!auth) return false;
   const clerk = Clerk({ secretKey: env.CLERK_SECRET_KEY });
   if (clerk) {
@@ -174,7 +176,6 @@ export const scrapperRouter = createTRPCRouter({
               url.searchParams.set("word", input.search);
             filterString = url.search;
           }
-          console.log("input", input, filterString);
 
           const parsed = await getParsedSyo("yomou", [
             `search.php${filterString}`,
@@ -191,13 +192,13 @@ export const scrapperRouter = createTRPCRouter({
               const descTable =
                 p.querySelector("table .ex");
               const href = anchor?.getAttribute("href");
-              if (header && href) {
-                console.log(descTable?.innerText);
+              if (href && anchor) {
                 return {
-                  novelName: header.text,
+                  novelName: toHTR(anchor.innerHTML),
                   novelURL: href,
-                  novelDescription:
-                    descTable?.innerText ?? "",
+                  novelDescription: toHTR(
+                    descTable?.innerHTML ?? "",
+                  ),
                 };
               } else {
                 return null;
@@ -228,10 +229,9 @@ export const scrapperRouter = createTRPCRouter({
     .input(z.string())
     .query(
       async ({
-        ctx: _,
+        ctx,
         input,
       }): Promise<ScrapperNovel | { error: string }> => {
-        // const urlI = new URL(decodeURIComponent(input));
         if (input.startsWith("http://dummy.com")) {
           // getting dummy novel data
           const novel = DummyNovels.find(
@@ -246,12 +246,17 @@ export const scrapperRouter = createTRPCRouter({
             error: "Could not find the dummy novel!",
           };
         }
+        if (!(await isAdmin(ctx.id)))
+          return {
+            error:
+              "That part is only available in admin mode!",
+          };
 
         const url = unuri(input);
 
         const syoified = syoifyURL(url);
 
-        if ("error" in syoified) throw syoified;
+        if ("error" in syoified) return syoified;
 
         const parsed = await getParsedSyo(
           syoified.syo,
@@ -275,7 +280,6 @@ export const scrapperRouter = createTRPCRouter({
             "a.novelview_pager-next",
           );
           if (nextPageAnchor) {
-            console.log("found next page!");
             const href =
               nextPageAnchor.getAttribute("href");
             if (!href) break;
@@ -291,15 +295,22 @@ export const scrapperRouter = createTRPCRouter({
         } while (nextPageAnchor);
         const chapters: ScrapperChapterInfo[] = [];
         const name =
-          parsed.querySelector(".novel_title")?.innerText ??
+          parsed.querySelector(".novel_title")?.innerHTML ??
           "";
         let desc = "";
         if (chaptersDLs.length === 0) {
           console.log("oneshot!");
+          const dateWWWC = parsed
+            .querySelector("meta[name='WWWC']")
+            ?.getAttribute("content");
+
           chapters.push({
             name: "Oneshot",
             ognum: 0,
             url,
+            date: `${new Date(
+              dateWWWC ?? Date.now(),
+            ).getTime()}`,
           });
         } else {
           const chs =
@@ -310,10 +321,18 @@ export const scrapperRouter = createTRPCRouter({
                 if (!sub) return null;
                 const href = sub.getAttribute("href");
                 if (!href) return null;
+                const date =
+                  elem.querySelector(
+                    ".long_update",
+                  )?.firstChild;
                 return {
-                  name: sub.innerText,
+                  name: toHTR(sub.innerHTML),
                   ognum: i + 1,
                   url: new URL(href, url).href,
+                  date: `${new Date(
+                    date?.innerText + " UTC+09" ??
+                      Date.now(),
+                  ).getTime()}`,
                 };
               },
             );
@@ -322,7 +341,7 @@ export const scrapperRouter = createTRPCRouter({
           }
 
           desc =
-            parsed.querySelector("#novel_ex")?.innerText ??
+            parsed.querySelector("#novel_ex")?.innerHTML ??
             "";
         }
 
@@ -330,8 +349,8 @@ export const scrapperRouter = createTRPCRouter({
           chapters,
           info: {
             novelURL: url,
-            novelDescription: desc,
-            novelName: name,
+            novelDescription: toHTR(desc),
+            novelName: toHTR(name),
           },
         };
       },
@@ -345,7 +364,7 @@ export const scrapperRouter = createTRPCRouter({
     )
     .query(
       async ({
-        ctx: _,
+        ctx,
         input,
       }): Promise<ScrapperChapter | { error: string }> => {
         if (input.novelURL.startsWith("http://dummy")) {
@@ -361,6 +380,11 @@ export const scrapperRouter = createTRPCRouter({
             return { error: "Incorrect chapter url" };
           return chap;
         }
+
+        if (!(await isAdmin(ctx.id)))
+          return {
+            error: "You have to be admin to get it!",
+          };
 
         return { error: "TODO" };
       },

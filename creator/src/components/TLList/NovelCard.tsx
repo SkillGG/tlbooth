@@ -3,7 +3,7 @@ import React, { useMemo, useState } from "react";
 
 import novelItem from "./novelItem.module.css";
 import { api } from "@/utils/api";
-import { cssIf, cssPIf } from "@/utils/utils";
+import { cssIf } from "@/utils/utils";
 import { EditField, useEditRef } from "../EditField";
 import { ChapterList } from "./ChapterList";
 import { type StoreNovel } from "@/hooks/mutations/mutation";
@@ -13,6 +13,7 @@ import { RemoveNovelMutation } from "@/hooks/mutations/novelMutations/removeNove
 import { AddNovelMutation } from "@/hooks/mutations/novelMutations/addNovel";
 import { WindowActionMenu } from "./ChapterActionMenu";
 import { createPortal } from "react-dom";
+import { HTRText } from "../htrLabel";
 
 export const compareChapterNums = (
   n: string,
@@ -96,6 +97,15 @@ export const NovelCard = ({
                     );
                 },
               },
+              {
+                label: "Copy original name",
+                action() {
+                  if (novel.ogname)
+                    void navigator.clipboard.writeText(
+                      novel.ogname,
+                    );
+                },
+              },
             ]}
             hide={() => setShowMenu(false)}
             x={showMenu.x}
@@ -110,7 +120,6 @@ export const NovelCard = ({
         ${cssIf(novel.forDeletion, novelItem.forDeletion)}
         grid grid-flow-col text-balance border-gray-400 text-center text-sm`}
         onContextMenu={(e) => {
-          console.log("showing context menu");
           setShowMenu({ x: e.clientX, y: e.clientY });
           e.preventDefault();
         }}
@@ -126,23 +135,29 @@ export const NovelCard = ({
             className="justify-self-center"
             style={{ maxWidth: "90%" }}
           >
-            {novel.ogname}
+            <HTRText htr={novel.ogname} />
           </div>
         </button>
       </div>
       {show && (
         <>
-          <div className="sm:grid-cols-[1fr] box-content grid grid-cols-[1fr_1fr]">
+          <div className="box-content grid grid-cols-[1fr_1fr] sm:grid-cols-[1fr]">
             <div className="px-3 pt-1">
               <div className="border-b-2">Novel info</div>
-              <div className="grid grid-flow-col grid-cols-[1fr_1fr] border-b-[1px] border-dotted px-3 pb-2">
+              <div
+                className="grid grid-flow-col grid-cols-[1fr_1fr] gap-[2px] border-x-[1px] border-b-2 border-dotted px-3 pb-2"
+                style={{
+                  borderLeftStyle: "solid",
+                  borderRightStyle: "solid",
+                }}
+              >
                 <EditField
                   fieldName="OGName"
                   lock={true}
                   defaultValue={novel.ogname}
                   className={{
                     staticField: {
-                      div: `max-h-40 overflow-y-auto`,
+                      div: `h-full max-h-40 overflow-y-auto leading-[normal]`,
                     },
                   }}
                 />
@@ -172,18 +187,15 @@ export const NovelCard = ({
                   defaultValue={novel.tlname ?? ""}
                   className={{
                     staticField: {
-                      div: `max-h-40 overflow-y-auto ${cssIf(
-                        !tlnameChanged,
-                        "rounded-lg",
-                        "bg-[#ff02]",
+                      div: `h-full max-h-40 overflow-y-auto leading-[normal] ${cssIf(
+                        tlnameChanged,
+                        "rounded-lg bg-[#ff02]",
                       )}`,
                     },
                   }}
                 />
               </div>
-              <div
-                className="grid grid-flow-col border-b-[1px] border-dotted px-3 pb-1 grid-cols-[1fr_1fr]"
-              >
+              <div className="mb-1 grid grid-flow-col grid-cols-[1fr_1fr] gap-[2px] border-x-[1px] border-b-[1px] px-3 pb-1">
                 <EditField
                   fieldName="OGDesc"
                   onSave={(v) =>
@@ -210,7 +222,7 @@ export const NovelCard = ({
                   defaultValue={novel.ogdesc}
                   className={{
                     staticField: {
-                      div: `max-h-40 overflow-y-scroll ${cssIf(
+                      div: `h-full max-h-40 overflow-y-auto leading-[normal] ${cssIf(
                         ogdescChanged,
                         "rounded-lg bg-[#ff02]",
                       )}`,
@@ -243,7 +255,7 @@ export const NovelCard = ({
                   defaultValue={novel.tldesc ?? ""}
                   className={{
                     staticField: {
-                      div: `max-h-40 overflow-y-scroll ${cssIf(
+                      div: `h-full max-h-40 overflow-y-auto leading-[normal] ${cssIf(
                         tldescChanged,
                         "rounded-lg bg-[#ff02]",
                       )}`,

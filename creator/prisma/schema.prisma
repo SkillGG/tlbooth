@@ -82,6 +82,8 @@ model Chapter {
     ogname String
     tlname String?
 
+    publishdate String @default("0")
+
     Novel   Novel  @relation(fields: [novelID], references: [id], onDelete: Cascade)
     novelID String @map("novelId")
 

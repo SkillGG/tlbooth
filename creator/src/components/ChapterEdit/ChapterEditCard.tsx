@@ -58,6 +58,7 @@ export function ChapterEditCard({
                   ognum: chapter.ognum,
                   num: val,
                 }),
+                true,
               );
           }}
         />

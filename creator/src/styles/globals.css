@@ -2,7 +2,10 @@
 @tailwind components;
 @tailwind utilities;
 
+* {
+  @apply leading-[normal];
+}
+
 body {
-  @apply bg-gray-800;
-  @apply text-white;
+  @apply bg-gray-800 text-white;
 }

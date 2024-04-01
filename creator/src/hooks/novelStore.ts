@@ -345,7 +345,6 @@ export const useNovelStore = create<NovelStore>()(
       }, remote);
     },
     apply: async () => {
-      console.log("applying mutations");
       const sets: [string, () => void][] = [];
       try {
         for (const mut of get().mutations) {
@@ -364,8 +363,24 @@ export const useNovelStore = create<NovelStore>()(
         }
       } catch (e) {
         console.error(e);
+        const getErrorMsg = (x: unknown): string => {
+          return (
+            typeof x === "string" ? x
+            : typeof x === "object" && x ?
+              x instanceof Error ? x.message
+              : (
+                "error" in x && typeof x.error === "string"
+              ) ?
+                x.error
+              : ""
+            : ""
+          );
+        };
+        const err = getErrorMsg(e);
         alert(
-          "Could not apply all mutations! Applied mutations:" +
+          "Could not apply all mutations!\n" +
+            (err ? err + "\n" : "") +
+            "Applied mutations:" +
             sets
               .map((v) => v[0])
               .reduce((p, n) => p + "\n" + n, ""),

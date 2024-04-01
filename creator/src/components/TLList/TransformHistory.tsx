@@ -2,6 +2,8 @@ import { useAdmin } from "@/hooks/admin";
 import { useNovelStore } from "@/hooks/novelStore";
 import { api } from "@/utils/api";
 import React, { useEffect, useState } from "react";
+import { RefreshButton } from "../Icons/refreshButton";
+import { useRouter } from "next/router";
 
 export function TransformationHistory() {
   const [showHistory, setShowHistory] = useState(false);
@@ -29,6 +31,7 @@ export function TransformationHistory() {
     }
   }, [trans, undone]);
 
+  const router = useRouter();
   return (
     <>
       <div className="inline-grid w-fit grid-flow-col gap-x-3">
@@ -63,23 +66,26 @@ export function TransformationHistory() {
               Show changes
             </button>
             {isAdmin && (
-              <button
+              <RefreshButton
                 className="text-center"
-                onClick={() => {
-                  apply()
-                    .then((sets) => {
-                      void invalidateList().then((_) => {
-                        for (const s of sets) {
-                          s();
-                        }
-                        saveMutations(localStorage);
-                      });
-                    })
-                    .catch(console.error);
+                refreshFn={async () => {
+                  try {
+                    const sets = await apply();
+                    const goBack = sets.length > 0;
+                    await invalidateList();
+                    for (const s of sets) {
+                      s();
+                    }
+                    saveMutations(localStorage);
+                    if (goBack)
+                      await router.push("/dashboard");
+                  } catch (e) {
+                    throw e;
+                  }
                 }}
               >
                 Apply
-              </button>
+              </RefreshButton>
             )}
           </>
         )}

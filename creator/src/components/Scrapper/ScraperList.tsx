@@ -160,7 +160,7 @@ export const ScraperList = () => {
   const utils = api.useUtils();
 
   return (
-    <div className="sm:px-5 sm:mt-4 flex max-h-full flex-col overflow-hidden">
+    <div className="flex max-h-full flex-col overflow-hidden sm:mt-4 sm:px-5">
       <div className="grid w-fit grid-flow-col gap-3">
         {novels && !("error" in novels) ?
           <>
@@ -172,7 +172,9 @@ export const ScraperList = () => {
                 else
                   await utils.scrapper.getListDummy.invalidate();
               }}
-            />
+            >
+              Refresh
+            </RefreshButton>
             <ScrapperFilterSelector
               filters={filters}
               setFilters={setFilters}

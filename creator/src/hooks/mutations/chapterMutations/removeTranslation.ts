@@ -1,5 +1,6 @@
 import { type NovelStore } from "@/hooks/novelStore";
 import { Mutation, MutationType } from "../mutation";
+import { trpcClient } from "@/pages/_app";
 
 type SaveData = {
   tlID: string;
@@ -51,13 +52,13 @@ export class RemoveTLMutation extends Mutation<
         p.find((x) => x.id === this.data.tlID)?.ogname ??
         this.data.tlID,
       MutationType.REMOVE_TRANSLATION,
-      async (store) => {
+      async function (this: RemoveTLMutation, store) {
+        await trpcClient.db.removeTL.mutate(this.data.tlID);
         RemoveTLMutation.removeAllDependantMutations(
           this.data.tlID,
           store,
           this,
         );
-        throw "TODO _removeTL";
       },
       { tlID, novelID, chapterID },
     );

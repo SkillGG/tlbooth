@@ -30,8 +30,7 @@ function TranslationItem({ tl }: { tl: StoreTranslation }) {
       } grid w-[50%] grid-flow-col px-4`}
     >
       <div>
-        {tl.id} ({tl.oglang} {"=>"} {tl.tllang}) [
-        {tl.status}]
+        ({tl.oglang} {"=>"} {tl.tllang}) [{tl.status}]
       </div>
       <div className="flex gap-2 justify-self-end">
         {!tl.forDeletion && (

@@ -8,7 +8,6 @@ import type {
 } from "@/server/api/routers/scrapper";
 import { useMediaQuery } from "@uidotdev/usehooks";
 import { compareChapterNums } from "./NovelCard";
-import deepEquals from "fast-deep-equal";
 import React, { useState } from "react";
 import { createPortal } from "react-dom";
 import {
@@ -20,6 +19,8 @@ import { StageChapterMutation } from "@/hooks/mutations/chapterMutations/stageCh
 import { type StoreNovel } from "@/hooks/mutations/mutation";
 import { Skeleton } from "../Skeleton/Skeleton";
 
+import dayjs from "dayjs";
+
 type StagedChapterInfo = ScrapperChapterInfo & {
   staged: boolean;
 };
@@ -28,6 +29,27 @@ type ActionMenuData = {
   x: number;
   y: number;
   actions: ChapterActionMenuItem[];
+};
+
+const getChapterDate = (d: number | string) => {
+  const num = typeof d === "string" ? parseInt(d) : d;
+  const numjs = dayjs(new Date(num));
+  const now = dayjs(Date.now());
+
+  const dayDiff = now.diff(numjs, "days");
+
+  if (dayDiff > 5) {
+    console.log("nore than 5 days");
+    return numjs.format("D-MM-YYYY");
+  } else {
+    if (dayDiff >= 2) return `${dayDiff} days ago`;
+    if (dayDiff === 1) return `yesterday`;
+    const hdiff = now.diff(numjs, "hours");
+    console.log(hdiff === 0);
+    if (hdiff === 0)
+      return `${now.diff(numjs, "minutes")} minutes ago`;
+    return `${hdiff}h ago`;
+  }
 };
 
 const useGotoEdit = () => {
@@ -89,19 +111,52 @@ const ChapterItem = React.memo(function ChapterItem({
 
   if (db && !local) {
     // only in DB
+    const dbChap = getDBChapterBy(
+      novelID,
+      (c) => c.url === db.url,
+    );
+    const localChap = getChapterBy(
+      novelID,
+      (c) => c.url === db.url,
+    );
+    console.log(dbChap, localChap);
     return (
       <div
-        className={`${novelItem.chaplinked} text-chapstate-dbonly`}
+        className={`${novelItem.chaplinked} ${!dbChap ? "text-chapstate-localonly" : "text-chapstate-dbonly"}`}
         title={"DB: " + db.url}
       >
         <div className="grid h-full w-full content-center justify-center text-balance text-center">
-          {db.name}
+          {db.name} ({getChapterDate(db.date)})
         </div>
         <ChapterMenuButton
           actions={[
-            { label: "db not local" },
+            {
+              label: "Edit",
+              action() {
+                if (localChap)
+                  toEdit(novelID, localChap.id);
+              },
+            },
             "-",
-            { label: "Kill da ho!" },
+            !dbChap ?
+              {
+                label: "Unstage",
+                action() {
+                  localChap &&
+                    removeMutation(
+                      StageChapterMutation.getID({
+                        novelID,
+                        chapterID: localChap.id,
+                      }),
+                    );
+                },
+              }
+            : {
+                label: "Remove",
+                action() {
+                  throw "TODO _removeChapterAction";
+                },
+              },
           ]}
           openMenu={openMenu}
         />
@@ -114,12 +169,12 @@ const ChapterItem = React.memo(function ChapterItem({
         title={"Local:" + local.url}
       >
         <div className="h-full w-full text-balance text-center">
-          {local.name}
+          {local.name} ({getChapterDate(local.date)})
         </div>
         <ChapterMenuButton
           actions={[
             {
-              label: "Stage",
+              label: "Add",
               action: async () => {
                 console.log("Staging chapter", local);
                 mutate(
@@ -143,7 +198,7 @@ const ChapterItem = React.memo(function ChapterItem({
       </div>
     );
   } else if (db && local) {
-    if (deepEquals({ ...db, staged: false }, local)) {
+    if (local.url === db.url) {
       const localChap = getChapterBy(
         novelID,
         (c) =>
@@ -158,7 +213,7 @@ const ChapterItem = React.memo(function ChapterItem({
           c.ognum === local.ognum &&
           c.ogname === local.name,
       );
-      const isLocalFromMutation = !(localChap && dbChap);
+      const isLocalFromMutation = !dbChap;
 
       return (
         <div
@@ -166,7 +221,7 @@ const ChapterItem = React.memo(function ChapterItem({
           title={"DB: " + db.url + " Local: " + local.url}
         >
           <div className="grid w-full content-center justify-center">
-            {db.name}
+            {db.name} ({getChapterDate(db.date)})
           </div>
           <ChapterMenuButton
             actions={[
@@ -179,7 +234,7 @@ const ChapterItem = React.memo(function ChapterItem({
                   );
                 },
               },
-              isLocalFromMutation ? "-" : undefined,
+              "-",
               isLocalFromMutation ?
                 {
                   label: "Unstage",
@@ -194,7 +249,12 @@ const ChapterItem = React.memo(function ChapterItem({
                     }
                   },
                 }
-              : undefined,
+              : {
+                  label: "Remove",
+                  action() {
+                    throw "TODO";
+                  },
+                },
             ]}
             openMenu={openMenu}
           />
@@ -206,18 +266,20 @@ const ChapterItem = React.memo(function ChapterItem({
           <div
             className={`${novelItem.chapremote} text-chapstate-dbonly`}
           >
-            {db.name}
+            {db.name} ({getChapterDate(db.date)})
           </div>
           <div className={`${novelItem.chapedit}`}>
             <ChapterMenuButton
-              actions={[{ label: "different!" }, "-"]}
+              actions={[
+                { label: "Same numbers, different URLs!" },
+              ]}
               openMenu={openMenu}
             />
           </div>
           <div
             className={`${novelItem.chaplocal} text-chapstate-localonly`}
           >
-            {local.name}
+            {local.name} ({getChapterDate(local.date)})
           </div>
         </>
       );
@@ -262,6 +324,7 @@ export const ChapterList = ({
       name: u.ogname,
       url: u.url,
       ognum: u.ognum,
+      date: u.publishdate,
     })) ?? []),
   ];
 
@@ -286,7 +349,7 @@ export const ChapterList = ({
 
   return (
     <div
-      className="sm:max-h-[24rem] flex h-full max-h-64 flex-col"
+      className="flex h-full max-h-64 flex-col sm:max-h-[24rem]"
       id={`chapter_list_${novel.id}`}
     >
       <div className="mt-1">
@@ -302,7 +365,9 @@ export const ChapterList = ({
               console.log(e);
             }
           }}
-        />
+        >
+          Refresh
+        </RefreshButton>
       </div>
       <div
         className={`${isPhone ? novelItem.phonechaps : novelItem.pcchaps} grid h-full max-h-full grid-flow-row overflow-y-auto`}
@@ -324,7 +389,7 @@ export const ChapterList = ({
         <div
           className={`${novelItem.chaplocal} ${erred ? "text-red-600" : ""} text-center font-bold text-chapstate-localonly`}
         >
-          Online{" "}
+          Online
           {erred && (
             <small className="text-[0.7rem]">{erred}</small>
           )}

@@ -21,6 +21,7 @@ export const DummyNovels: (Omit<
           name: "DN1 Chapter 1",
           ognum: 1,
           url: "http://dummy.com/1/1",
+          date: `${new Date("02/02/2022").getTime()}`,
         },
         lines: [
           { pos: 0, text: "Dummy 1 Chapter 1 Line 1" },
@@ -39,6 +40,7 @@ export const DummyNovels: (Omit<
           name: "DN1 Chapter 2",
           ognum: 2,
           url: "http://dummy.com/1/2",
+          date: `${new Date("02/02/2022").getTime()}`,
         },
         lines: [
           { pos: 0, text: "Dummy 1 Chapter 2 Line 1" },
@@ -58,6 +60,7 @@ export const DummyNovels: (Omit<
           name: "DN1 Chapter 1.5",
           ognum: 1.5,
           url: "http://dummy.com/1/1.5",
+          date: `${new Date("02/02/2022").getTime()}`,
         },
         lines: [
           { pos: 0, text: "Dummy 1 Chapter 1.5 Line 1" },
@@ -85,6 +88,7 @@ export const DummyNovels: (Omit<
           name: "DN2 Chapter 1",
           ognum: 1,
           url: "http://dummy.com/2/1",
+          date: `${new Date("02/02/2022").getTime()}`,
         },
         lines: [
           { pos: 0, text: "Dummy 2 Chapter 1 Line 1" },
@@ -103,6 +107,7 @@ export const DummyNovels: (Omit<
           name: "DN1 Chapter 2",
           ognum: 2,
           url: "http://dummy.com/2/2",
+          date: `${new Date("02/02/2022").getTime()}`,
         },
         lines: [
           { pos: 0, text: "Dummy 2 Chapter 2 Line 1" },
@@ -121,6 +126,7 @@ export const DummyNovels: (Omit<
           name: "DN1 Chapter 1.5",
           ognum: 1.5,
           url: "http://dummy.com/2/1.5",
+          date: `${new Date("02/02/2022").getTime()}`,
         },
         lines: [
           { pos: 0, text: "Dummy 2 Chapter 1.5 Line 1" },

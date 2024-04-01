@@ -7,6 +7,7 @@ import {
 import { type Optional, isLang } from "@/utils/utils";
 import { RemoveTLMutation } from "./removeTranslation";
 import { type NovelStore } from "@/hooks/novelStore";
+import { trpcClient } from "@/pages/_app";
 
 type SaveData = {
   novelID: string;
@@ -56,6 +57,15 @@ export class AddTranslationMutation extends Mutation<
     const id =
       tlID ??
       `translation_${++AddTranslationMutation.translationID}`;
+    const newTL: StoreTranslation = {
+      chapterID,
+      id,
+      lines: [],
+      oglang: from,
+      tllang: to,
+      local: true,
+      status: "STAGED",
+    };
     super(
       AddTranslationMutation.getID({
         novelID,
@@ -65,15 +75,6 @@ export class AddTranslationMutation extends Mutation<
         to,
       }),
       (p) => {
-        const newTL: StoreTranslation = {
-          chapterID,
-          id,
-          lines: [],
-          oglang: from,
-          tllang: to,
-          local: true,
-          status: "STAGED",
-        };
         return p.map((n) =>
           n.id === this.data.novelID ?
             {
@@ -95,8 +96,22 @@ export class AddTranslationMutation extends Mutation<
       },
       id,
       MutationType.ADD_TRANSLATION,
-      async () => {
-        throw "TODO _addTL";
+      async (novelStore) => {
+        const retTL = await trpcClient.db.addTL.mutate({
+          chapterID: this.data.chapterID,
+          oglang: this.data.from,
+          status: "STAGED",
+          tllang: this.data.to,
+        });
+        // update all novelIDs in every mutation with new novelID from database
+        novelStore.getMutations().forEach((n) => {
+          if (n.data && "tlID" in n.data) {
+            if (n.data.tlID === newTL.id) {
+              n.data.tlID = retTL.id;
+              n.updateID();
+            }
+          }
+        });
       },
       { novelID, chapterID, from, tlID: id, to },
     );

@@ -1,3 +1,4 @@
+import { trpcClient } from "@/pages/_app";
 import { Mutation, MutationType } from "../mutation";
 
 type SaveData = {
@@ -59,7 +60,9 @@ export class ChangeChapterNameMutation extends Mutation<
       name,
       MutationType.CHANGE_CHAPTER_NAME,
       async () => {
-        throw "TODO _changeChapterName";
+        await trpcClient.db.changeChapterName.mutate(
+          this.data,
+        );
       },
       { novelID, name, og, chapterID },
     );

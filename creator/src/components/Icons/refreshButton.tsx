@@ -12,7 +12,13 @@ export const RefreshButton: FC<
     iconClass?: ComponentPropsWithoutRef<"div">["className"];
     force?: true;
   } & ComponentPropsWithoutRef<"div">
-> = ({ refreshFn, className, iconClass, force }) => {
+> = ({
+  refreshFn,
+  className,
+  iconClass,
+  force,
+  children,
+}) => {
   const [spinner, setSpinner] = useState(false);
   const [error, setError] = useState("");
 
@@ -53,7 +59,7 @@ export const RefreshButton: FC<
           }}
           className={className}
         >
-          Refresh
+          {children}
         </button>
       }
     </>
