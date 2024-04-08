@@ -25,7 +25,7 @@
 
 .chapremote {
   grid-column: 2 / span 1;
-  text-align: center  ;
+  text-align: center;
   display: grid;
   @apply content-center justify-center border-b-2 p-1;
 }

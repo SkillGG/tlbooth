@@ -38,6 +38,6 @@
     "**/*.cjs",
     "**/*.js",
     ".next/types/**/*.ts"
-, "../kotobas/src/components/SearchResponse.tsx"  ],
+  ],
   "exclude": ["node_modules"]
 }

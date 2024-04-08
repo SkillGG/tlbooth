@@ -91,7 +91,7 @@ export class SanitizedText {
           noRB,
           /\[rt]([\s\S]*?)\[\/rt]/g,
           (m) => {
-            return <rt key={m}>{m}</rt>;
+            return <rt>{m}</rt>;
           },
         );
 
@@ -99,11 +99,11 @@ export class SanitizedText {
           rt,
           /\[rp]([\s\S]*?)\[\/rp]/g,
           (m) => {
-            return <rp key={m}>{m}</rp>;
+            return <rp>{m}</rp>;
           },
         );
 
-        return <ruby key={q}>{...rp}</ruby>;
+        return <ruby>{...rp}</ruby>;
       },
     );
 

@@ -2,12 +2,7 @@ import { authMiddleware, clerkClient } from "@clerk/nextjs";
 import { NextResponse } from "next/server";
 
 export default authMiddleware({
-  publicRoutes: [
-    "/",
-    "/kotobank/add",
-    "/kotobank/list",
-    "/api/trpc/koto.scrapList",
-  ],
+  publicRoutes: ["/"],
   async afterAuth(auth, req, _) {
     // Redirect non logged-in users to login page
     if (!auth.userId && !auth.isPublicRoute) {
@@ -18,13 +13,8 @@ export default authMiddleware({
         new URL("/", req.nextUrl.href),
       );
     }
-
     // Return 403 for non-logged in API calls
-    if (
-      !auth.userId &&
-      auth.isApiRoute &&
-      req.nextUrl.href
-    ) {
+    if (!auth.userId && auth.isApiRoute) {
       console.error("Accessing API w/o auth!", auth.userId);
       return NextResponse.rewrite(
         new URL("/403.json", req.url),
@@ -62,7 +52,9 @@ export default authMiddleware({
     }
 
     // Allow users visiting public routes to access them
-    return NextResponse.next();
+    return NextResponse.next({
+      headers: { "x-clerk-id": auth?.userId ?? "" },
+    });
   },
 });
 

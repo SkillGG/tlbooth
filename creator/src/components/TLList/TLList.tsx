@@ -20,10 +20,7 @@ export const TLList: FC<TLListProps> = () => {
   const showSkele = !(!skeleton && tls);
 
   return (
-    <div
-      className="flex max-h-full flex-col overflow-hidden px-5"
-      data-type="TLList"
-    >
+    <div className="flex max-h-full flex-col overflow-hidden px-5">
       <div>
         {/* <button
           className="mr-2"

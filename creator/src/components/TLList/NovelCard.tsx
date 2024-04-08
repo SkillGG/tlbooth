@@ -91,7 +91,6 @@ export const NovelCard = ({
           popupMenu.show(e.clientX, e.clientY, [
             {
               label: "Go to page",
-              className: "bg-cyan-500",
               action() {
                 if (novel.url)
                   window.open(
@@ -100,10 +99,8 @@ export const NovelCard = ({
                   );
               },
             },
-            "-",
             {
               label: "Copy original name",
-              className: "bg-cyan-700",
               action() {
                 if (novel.ogname)
                   void navigator.clipboard.writeText(
@@ -132,7 +129,7 @@ export const NovelCard = ({
       </div>
       {show && (
         <>
-          <div className="box-content grid grid-cols-[1fr] sm:grid-cols-[1fr_1fr]">
+          <div className="box-content grid grid-cols-[1fr_1fr] sm:grid-cols-[1fr]">
             <div className="px-3 pt-1">
               <div className="border-b-2">Novel info</div>
               <div

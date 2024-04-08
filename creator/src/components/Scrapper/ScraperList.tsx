@@ -118,7 +118,7 @@ const NovelItem = ({
       style={{ gridTemplateColumns: "auto min-content" }}
     >
       <div
-        className={`grid w-full content-center text-balance break-all border-gray-400 px-3 text-center text-sm`}
+        className={`grid w-full content-center text-balance border-gray-400 px-3 text-center text-sm`}
       >
         {novel.novelName}
       </div>

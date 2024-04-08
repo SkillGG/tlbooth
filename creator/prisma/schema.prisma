@@ -92,20 +92,3 @@ model Chapter {
 
     translations Translation[]
 }
-
-enum KLang {
-    JP
-    EN
-}
-
-model kotobas_words {
-    id Int @id @default(autoincrement())
-
-    lang KLang
-
-    word     String
-    meanings String[]
-    examples String[]
-
-    @@index([word, lang])
-}
