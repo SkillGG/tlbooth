@@ -28,7 +28,7 @@ function TranslationItem({ tl }: { tl: StoreTranslation }) {
         : tl.status === "PR" || tl.status === "TL" ?
           "text-chapstate-dbonly"
         : "text-chapstate-good"
-      } grid w-[50%] grid-flow-col px-4`}
+      } grid w-[50%] grid-flow-col px-4 lg:w-[70%]`}
     >
       <div>
         ({tl.oglang} {"=>"} {tl.tllang}) [{tl.status}]
@@ -105,7 +105,7 @@ export function ChapterEdit(props: {
             return <TranslationItem key={tl.id} tl={tl} />;
           })}
           <div
-            className="mt-2 grid w-[50%] grid-flow-col gap-4 border-t-2 border-dotted px-4 pt-2 text-white"
+            className="mt-2 grid w-[50%] grid-flow-col gap-4 border-t-2 border-dotted px-4 pt-2 text-white lg:w-[70%]"
             style={{
               gridTemplateColumns:
                 "min-content min-content min-content auto",

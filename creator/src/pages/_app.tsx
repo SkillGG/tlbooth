@@ -11,6 +11,7 @@ import { AdminCheckProvider } from "@/hooks/admin";
 import { useEffect, useState } from "react";
 import { useNovelStore } from "@/hooks/novelStore";
 import { PopupMenuProvider } from "@/components/PopupMenu";
+import { usePathname } from "next/navigation";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -21,12 +22,19 @@ export let trpcClient = null as unknown as ReturnType<
   typeof api.useUtils
 >["client"];
 
-const MyApp: AppType = ({ Component, pageProps }) => {
+const MyApp: AppType = async ({ Component, pageProps }) => {
   const [navLoaded, setNavLoaded] = useState(false);
   trpcClient = api.useUtils().client;
 
-  const novels = api.db.getFromDB.useQuery().data;
-  const nvStore = useNovelStore();
+  const path = usePathname();
+
+  const novels = api.db.getFromDB.useQuery(undefined, {
+    retry: 3,
+  }).data;
+  const nvStore = useNovelStore((s) => ({
+    loadData: s.loadData,
+    loadMutations: s.loadMutations,
+  }));
 
   const { loadData, loadMutations } = nvStore;
 
@@ -50,7 +58,10 @@ const MyApp: AppType = ({ Component, pageProps }) => {
       <ClerkProvider {...pageProps}>
         <AdminCheckProvider>
           <PopupMenuProvider>
-            <LoginBar setLoaded={setNavLoaded} />
+            {}
+            {path.includes("kotobank") ?
+              <Component {...pageProps} />
+            : <LoginBar setLoaded={setNavLoaded} />}
             {navLoaded ?
               <main
                 className={`font-sans ${inter.variable}`}

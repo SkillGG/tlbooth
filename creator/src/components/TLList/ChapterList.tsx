@@ -8,11 +8,12 @@ import type {
 } from "@/server/api/routers/scrapper";
 import { useMediaQuery } from "@uidotdev/usehooks";
 import { compareChapterNums } from "./NovelCard";
-import React from "react";
+import React, { useMemo } from "react";
 import { useRouter } from "next/router";
 import { StageChapterMutation } from "@/hooks/mutations/chapterMutations/stageChapter";
 import { type StoreNovel } from "@/hooks/mutations/mutation";
 import { Skeleton } from "../Skeleton/Skeleton";
+import deepEqual from "fast-deep-equal";
 
 import dayjs from "dayjs";
 import {
@@ -33,13 +34,11 @@ const getChapterDate = (d: number | string) => {
   const dayDiff = now.diff(numjs, "days");
 
   if (dayDiff > 5) {
-    console.log("nore than 5 days");
     return numjs.format("DD-MM-YYYY");
   } else {
     if (dayDiff >= 2) return `${dayDiff} days ago`;
     if (dayDiff === 1) return `yesterday`;
     const hdiff = now.diff(numjs, "hours");
-    console.log(hdiff === 0);
     if (hdiff === 0)
       return `${now.diff(numjs, "minutes")} minutes ago`;
     return `${hdiff}h ago`;
@@ -109,7 +108,6 @@ const ChapterItem = React.memo(function ChapterItem({
       novelID,
       (c) => c.url === db.url,
     );
-    console.log(dbChap, localChap);
     return (
       <div
         className={`${novelItem.chaplinked} ${!dbChap ? "text-chapstate-localonly" : "text-chapstate-dbonly"}`}
@@ -144,7 +142,8 @@ const ChapterItem = React.memo(function ChapterItem({
               }
             : {
                 label: "Remove",
-                className: "bg-red-300 hover:bg-red-600",
+                className: "bg-gray-300 hover:bg-gray-600",
+                disabled: true,
                 action() {
                   throw "TODO _removeChapterAction";
                 },
@@ -213,7 +212,7 @@ const ChapterItem = React.memo(function ChapterItem({
           className={`${novelItem.chaplinked} text-chapstate-good`}
           title={"DB: " + db.url + " Local: " + local.url}
         >
-          <div className="grid w-full content-center justify-center">
+          <div className="grid w-full content-center justify-center text-center">
             {db.name} ({getChapterDate(db.date)})
           </div>
           <ChapterMenuButton
@@ -245,7 +244,9 @@ const ChapterItem = React.memo(function ChapterItem({
                 }
               : {
                   label: "Remove",
-                  className: "bg-red-300 hover:bg-red-600",
+                  className:
+                    "bg-gray-300 hover:bg-gray-600",
+                  disabled: true,
                   action() {
                     throw "TODO _removeChapterAction";
                   },
@@ -266,7 +267,9 @@ const ChapterItem = React.memo(function ChapterItem({
           <div className={`${novelItem.chapedit}`}>
             <ChapterMenuButton
               actions={[
-                { label: "Same numbers, different URLs!" },
+                {
+                  label: "Same numbers, different URLs!",
+                },
               ]}
               openMenu={openMenu}
             />
@@ -304,22 +307,27 @@ export const ChapterList = ({
   const popupMenu = usePopupMenu();
 
   const isPhone = useMediaQuery(
-    "only screen and (max-width: 1024px)",
+    "only screen and (max-width: 800px)",
   );
 
-  const allChapters: StagedChapterInfo[] = [
-    ...(novelData?.chapters.map((u) => ({
-      staged: false,
-      ...u,
-    })) ?? []),
-    ...(getNovel(novel.id)?.chapters.map((u) => ({
-      staged: true,
-      name: u.ogname,
-      url: u.url,
-      ognum: u.ognum,
-      date: u.publishdate,
-    })) ?? []),
-  ];
+  const LocalNovel = getNovel(novel.id);
+
+  const allChapters: StagedChapterInfo[] = useMemo(
+    () => [
+      ...(novelData?.chapters.map((u) => ({
+        staged: false,
+        ...u,
+      })) ?? []),
+      ...(LocalNovel?.chapters.map((u) => ({
+        staged: true,
+        name: u.ogname,
+        url: u.url,
+        ognum: u.ognum,
+        date: u.publishdate,
+      })) ?? []),
+    ],
+    [LocalNovel?.chapters, novelData?.chapters],
+  );
 
   const chapterInfos = allChapters.reduce<
     Record<
@@ -342,7 +350,7 @@ export const ChapterList = ({
 
   return (
     <div
-      className="flex h-full max-h-64 flex-col sm:max-h-[24rem]"
+      className="mid:max-h-64 flex h-full max-h-[24rem] flex-col"
       id={`chapter_list_${novel.id}`}
     >
       <div className="mt-1">

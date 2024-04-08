@@ -12,6 +12,7 @@ import { twMerge } from "tailwind-merge";
 type ChapterAction = {
   label: string;
   className?: string;
+  disabled?: true;
   action?(): void | Promise<void>;
 };
 
@@ -154,6 +155,7 @@ export function WindowActionMenu({
                 )}
               >
                 <button
+                  disabled={action.disabled}
                   onClick={async () => {
                     await action.action?.();
                     hide();
