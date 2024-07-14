@@ -24,8 +24,9 @@ export type TLInfo = {
   novel: StoreNovel;
 } | null;
 
-export type AnyMutation<T extends MutationType = MutationType> =
-  Mutation<T, SaveMutationData<{ type: T }>>;
+export type AnyMutation<
+  T extends MutationType = MutationType,
+> = Mutation<T, SaveMutationData<{ type: T }>>;
 
 type Settings = {
   alwaysRawEdit: boolean;
@@ -257,15 +258,18 @@ export const useNovelStore = create<NovelStore>()(
           ...get().undoneMutations,
         ];
         if (muts.find((m) => m.id === t.id)) {
-          if (o)
+          if (o) {
+            t.beforeAdd(get());
             return {
               mutations: [
                 ...s.mutations.filter((m) => m.id !== t.id),
                 t,
               ],
             };
+          }
           return s;
         }
+        t.beforeAdd(get());
         return { mutations: [...s.mutations, t] };
       });
       get().saveMutations(localStorage);
@@ -275,9 +279,9 @@ export const useNovelStore = create<NovelStore>()(
       if (mut) mut.onRemoved(get());
       else
         console.error(
-          "Could not execute onRemove of mutation with ID: ",
+          "Could not find mutation with ID: ",
           id,
-        );
+        );  
       set((s) => {
         const filterFn = (x: AnyMutation) => {
           if (x.id === id) return false;

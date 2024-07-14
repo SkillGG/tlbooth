@@ -1,6 +1,7 @@
 import { LineStatus } from "@prisma/client";
 import { Mutation, MutationType } from "../mutation";
 import { trpcClient } from "@/pages/_app";
+import { NovelStore } from "@/hooks/novelStore";
 
 type SaveData = {
   value: string;
@@ -144,4 +145,5 @@ export class ChangeLineMutation extends Mutation<
     this.id = ChangeLineMutation.getID(this.data);
   }
   override onRemoved(): void {}
+  override beforeAdd(): void {}
 }

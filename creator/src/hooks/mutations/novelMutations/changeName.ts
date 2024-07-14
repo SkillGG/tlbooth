@@ -56,4 +56,5 @@ export class ChangeNovelNameMutation extends Mutation<
     this.id = ChangeNovelNameMutation.getID(this.data);
   }
   override onRemoved(): void {}
+  override beforeAdd(): void {}
 }

@@ -110,4 +110,5 @@ export class RemoveLineMutation extends Mutation<
       }
     });
   }
+  override beforeAdd(): void {}
 }

@@ -71,4 +71,5 @@ export class RemoveNovelMutation extends Mutation<
       }
     });
   }
+  override beforeAdd(): void {}
 }

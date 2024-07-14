@@ -134,4 +134,5 @@ export class StageChapterMutation extends Mutation<
       }
     });
   }
+  override beforeAdd(): void {}
 }

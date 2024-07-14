@@ -71,4 +71,5 @@ export class ChangeChapterNameMutation extends Mutation<
     this.id = ChangeChapterNameMutation.getID(this.data);
   }
   override onRemoved(): void {}
+  override beforeAdd(): void {}
 }

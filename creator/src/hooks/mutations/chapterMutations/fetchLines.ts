@@ -149,4 +149,5 @@ export class FetchLinesMutation extends Mutation<
     this.id = FetchLinesMutation.getID(this.data);
   }
   override onRemoved(): void {}
+  override beforeAdd(): void {}
 }

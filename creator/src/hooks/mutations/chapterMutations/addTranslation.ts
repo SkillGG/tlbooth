@@ -151,4 +151,5 @@ export class AddTranslationMutation extends Mutation<
       this,
     );
   }
+  override beforeAdd(): void {}
 }

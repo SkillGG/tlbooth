@@ -87,6 +87,7 @@ export abstract class Mutation<
   }
   abstract updateID(): void;
   abstract onRemoved(store: NovelStore): void;
+  abstract beforeAdd(store: NovelStore): void;
   getDescription(n: StoreNovel[]) {
     return typeof this.desc === "function" ?
         this.desc(n)

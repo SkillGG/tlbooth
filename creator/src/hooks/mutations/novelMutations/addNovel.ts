@@ -104,4 +104,5 @@ export class AddNovelMutation extends Mutation<
       this,
     );
   }
+  override beforeAdd(): void {}
 }

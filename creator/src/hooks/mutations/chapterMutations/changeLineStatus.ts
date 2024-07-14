@@ -131,4 +131,5 @@ export class ChangeLineStatusMutation extends Mutation<
       );
     }
   }
+  override beforeAdd(): void {}
 }

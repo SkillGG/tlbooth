@@ -128,6 +128,18 @@ function LineItem({
                     },
                   ] as ChapterActionMenuItem[])
                 : []),
+                ...(line.status === "PR" ?
+                  [
+                    {
+                      label: "Mark for re-tl",
+                      className:
+                        "bg-orange-300 hover:bg-red-300",
+                      action() {
+                        changeStateTo("TL");
+                      },
+                    },
+                  ]
+                : []),
                 {
                   label: raw ? "HTML Edit" : "Raw edit",
                   action() {

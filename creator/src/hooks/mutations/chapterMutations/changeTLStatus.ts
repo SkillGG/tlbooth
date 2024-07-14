@@ -114,4 +114,5 @@ export class ChangeTLStatusMutation extends Mutation<
     this.id = ChangeTLStatusMutation.getID(this.data);
   }
   override onRemoved(): void {}
+  override beforeAdd(): void {}
 }

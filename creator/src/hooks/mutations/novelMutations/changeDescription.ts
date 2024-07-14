@@ -58,4 +58,5 @@ export class ChangeNovelDescriptionMutation extends Mutation<
     );
   }
   override onRemoved(): void {}
+  override beforeAdd(): void {}
 }
