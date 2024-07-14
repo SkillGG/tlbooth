@@ -56,6 +56,7 @@ export class AddNovelMutation extends Mutation<
       local: true,
       ogdesc: novelDescription,
       tldesc: "",
+      author: "",
     };
     console.log("adding novel", novel);
     super(
