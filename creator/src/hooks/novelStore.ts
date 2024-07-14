@@ -24,7 +24,7 @@ export type TLInfo = {
   novel: StoreNovel;
 } | null;
 
-type AnyMutation<T extends MutationType = MutationType> =
+export type AnyMutation<T extends MutationType = MutationType> =
   Mutation<T, SaveMutationData<{ type: T }>>;
 
 type Settings = {

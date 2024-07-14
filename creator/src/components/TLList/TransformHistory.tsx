@@ -1,9 +1,25 @@
 import { useAdmin } from "@/hooks/admin";
-import { useNovelStore } from "@/hooks/novelStore";
+import {
+  AnyMutation,
+  useNovelStore,
+} from "@/hooks/novelStore";
 import { api } from "@/utils/api";
 import React, { useEffect, useState } from "react";
 import { RefreshButton } from "../Icons/refreshButton";
 import { useRouter } from "next/router";
+import { MutationType } from "@/hooks/mutations/mutation";
+
+const allowedMutations: Record<
+  string,
+  "all" | "none" | undefined | MutationType[]
+> = {
+  proofread: [
+    MutationType.CHANGE_LINE,
+    MutationType.CHANGE_LINE_STATUS,
+  ],
+  admin: "all",
+  "*": "none",
+};
 
 export function TransformationHistory() {
   const [showHistory, setShowHistory] = useState(false);
@@ -31,7 +47,23 @@ export function TransformationHistory() {
     }
   }, [trans, undone]);
 
+  const canApply = (type: string | false) => {
+    if (!type) return false;
+    for (const amType of Object.keys(allowedMutations)) {
+      if (type !== amType) continue;
+      const amS = allowedMutations[amType];
+      if (!amS) return false;
+      if (amS === "all") return true;
+      if (amS === "none") return false;
+      return trans.reduce((p, mut) => {
+        return !p ? p : amS.includes(mut.type);
+      }, true);
+    }
+    return false;
+  };
+
   const router = useRouter();
+
   return (
     <>
       <div className="inline-grid w-fit grid-flow-col gap-x-3">
@@ -65,8 +97,9 @@ export function TransformationHistory() {
             >
               Show changes
             </button>
-            {isAdmin && (
+            {canApply(isAdmin.type) && (
               <RefreshButton
+                title="REf??"
                 className="text-center"
                 refreshFn={async () => {
                   try {
