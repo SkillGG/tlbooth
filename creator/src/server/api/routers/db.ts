@@ -51,6 +51,7 @@ export const databaseRouter = createTRPCRouter({
           url: input.novelURL,
           ogname: input.novelName,
           ogdesc: input.novelDescription,
+          author: "",
         },
       });
       return result;
@@ -116,7 +117,7 @@ export const databaseRouter = createTRPCRouter({
         novelID: z.string(),
         ognum: z.number(),
         url: z.string(),
-        date: z.string(),
+        date: z.date(),
       }),
     )
     .mutation(async ({ ctx, input }) => {
@@ -128,7 +129,7 @@ export const databaseRouter = createTRPCRouter({
           novelID,
           num: `${ognum}`,
           ognum,
-          publishdate: date,
+          ogPub: date,
         },
       });
       return result;
@@ -172,12 +173,23 @@ export const databaseRouter = createTRPCRouter({
         status: tlStatusEnum,
         tllang: langEnum,
         chapterID: z.string(),
+        author: z.string(),
+        lastEditDate: z.date(),
+        pubDate: z.date(),
       }),
     )
     .mutation(
       async ({
         ctx,
-        input: { oglang, status, chapterID, tllang },
+        input: {
+          oglang,
+          status,
+          chapterID,
+          tllang,
+          author,
+          lastEditDate,
+          pubDate,
+        },
       }): Promise<Translation> => {
         const result = await ctx.db.translation.create({
           data: {
@@ -185,6 +197,10 @@ export const databaseRouter = createTRPCRouter({
             status: status,
             tllang: tllang,
             chapterID,
+            author,
+            publishDate: pubDate,
+            lastEditDate: lastEditDate,
+            editAuthors: [author],
           },
         });
         return result;

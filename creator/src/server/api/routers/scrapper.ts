@@ -24,7 +24,7 @@ export const ScrapperChapterInfo = z.object({
   url: z.string().url(),
   name: z.string().min(1),
   ognum: z.number(),
-  date: z.string(),
+  date: z.date(),
 });
 
 export const ScrapperTextLine = z.object({
@@ -38,7 +38,9 @@ export const ScrapperChapter = z.object({
 });
 
 export const ScrapperNovel = z.object({
-  info: ScrapperNovelInfo,
+  info: ScrapperNovelInfo.and(
+    z.object({ author: z.string() }),
+  ),
   chapters: z.array(ScrapperChapterInfo),
 });
 
@@ -308,7 +310,7 @@ export const scrapperRouter = createTRPCRouter({
         let desc = "";
         if (chaptersDLs.length === 0) {
           console.log("oneshot!");
-          const dateWWWC = parsed
+          const date = parsed
             .querySelector("meta[name='WWWC']")
             ?.getAttribute("content");
 
@@ -316,9 +318,9 @@ export const scrapperRouter = createTRPCRouter({
             name: "Oneshot",
             ognum: 0,
             url,
-            date: `${new Date(
-              dateWWWC ?? Date.now(),
-            ).getTime()}`,
+            date: new Date(
+              date ? date + " UTC+09" : Date.now(),
+            ),
           });
         } else {
           const chs =
@@ -337,10 +339,11 @@ export const scrapperRouter = createTRPCRouter({
                   name: toHTR(sub.innerHTML),
                   ognum: i + 1,
                   url: new URL(href, url).href,
-                  date: `${new Date(
-                    date?.innerText + " UTC+09" ??
-                      Date.now(),
-                  ).getTime()}`,
+                  date: new Date(
+                    date ?
+                      date.innerText + " UTC+09"
+                    : Date.now(),
+                  ),
                 };
               },
             );
@@ -359,6 +362,7 @@ export const scrapperRouter = createTRPCRouter({
             novelURL: url,
             novelDescription: toHTR(desc),
             novelName: toHTR(name),
+            author: "",
           },
         };
       },

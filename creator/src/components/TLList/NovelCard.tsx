@@ -131,7 +131,16 @@ export const NovelCard = ({
         <>
           <div className="box-content grid grid-cols-[1fr_1fr] sm:grid-cols-[1fr]">
             <div className="px-3 pt-1">
-              <div className="border-b-2">Novel info</div>
+              <div className="border-b-2">
+                <EditField
+                  fieldName="Author"
+                  defaultValue={novel.author}
+                  lock={false}
+                  onSave={() => {
+                    throw "TODO! Add Author changes";
+                  }}
+                />
+              </div>
               <div
                 className="grid grid-flow-col grid-cols-[1fr_1fr] gap-[2px] border-x-[1px] border-b-2 border-dotted px-3 pb-2"
                 style={{

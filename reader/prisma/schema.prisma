@@ -9,7 +9,6 @@ datasource db {
     provider  = "postgresql"
     url       = env("DB_URL")
     directUrl = env("DB_DIRECT_URL")
-    relationMode = "prisma"
 }
 
 enum LANG {
@@ -39,12 +38,8 @@ model Translation {
 
     status TLStatus
 
-    publishDate DateTime @default(now())
-
-    lastEditDate DateTime @default(now())
-    editAuthors  String[] @default([])
-
-    author String
+    publishdate String @default("0")
+    editdate    String @default("0")
 
     Chapter   Chapter? @relation(fields: [chapterID], references: [id], onDelete: Cascade)
     chapterID String?  @map("chapterId")
@@ -61,10 +56,6 @@ model TextLine {
 
     status LineStatus @default(STAGED)
 
-    changeTime DateTime @default(now())
-
-    changeAuthors String[]
-
     Translation Translation? @relation(fields: [textID], references: [id], onDelete: Cascade)
     textID      String?      @map("textId")
 }
@@ -73,8 +64,6 @@ model Novel {
     id String @id @default(cuid()) @map("_id")
 
     url String @unique
-
-    author String
 
     ogname String
     tlname String @default("")
@@ -93,10 +82,10 @@ model Chapter {
     num   String @default("1")
     ognum Int    @default(1)
 
-    ogPub DateTime
-
     ogname String
     tlname String?
+
+    publishdate String @default("0")
 
     Novel   Novel  @relation(fields: [novelID], references: [id], onDelete: Cascade)
     novelID String @map("novelId")

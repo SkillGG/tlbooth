@@ -137,6 +137,10 @@ function LineItem({
                 {
                   label: "Remove",
                   className: "bg-red-400 hover:bg-red-600",
+                  shortcut: {
+                    key: "KeyR",
+                    label: "r",
+                  },
                   action() {
                     mutate(
                       new RemoveLineMutation({
@@ -153,7 +157,8 @@ function LineItem({
               popup.show(e.clientX, e.clientY, [
                 {
                   label: "Undo",
-                  className:"bg-green-300 hover:bg-green-500",
+                  className:
+                    "bg-green-300 hover:bg-green-500",
                   action() {
                     removeMutation(
                       RemoveLineMutation.getID(line.id),

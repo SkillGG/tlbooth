@@ -9,10 +9,19 @@ import { createPortal } from "react-dom";
 import reactStringReplace from "react-string-replace";
 import { twMerge } from "tailwind-merge";
 
+type KeyboardShortcut = {
+  key: string;
+  label?: string;
+  ctrl?: true;
+  shift?: true;
+  alt?: true;
+};
+
 type ChapterAction = {
   label: string;
   className?: string;
   action?(): void | Promise<void>;
+  shortcut?: KeyboardShortcut;
 };
 
 type ActionSeparator = "-";
@@ -92,6 +101,10 @@ export const usePopupMenu = () => {
   return ctx;
 };
 
+const shortcutToString = (s: KeyboardShortcut) => {
+  return `(${s.ctrl ? "CTRL + " : ""}${s.alt ? "Alt + " : ""}${s.shift ? "Shift + " : ""}${s.label ? s.label : s.key[s.shift ? "toUpperCase" : "toLowerCase"]()})`;
+};
+
 export function WindowActionMenu({
   actions,
   hide,
@@ -99,7 +112,7 @@ export function WindowActionMenu({
   y,
 }: ChapterActionMenuProps) {
   useEffect(() => {
-    const abort = new AbortController();
+    const clickAbort = new AbortController(); // call signal.abort() to remove listener
     document.body.addEventListener(
       "click",
       (e) => {
@@ -113,12 +126,36 @@ export function WindowActionMenu({
           hide();
         }
       },
-      { signal: abort.signal },
+      { signal: clickAbort.signal },
+    );
+
+    const keydownAbort = new AbortController();
+    document.body.addEventListener(
+      "keydown",
+      (e) => {
+        for (const action of actions) {
+          if (!action) continue;
+          if (typeof action == "string") continue;
+          if (!action.shortcut) continue;
+          console.log(action.shortcut.key, e.code);
+          if (
+            e.code === action.shortcut.key &&
+            !!e.ctrlKey === !!action.shortcut.ctrl &&
+            !!e.shiftKey === !!action.shortcut.shift &&
+            !!e.altKey == !!action.shortcut.alt
+          ) {
+            void action.action?.();
+            hide();
+          }
+        }
+      },
+      { signal: keydownAbort.signal },
     );
     return () => {
-      abort.abort();
+      clickAbort.abort();
+      keydownAbort.abort();
     };
-  }, [hide]);
+  }, [hide, actions]);
 
   return (
     <div
@@ -169,7 +206,9 @@ export function WindowActionMenu({
                           key={`br_${inx}_${action.label}`}
                         />
                       ),
-                    )}
+                    )}{" "}
+                    {action.shortcut &&
+                      shortcutToString(action.shortcut)}
                   </span>
                 </button>
               </div>

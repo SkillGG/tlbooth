@@ -72,6 +72,8 @@ export class FetchLinesMutation extends Mutation<
         status: "STAGED",
         textID: tlID,
         tlline: "",
+        changeAuthors: [],
+        changeTime: new Date(),
       } satisfies TextLine;
     });
   }

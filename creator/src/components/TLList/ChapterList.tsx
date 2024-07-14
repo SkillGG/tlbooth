@@ -25,8 +25,11 @@ type StagedChapterInfo = ScrapperChapterInfo & {
   staged: boolean;
 };
 
-const getChapterDate = (d: number | string) => {
-  const num = typeof d === "string" ? parseInt(d) : d;
+const getChapterDate = (d: Date | number | string) => {
+  const num =
+    typeof d === "string" ? parseInt(d)
+    : typeof d === "object" ? d.getTime()
+    : d;
   const numjs = dayjs(new Date(num));
   const now = dayjs(Date.now());
 
@@ -317,7 +320,7 @@ export const ChapterList = ({
       name: u.ogname,
       url: u.url,
       ognum: u.ognum,
-      date: u.publishdate,
+      date: u.ogPub,
     })) ?? []),
   ];
 

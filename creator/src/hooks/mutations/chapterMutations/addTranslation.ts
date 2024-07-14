@@ -15,6 +15,8 @@ type SaveData = {
   from: LANG;
   to: LANG;
   tlID: string;
+  author: string;
+  date: Date;
 };
 
 export const isAddTranslationSaveData = (
@@ -27,7 +29,9 @@ export const isAddTranslationSaveData = (
     "to" in o &&
     "novelID" in o &&
     "chapterID" in o &&
+    "author" in o &&
     typeof o.novelID === "string" &&
+    typeof o.author === "string" &&
     typeof o.chapterID === "string" &&
     isLang(o.from) &&
     isLang(o.to)
@@ -45,14 +49,16 @@ export class AddTranslationMutation extends Mutation<
     tlID,
     from,
     to,
-  }: SaveData) =>
+  }: Omit<SaveData, "author" | "date">) =>
     `add_translation_${novelID}_${chapterID}_${from}_${to}_${tlID}`;
   constructor({
     novelID,
     chapterID,
     from,
+    date,
     tlID,
     to,
+    author,
   }: Optional<SaveData, "tlID">) {
     const id =
       tlID ??
@@ -65,8 +71,10 @@ export class AddTranslationMutation extends Mutation<
       tllang: to,
       local: true,
       status: "STAGED",
-      editdate: `${Date.now()}`,
-      publishdate: `${Date.now()}`,
+      lastEditDate: date,
+      publishDate: date,
+      editAuthors: [author],
+      author,
     };
     super(
       AddTranslationMutation.getID({
@@ -104,6 +112,9 @@ export class AddTranslationMutation extends Mutation<
           oglang: this.data.from,
           status: "STAGED",
           tllang: this.data.to,
+          author: this.data.author,
+          lastEditDate: this.data.date,
+          pubDate: this.data.date,
         });
         // update all novelIDs in every mutation with new novelID from database
         novelStore.getMutations().forEach((n) => {
@@ -119,7 +130,15 @@ export class AddTranslationMutation extends Mutation<
             path.replace(newTL.id, this.data.tlID)
           : null;
       },
-      { novelID, chapterID, from, tlID: id, to },
+      {
+        novelID,
+        chapterID,
+        from,
+        tlID: id,
+        to,
+        author,
+        date,
+      },
     );
   }
   updateID(): void {

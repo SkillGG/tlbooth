@@ -78,7 +78,7 @@ export class SanitizedText {
     const deRuby = replace(
       r,
       /\[r]([\s\S]*?)\[\/r]/g,
-      (q) => {
+      (q, _i, o) => {
         const noRB = replace(
           q,
           /\[rb]([\s\S]*?)\[\/rb]/g,
@@ -90,20 +90,24 @@ export class SanitizedText {
         const rt = replace(
           noRB,
           /\[rt]([\s\S]*?)\[\/rt]/g,
-          (m) => {
-            return <rt>{m}</rt>;
+          (m, _i, o) => {
+            return <rt key={`${m}#${o}`}>{m}</rt>;
           },
         );
 
         const rp = replace(
           rt,
           /\[rp]([\s\S]*?)\[\/rp]/g,
-          (m) => {
-            return <rp>{m}</rp>;
+          (m, _i, o) => {
+            return <rp key={`${m}#${o}`}>{m}</rp>;
           },
         );
 
-        return <ruby>{...rp}</ruby>;
+        return (
+          <ruby id={`${o}_${_i}`} key={`${o}_${_i}`}>
+            {...rp}
+          </ruby>
+        );
       },
     );
 

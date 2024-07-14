@@ -50,6 +50,41 @@
                     ]
                 }
             ]
+        ],
+        "reader": [
+            {
+                "name": "prisma",
+                "autoExecuteCommands": true,
+                "icon": "database",
+                "color": "terminal.ansiBrightYellow",
+                "commands": [
+                    "cd reader",
+                    "npx prisma studio --port 5666 --browser none"
+                ],
+                "joinOperator": ";"
+            },
+            [
+                {
+                    "name": "git",
+                    "autoExecuteCommands": true,
+                    "icon": "git-commit",
+                    "color": "terminal.ansiBrightBlue",
+                    "commands": [
+                        "cd reader"
+                    ],
+                    "focus": false
+                },
+                {
+                    "name": "dev",
+                    "autoExecuteCommands": true,
+                    "icon": "debug-alt",
+                    "joinOperator": ";",
+                    "commands": [
+                        "cd reader",
+                        "npm run dev"
+                    ]
+                }
+            ]
         ]
     }
 }

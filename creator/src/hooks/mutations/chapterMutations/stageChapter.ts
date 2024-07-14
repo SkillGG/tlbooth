@@ -9,7 +9,7 @@ type SaveData = {
   name: string;
   ognum: number;
   chapterID: string;
-  date: string;
+  date: Date;
 };
 
 export const isStageChapterSaveData = (
@@ -29,7 +29,8 @@ export const isStageChapterSaveData = (
     "name" in o &&
     typeof o.name === "string" &&
     "date" in o &&
-    typeof o.date === "string"
+    typeof o.date === "object" &&
+    o.date instanceof Date
   );
 };
 
@@ -79,7 +80,7 @@ export class StageChapterMutation extends Mutation<
                     url: url,
                     tlname: "",
                     translations: [],
-                    publishdate: date,
+                    ogPub: date,
                   },
                 ],
               }

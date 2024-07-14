@@ -1,3 +1,4 @@
+import { useAuth } from "@clerk/nextjs";
 import {
   type PropsWithChildren,
   createContext,
@@ -6,16 +7,24 @@ import {
   useEffect,
 } from "react";
 
-const adminContext = createContext(false);
+type UserData = { sign?: string; id: string };
+
+const adminContext = createContext<UserData | null>(null);
 
 export const AdminCheckProvider = ({
   children,
 }: PropsWithChildren) => {
-  const [admin, setAdmin] = useState(false);
+  const [admin, setAdmin] = useState<UserData | null>(null);
+
+  const auth = useAuth();
 
   useEffect(() => {
-    setAdmin(!!/(\?|&)admin=/.exec(window.location.search));
-  }, []);
+    if (auth.isSignedIn) {
+      if (admin?.id === auth.userId) return;
+      setAdmin({ id: auth.userId });
+    }
+  }, [auth, admin]);
+
   return (
     <adminContext.Provider value={admin}>
       {children}
