@@ -17,7 +17,8 @@ export const cssPIf = (
   return !!condition ? onTrue ?? onFalse : onFalse;
 };
 
-export const cssDef = (condidion?: string) => {
+export const cssDef = (condidion?: unknown): string => {
+  if (typeof condidion !== "string") return "";
   return cssIf(!!condidion, condidion, "");
 };
 

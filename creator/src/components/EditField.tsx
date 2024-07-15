@@ -1,5 +1,4 @@
 import { SanitizedText } from "@/utils/sanitizer";
-import { cssDef } from "@/utils/utils";
 import { renderToStaticMarkup } from "react-dom/server";
 import React, {
   type CSSProperties,
@@ -12,26 +11,48 @@ import { useNovelStore } from "@/hooks/novelStore";
 import { twMerge } from "tailwind-merge";
 
 type EditFieldCustomization<T> = {
-  main?: T;
+  main?:
+    | { lock?: T; normal: T }
+    | (T extends string ? T : never);
   header?: {
-    main?: T;
+    main?:
+      | { lock?: T; normal: T }
+      | (T extends string ? T : never);
     noEdit?: {
-      restore?: T;
-      edit?: T;
+      restore?:
+        | { lock?: T; normal: T }
+        | (T extends string ? T : never);
+      edit?:
+        | { lock?: T; normal: T }
+        | (T extends string ? T : never);
     };
     edit?: {
-      main?: T;
-      save?: T;
-      cancel?: T;
+      main?:
+        | { lock?: T; normal: T }
+        | (T extends string ? T : never);
+      save?:
+        | { lock?: T; normal: T }
+        | (T extends string ? T : never);
+      cancel?:
+        | { lock?: T; normal: T }
+        | (T extends string ? T : never);
     };
   };
   staticField?: {
-    div?: T;
-    span?: T;
+    div?:
+      | { lock?: T; normal: T }
+      | (T extends string ? T : never);
+    span?:
+      | { lock?: T; normal: T }
+      | (T extends string ? T : never);
   };
   editField?: {
-    div?: T;
-    span?: T;
+    div?:
+      | { lock?: T; normal: T }
+      | (T extends string ? T : never);
+    span?:
+      | { lock?: T; normal: T }
+      | (T extends string ? T : never);
   };
 };
 
@@ -100,15 +121,58 @@ export const EditField = React.forwardRef<
 
   const raw = alwaysRawEdit ? true : rawHTR;
 
+  const getMergedDefs = (
+    ...defs: (
+      | { lock?: string; normal: string }
+      | string
+      | undefined
+    )[]
+  ) => {
+    return twMerge(
+      ...defs
+        .map((d) => (typeof d === "string" ? d : d?.normal))
+        .filter((f) => !!f),
+      ...(lock ?
+        defs
+          .map((d) =>
+            typeof d === "string" ? null : d?.lock ?? "",
+          )
+          .filter((f) => !!f)
+      : []),
+    );
+  };
+
+  const getMergedProps = (
+    ...defs: (
+      | {
+          lock?: CSSProperties;
+          normal: CSSProperties;
+        }
+      | undefined
+    )[]
+  ): CSSProperties => {
+    return Object.assign(
+      {},
+      ...defs.map((p) => p?.normal).filter((f) => !!f),
+      ...(lock ?
+        defs.map((q) => q?.lock).filter((f) => !!f)
+      : []),
+    ) as CSSProperties;
+  };
+
   return (
     <>
       <div
-        className={`${cssDef(className?.main)}`}
-        style={style?.main}
+        className={`${getMergedDefs(className?.main)}`}
+        style={getMergedProps(style?.main)}
+        data-locked={lock}
       >
         <small
-          className={`${cssDef(className?.header?.main)}`}
-          style={style?.header?.main}
+          className={`${getMergedDefs(className?.header?.main, className?.header?.main)}`}
+          style={{
+            ...style?.header?.main?.normal,
+            ...(lock ? style?.header?.main?.normal : {}),
+          }}
         >
           {fieldName}
           {fieldName ? ":" : ""}
@@ -118,9 +182,13 @@ export const EditField = React.forwardRef<
                 <button
                   className={twMerge(
                     `ml-1`,
-                    cssDef(className?.header?.noEdit?.edit),
+                    getMergedDefs(
+                      className?.header?.noEdit?.edit,
+                    ),
                   )}
-                  style={style?.header?.noEdit?.edit}
+                  style={getMergedProps(
+                    style?.header?.noEdit?.edit,
+                  )}
                   onClick={() => {
                     setEdit((p) => !p);
                     setTimeout(() => {
@@ -134,11 +202,13 @@ export const EditField = React.forwardRef<
                   <button
                     className={twMerge(
                       `ml-1`,
-                      cssDef(
+                      getMergedDefs(
                         className?.header?.noEdit?.restore,
                       ),
                     )}
-                    style={style?.header?.noEdit?.restore}
+                    style={getMergedProps(
+                      style?.header?.noEdit?.restore,
+                    )}
                     onClick={() => {
                       console.log("clicking restore");
                       void onRestore?.();
@@ -152,17 +222,25 @@ export const EditField = React.forwardRef<
             : <div
                 className={twMerge(
                   `inline-grid grid-flow-col gap-x-1`,
-                  cssDef(className?.header?.edit?.main),
+                  getMergedDefs(
+                    className?.header?.edit?.main,
+                  ),
                 )}
-                style={style?.header?.edit?.main}
+                style={getMergedProps(
+                  style?.header?.edit?.main,
+                )}
               >
                 <button
                   ref={saveRef}
                   className={twMerge(
                     `text-green-300`,
-                    cssDef(className?.header?.edit?.save),
+                    getMergedDefs(
+                      className?.header?.edit?.save,
+                    ),
                   )}
-                  style={style?.header?.edit?.save}
+                  style={getMergedProps(
+                    style?.header?.edit?.save,
+                  )}
                   onClick={async () => {
                     if (textRef.current) {
                       const value =
@@ -189,9 +267,13 @@ export const EditField = React.forwardRef<
                 <button
                   className={twMerge(
                     `text-red-400`,
-                    cssDef(className?.header?.edit?.cancel),
+                    getMergedDefs(
+                      className?.header?.edit?.cancel,
+                    ),
                   )}
-                  style={style?.header?.edit?.cancel}
+                  style={getMergedProps(
+                    style?.header?.edit?.cancel,
+                  )}
                   onClick={() => {
                     setEdit((p) => !p);
                     if (textRef.current)
@@ -209,19 +291,17 @@ export const EditField = React.forwardRef<
             key="editfield"
             className={twMerge(
               ``,
-              cssDef(className?.editField?.div),
+              getMergedDefs(className?.editField?.div),
             )}
-            style={{
-              ...style?.editField?.div,
-            }}
+            style={getMergedProps(style?.editField?.div)}
           >
             <span
               contentEditable
               className={twMerge(
                 `block`,
-                cssDef(className?.editField?.span),
+                getMergedDefs(className?.editField?.span),
               )}
-              style={style?.editField?.span}
+              style={getMergedProps(style?.editField?.span)}
               onKeyDown={(e) => {
                 if (e.code === "Enter" && !e.shiftKey) {
                   e.preventDefault();
@@ -256,16 +336,18 @@ export const EditField = React.forwardRef<
             key="nonEditField"
             className={twMerge(
               ``,
-              cssDef(className?.staticField?.div),
+              getMergedDefs(className?.staticField?.div),
             )}
-            style={style?.staticField?.div}
+            style={getMergedProps(style?.staticField?.div)}
           >
             <div
               className={twMerge(
                 ``,
-                cssDef(className?.staticField?.span),
+                getMergedDefs(className?.staticField?.span),
               )}
-              style={style?.staticField?.span}
+              style={getMergedProps(
+                style?.staticField?.span,
+              )}
             >
               <HTRText htr={defaultValue ?? ""} />
             </div>

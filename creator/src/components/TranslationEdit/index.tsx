@@ -9,16 +9,17 @@ import { trpcClient } from "@/pages/_app";
 import { FetchLinesMutation } from "@/hooks/mutations/chapterMutations/fetchLines";
 import { EditField } from "../EditField";
 import { ChangeLineMutation } from "@/hooks/mutations/chapterMutations/changeLine";
-import {
-  type ChapterActionMenuItem,
-  usePopupMenu,
-} from "../PopupMenu";
+import { usePopupMenu } from "../PopupMenu";
 import { ChangeLineStatusMutation } from "@/hooks/mutations/chapterMutations/changeLineStatus";
 import Head from "next/head";
 import { ChangeTLStatusMutation } from "@/hooks/mutations/chapterMutations/changeTLStatus";
 import { useEffect, useMemo, useState } from "react";
-import { type StoreTextLine } from "@/hooks/mutations/mutation";
-import { RemoveLineMutation } from "@/hooks/mutations/chapterMutations/removeLine";
+import {
+  type StoreTextLine,
+} from "@/hooks/mutations/mutation";
+import { useAdmin, UserType } from "@/hooks/admin";
+import ApproveSVG from "./approveSVG";
+import CancelSVG from "./cancelSVG";
 
 function LineItem({
   line,
@@ -36,7 +37,7 @@ function LineItem({
     isMutation,
   } = useNovelStore();
 
-  const [raw, setRaw] = useState<boolean>(false);
+  const [raw] = useState<boolean>(false);
 
   const tlInfo = getTranslationInfo(tlID);
   const popup = usePopupMenu();
@@ -88,119 +89,61 @@ function LineItem({
   };
 
   return (
-    <>
+    <div className="grid grid-cols-[min-content_min-content_1fr_min-content_1fr] gap-2 border-b-2 border-dotted px-2 pb-1">
       <div
         className={`${textStyle} col-[1/span_1] grid w-min content-center justify-center`}
       >
         #{line.pos}
       </div>
       <div
-        className={`${textStyle} col-[2/span_1] grid h-full content-center pl-2`}
-      >
-        <button
-          data-openspopup
-          onClick={(e) => {
-            if (!line.forDeletion)
-              popup.show(e.clientX, e.clientY, [
-                line.status === "STAGED" && {
-                  label: "Mark as\ntranslated",
-                  action() {
-                    changeStateTo("TL");
-                  },
-                },
-                ...(line.status === "TL" ?
-                  ([
-                    {
-                      label: "Approve",
-                      className:
-                        "bg-green-300 hover:bg-green-600",
-                      action() {
-                        changeStateTo("PR");
-                      },
-                    },
-                    {
-                      label: "Reject",
-                      className:
-                        "bg-orange-300 hover:bg-red-300",
-                      action() {
-                        changeStateTo("STAGED");
-                      },
-                    },
-                  ] as ChapterActionMenuItem[])
-                : []),
-                ...(line.status === "PR" ?
-                  [
-                    {
-                      label: "Mark for re-tl",
-                      className:
-                        "bg-orange-300 hover:bg-red-300",
-                      action() {
-                        changeStateTo("TL");
-                      },
-                    },
-                  ]
-                : []),
-                {
-                  label: raw ? "HTML Edit" : "Raw edit",
-                  action() {
-                    setRaw((p) => !p);
-                  },
-                },
-                {
-                  label: "Remove",
-                  className: "bg-red-400 hover:bg-red-600",
-                  shortcut: {
-                    key: "KeyR",
-                    label: "r",
-                  },
-                  action() {
-                    mutate(
-                      new RemoveLineMutation({
-                        tlID: tlID,
-                        chapterID,
-                        lineID: line.id,
-                        novelID,
-                      }),
-                    );
-                  },
-                },
-              ]);
-            else
-              popup.show(e.clientX, e.clientY, [
-                {
-                  label: "Undo",
-                  className:
-                    "bg-green-300 hover:bg-green-500",
-                  action() {
-                    removeMutation(
-                      RemoveLineMutation.getID(line.id),
-                    );
-                  },
-                },
-              ]);
-          }}
-        >
-          {raw ? "[" : "("}
-          {line.status.substring(0, 2)}
-          {raw ? "]" : ")"}
-        </button>
-      </div>
-      <div
         className={`${textStyle} col-[3/span_1] grid content-center justify-center px-2 text-center`}
+        data-type="ogline"
       >
         <EditField
           fieldName=""
           lock={true}
           defaultValue={line.ogline}
           className={{
-            editField: { div: "text-center" },
-            header: { main: "block min-h-[15px]" },
+            editField: { div: { normal: "text-center" } },
+            header: {
+              main: {
+                normal: "block min-h-[15px]",
+                lock: "min-h-0",
+              },
+            },
           }}
         />
       </div>
       <div
-        className={`${textStyle} col-[4/span_1] flex align-middle`}
+        className={`${textStyle} col-[4/span_1] flex flex-col justify-center`}
+        data-type="statusbox"
       >
+        {line.status === "TL" && (
+          <div className="flex">
+            <button
+              title="Approve"
+              onClick={() => {
+                changeStateTo("PR");
+              }}
+            >
+              <ApproveSVG
+                width={25}
+                height={25}
+                className="box-content border-[1px] border-transparent fill-green-400 hover:border-green-300"
+              />
+            </button>
+            <button
+              title="Reject"
+              onClick={() => changeStateTo("STAGED")}
+            >
+              <CancelSVG
+                width={25}
+                height={25}
+                className="box-content border-[1px] border-transparent fill-red-400 hover:border-red-300"
+              />
+            </button>
+          </div>
+        )}
         <button
           disabled={lock || line.forDeletion}
           onClick={() => {
@@ -222,14 +165,19 @@ function LineItem({
       </div>
       <div
         className={`${textStyle} col-[5/span_1] grid content-center justify-center px-2 text-center`}
+        data-type="tlline"
       >
         <EditField
           fieldName=""
           className={{
             editField: {
-              span: "min-h-6 break-normal text-center",
+              span: {
+                normal: "min-h-6 break-normal text-center",
+              },
             },
-            staticField: { span: "min-h-6 text-center" },
+            staticField: {
+              span: { normal: "min-h-6 text-center" },
+            },
           }}
           lock={line.forDeletion ?? lock}
           defaultValue={line.tlline}
@@ -270,7 +218,7 @@ function LineItem({
           }}
         />
       </div>
-    </>
+    </div>
   );
 }
 
@@ -291,6 +239,8 @@ export function TranslationEditor({
   const { tl, novel, chap } = info;
 
   const { mutate } = useNovelStore();
+
+  const { type: userType } = useAdmin();
 
   const checkStatus = useMemo(
     () => () => {
@@ -397,29 +347,28 @@ export function TranslationEditor({
               lines
             </button>
           )}
-          {tl.status === "PR" && (
-            <button
-              className="ml-1 text-chapstate-good"
-              onClick={() => {
-                mutate(
-                  new ChangeTLStatusMutation({
-                    chapterID: chap.id,
-                    novelID: novel.id,
-                    status: "PUBLISH",
-                    tlID: tl.id,
-                    publishdate: `${Date.now()}`,
-                  }),
-                  true,
-                );
-              }}
-            >
-              Publish
-            </button>
-          )}
+          {tl.status === "PR" &&
+            userType === UserType.ADMIN && (
+              <button
+                className="ml-1 text-chapstate-good"
+                onClick={() => {
+                  mutate(
+                    new ChangeTLStatusMutation({
+                      chapterID: chap.id,
+                      novelID: novel.id,
+                      status: "PUBLISH",
+                      tlID: tl.id,
+                      publishdate: `${Date.now()}`,
+                    }),
+                    true,
+                  );
+                }}
+              >
+                Publish
+              </button>
+            )}
         </div>
-        <div
-          className={`grid grid-cols-[min-content_min-content_1fr_min-content_1fr] px-2 `}
-        >
+        <div className={`flex flex-col`}>
           {tl.lines
             .sort((p, n) => p.pos - n.pos)
             .map((line) => (

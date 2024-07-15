@@ -1,25 +1,33 @@
-import { useAdmin } from "@/hooks/admin";
-import {
-  AnyMutation,
-  useNovelStore,
-} from "@/hooks/novelStore";
+import { useAdmin, UserType } from "@/hooks/admin";
+import { useNovelStore } from "@/hooks/novelStore";
 import { api } from "@/utils/api";
 import React, { useEffect, useState } from "react";
 import { RefreshButton } from "../Icons/refreshButton";
 import { useRouter } from "next/router";
 import { MutationType } from "@/hooks/mutations/mutation";
 
-const allowedMutations: Record<
-  string,
+const userPermissions: Record<
+  UserType,
   "all" | "none" | undefined | MutationType[]
 > = {
-  proofread: [
+  [UserType.PROOFREAD]: [
     MutationType.CHANGE_LINE,
     MutationType.CHANGE_LINE_STATUS,
   ],
-  admin: "all",
-  "*": "none",
+  [UserType.ADMIN]: "all",
+  [UserType.GUEST]: "none",
 };
+
+export function hasPermissionTo(
+  u: UserType,
+  p: MutationType,
+) {
+  return (
+    userPermissions[u] === "all" ||
+    (userPermissions[u] !== "none" &&
+      userPermissions[u]?.includes(p))
+  );
+}
 
 export function TransformationHistory() {
   const [showHistory, setShowHistory] = useState(false);
@@ -39,7 +47,7 @@ export function TransformationHistory() {
     saveMutations,
   } = useNovelStore();
 
-  const isAdmin = useAdmin();
+  const { type: userType } = useAdmin();
 
   useEffect(() => {
     if (trans.length + undone.length === 0) {
@@ -47,19 +55,12 @@ export function TransformationHistory() {
     }
   }, [trans, undone]);
 
-  const canApply = (type: string | false) => {
+  const canApply = (type: UserType) => {
     if (!type) return false;
-    for (const amType of Object.keys(allowedMutations)) {
-      if (type !== amType) continue;
-      const amS = allowedMutations[amType];
-      if (!amS) return false;
-      if (amS === "all") return true;
-      if (amS === "none") return false;
-      return trans.reduce((p, mut) => {
-        return !p ? p : amS.includes(mut.type);
-      }, true);
+    for (const mut of trans) {
+      if (!hasPermissionTo(type, mut.type)) return false;
     }
-    return false;
+    return true;
   };
 
   const router = useRouter();
@@ -97,7 +98,7 @@ export function TransformationHistory() {
             >
               Show changes
             </button>
-            {canApply(isAdmin.type) && (
+            {canApply(userType) && (
               <RefreshButton
                 title="REf??"
                 className="text-center"

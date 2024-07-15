@@ -7,13 +7,28 @@ import {
   useEffect,
 } from "react";
 
+export enum UserType {
+  PROOFREAD = "proofread",
+  ADMIN = "admin",
+  GUEST = "guest",
+}
+
 type UserData = {
   sign?: string;
   id: string;
-  type: string;
+  type: UserType;
 };
 
 const adminContext = createContext<UserData | null>(null);
+
+export const isUserType = (
+  c: string | false,
+): c is UserType => {
+  if (!c) return false;
+  return (
+    Object.values(UserType) as readonly string[]
+  ).includes(c);
+};
 
 export const AdminCheckProvider = ({
   children,
@@ -31,7 +46,8 @@ export const AdminCheckProvider = ({
         auth.user.publicMetadata.type;
       setAdmin({
         id: auth.user.id,
-        type: accType || "guest",
+        type:
+          isUserType(accType) ? accType : UserType.GUEST,
       });
     }
   }, [auth, admin]);
