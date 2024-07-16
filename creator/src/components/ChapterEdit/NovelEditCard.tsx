@@ -19,8 +19,6 @@ export function NovelEditCard({
 
   const localNovel = !getDBNovel(novelID);
 
-  console.log("localNovel", localNovel);
-
   return (
     <div
       className={`border-2 ${localNovel ? "border-chapstate-localonly text-chapstate-localonly" : "border-chapstate-good text-chapstate-good"} w-[100%] pb-2`}

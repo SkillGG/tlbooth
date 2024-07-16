@@ -62,6 +62,7 @@ const usePopup = () => {
       y: number,
       actions: ChapterActionMenuItem[],
     ) => {
+      console.log("showing popup");
       setActions(actions);
       setShowMenu({ x, y });
     },

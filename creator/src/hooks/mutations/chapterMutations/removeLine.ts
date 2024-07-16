@@ -30,7 +30,13 @@ export class RemoveLineMutation extends Mutation<
   MutationType.REMOVE_LINE,
   SaveData
 > {
-  static getID = (lineID: string) => `remove_tl_${lineID}`;
+  static getID = ({
+    tlID,
+    chapterID,
+    lineID,
+    novelID,
+  }: SaveData) =>
+    `remove_line_${tlID}_${novelID}_${chapterID}_${lineID}`;
   constructor({
     tlID,
     novelID,
@@ -38,7 +44,12 @@ export class RemoveLineMutation extends Mutation<
     lineID,
   }: SaveData) {
     super(
-      RemoveLineMutation.getID(lineID),
+      RemoveLineMutation.getID({
+        chapterID,
+        lineID,
+        novelID,
+        tlID,
+      }),
       (p) =>
         p.map((n) =>
           n.id === this.data.novelID ?
@@ -86,7 +97,7 @@ export class RemoveLineMutation extends Mutation<
     );
   }
   updateID(): void {
-    this.id = RemoveLineMutation.getID(this.data.lineID);
+    this.id = RemoveLineMutation.getID(this.data);
   }
   override onRemoved(): void {}
   static removeAllDependantMutations(

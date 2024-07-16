@@ -14,12 +14,13 @@ import { ChangeLineStatusMutation } from "@/hooks/mutations/chapterMutations/cha
 import Head from "next/head";
 import { ChangeTLStatusMutation } from "@/hooks/mutations/chapterMutations/changeTLStatus";
 import { useEffect, useMemo, useState } from "react";
-import {
-  type StoreTextLine,
-} from "@/hooks/mutations/mutation";
+import { type StoreTextLine } from "@/hooks/mutations/mutation";
 import { useAdmin, UserType } from "@/hooks/admin";
 import ApproveSVG from "./approveSVG";
 import CancelSVG from "./cancelSVG";
+import EditSVG from "./editSVG";
+import { RemoveLineMutation } from "@/hooks/mutations/chapterMutations/removeLine";
+import RestoreSVG from "./restoreSVG";
 
 function LineItem({
   line,
@@ -47,7 +48,7 @@ function LineItem({
     window.addEventListener(
       "scroll",
       () => {
-        popup.hide();
+        if (popup.isShown) popup.hide();
       },
       {
         signal: abort.signal,
@@ -112,6 +113,7 @@ function LineItem({
               },
             },
           }}
+          rawHTR={raw}
         />
       </div>
       <div
@@ -145,19 +147,75 @@ function LineItem({
           </div>
         )}
         <button
-          disabled={lock || line.forDeletion}
-          onClick={() => {
-            mutate(
-              new ChangeLineMutation({
-                novelID,
-                chapterID,
-                tlID,
-                lineID: line.id,
-                og: false,
-                value: line.ogline,
-                status: "TL",
-              }),
+          onMouseDown={(e) => {
+            popup.show(
+              e.clientX,
+              e.clientY,
+              line.forDeletion ?
+                [
+                  {
+                    label: "Undo\nremove\n",
+                    className:
+                      "hover:bg-orange-400 bg-orange-200",
+                    shortcut: {
+                      key: "KeyR",
+                      label: "R",
+                      shift: true,
+                    },
+                    action() {
+                      removeMutation(
+                        RemoveLineMutation.getID({
+                          tlID,
+                          novelID,
+                          chapterID,
+                          lineID: line.id,
+                        }),
+                      );
+                    },
+                  },
+                ]
+              : [
+                  {
+                    label: "Copy",
+                    className:
+                      "hover:bg-green-300 bg-green-100",
+                    action() {
+                      mutate(
+                        new ChangeLineMutation({
+                          novelID,
+                          chapterID,
+                          tlID,
+                          lineID: line.id,
+                          og: false,
+                          value: line.ogline,
+                          status: "TL",
+                        }),
+                      );
+                    },
+                  },
+                  {
+                    label: "Remove\n",
+                    className:
+                      "hover:bg-red-400 bg-red-200",
+                    shortcut: {
+                      key: "KeyR",
+                      label: "R",
+                      shift: true,
+                    },
+                    action() {
+                      mutate(
+                        new RemoveLineMutation({
+                          tlID,
+                          novelID,
+                          chapterID,
+                          lineID: line.id,
+                        }),
+                      );
+                    },
+                  },
+                ],
             );
+            e.preventDefault();
           }}
         >
           ={">"}
@@ -169,6 +227,23 @@ function LineItem({
       >
         <EditField
           fieldName=""
+          editBtnAfter
+          editElement={
+            <EditSVG
+              width={17}
+              height={17}
+              className="ml-2"
+              bgColor="white"
+            />
+          }
+          restoreElement={
+            <RestoreSVG
+              width={17}
+              height={17}
+              color="orange"
+            />
+          }
+          restoreBtnAfter
           className={{
             editField: {
               span: {
@@ -179,7 +254,10 @@ function LineItem({
               span: { normal: "min-h-6 text-center" },
             },
           }}
-          lock={line.forDeletion ?? lock}
+          lock={
+            line.ogline.length === 0 ||
+            (line.forDeletion ?? lock)
+          }
           defaultValue={line.tlline}
           onRestore={() => {
             removeMutation(
@@ -192,7 +270,7 @@ function LineItem({
               }),
             );
           }}
-          rawHTR={raw ? true : undefined}
+          rawHTR={raw}
           showRestore={isMutation(
             ChangeLineMutation.getID({
               chapterID: tlInfo.chap.id,
@@ -244,8 +322,6 @@ export function TranslationEditor({
 
   const checkStatus = useMemo(
     () => () => {
-      console.log("Checking TL Status");
-
       if (tl.lines.length === 0) {
         if (tl.status !== "STAGED") {
           mutate(
@@ -334,7 +410,11 @@ export function TranslationEditor({
                 mutate(
                   new FetchLinesMutation({
                     chapterID: chap.id,
-                    lines,
+                    lines: lines.map((l) =>
+                      l.text === "[/]" ?
+                        { ...l, text: "" }
+                      : l,
+                    ),
                     novelID: novel.id,
                     tlID: tl.id,
                   }),

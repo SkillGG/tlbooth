@@ -287,7 +287,6 @@ export const NovelCard = ({
                   className="absolute right-0 mt-1 justify-self-end text-red-400"
                   style={{ transform: "translateX(5px)" }}
                   onClick={() => {
-                    console.log(novel.local);
                     if (!novel.local)
                       mutate(
                         new RemoveNovelMutation(novel.id),

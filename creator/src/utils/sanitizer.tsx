@@ -180,3 +180,9 @@ export class SanitizedText {
     return <>{...deBRd}</>;
   }
 }
+
+declare global {
+  interface Window {
+    SanitizedText: typeof SanitizedText;
+  }
+}

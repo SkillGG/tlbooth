@@ -70,9 +70,13 @@ type EditFieldProps = {
     hide(): void;
     show(): void;
   } | null;
+  editBtnAfter?: boolean;
+  editElement?: React.ReactElement;
+  restoreBtnAfter?: boolean;
+  restoreElement?: React.ReactElement;
   verifyValue?: (b: string) => boolean;
   undefinedIsEmpty?: boolean;
-  rawHTR?: true;
+  rawHTR?: boolean;
 };
 
 type EditFieldRef = { show: () => void; hide: () => void };
@@ -96,6 +100,10 @@ export const EditField = React.forwardRef<
     style,
     onRestore,
     rawHTR,
+    editBtnAfter,
+    editElement,
+    restoreBtnAfter,
+    restoreElement,
     verifyValue = () => true,
     undefinedIsEmpty = true,
   },
@@ -119,7 +127,7 @@ export const EditField = React.forwardRef<
     };
   });
 
-  const raw = alwaysRawEdit ? true : rawHTR;
+  const raw = alwaysRawEdit || rawHTR;
 
   const getMergedDefs = (
     ...defs: (
@@ -160,6 +168,88 @@ export const EditField = React.forwardRef<
     ) as CSSProperties;
   };
 
+  const editBtn = !edit && (
+    <button
+      className={twMerge(
+        `ml-1`,
+        getMergedDefs(className?.header?.noEdit?.edit),
+      )}
+      style={getMergedProps(style?.header?.noEdit?.edit)}
+      onClick={() => {
+        setEdit((p) => !p);
+        setTimeout(() => {
+          textRef.current?.focus();
+        });
+      }}
+    >
+      {editElement ?? "Edit"}
+    </button>
+  );
+
+  const restoreBtn = !edit && showRestore && (
+    <button
+      className={twMerge(
+        `ml-1`,
+        getMergedDefs(className?.header?.noEdit?.restore),
+      )}
+      style={getMergedProps(style?.header?.noEdit?.restore)}
+      onClick={() => {
+        console.log("clicking restore");
+        void onRestore?.();
+        setEdit(false);
+      }}
+    >
+      {restoreElement ?? "Restore"}
+    </button>
+  );
+
+  const saveBtn = edit && (
+    <button
+      ref={saveRef}
+      className={twMerge(
+        `text-green-300`,
+        getMergedDefs(className?.header?.edit?.save),
+      )}
+      style={getMergedProps(style?.header?.edit?.save)}
+      onClick={async () => {
+        if (textRef.current) {
+          const value =
+            textRef.current.innerHTML.trim() ?? "";
+          const text = SanitizedText.fromHTML(
+            value,
+            !raw,
+          ).htr;
+          if (
+            text === defaultValue ||
+            (undefinedIsEmpty && !text && !defaultValue)
+          )
+            return void setEdit(false);
+          await onSave?.(text.trim());
+          setEdit(false);
+        }
+      }}
+    >
+      Save
+    </button>
+  );
+
+  const cancelBtn = edit && (
+    <button
+      className={twMerge(
+        `text-red-400`,
+        getMergedDefs(className?.header?.edit?.cancel),
+      )}
+      style={getMergedProps(style?.header?.edit?.cancel)}
+      onClick={() => {
+        setEdit((p) => !p);
+        if (textRef.current)
+          void onCancel?.(textRef.current.innerText);
+      }}
+    >
+      Cancel
+    </button>
+  );
+
   return (
     <>
       <div
@@ -179,45 +269,8 @@ export const EditField = React.forwardRef<
           {!lock &&
             (!edit ?
               <>
-                <button
-                  className={twMerge(
-                    `ml-1`,
-                    getMergedDefs(
-                      className?.header?.noEdit?.edit,
-                    ),
-                  )}
-                  style={getMergedProps(
-                    style?.header?.noEdit?.edit,
-                  )}
-                  onClick={() => {
-                    setEdit((p) => !p);
-                    setTimeout(() => {
-                      textRef.current?.focus();
-                    });
-                  }}
-                >
-                  Edit
-                </button>
-                {showRestore && (
-                  <button
-                    className={twMerge(
-                      `ml-1`,
-                      getMergedDefs(
-                        className?.header?.noEdit?.restore,
-                      ),
-                    )}
-                    style={getMergedProps(
-                      style?.header?.noEdit?.restore,
-                    )}
-                    onClick={() => {
-                      console.log("clicking restore");
-                      void onRestore?.();
-                      setEdit(false);
-                    }}
-                  >
-                    Restore
-                  </button>
-                )}
+                {!editBtnAfter && editBtn}
+                {!restoreBtnAfter && restoreBtn}
               </>
             : <div
                 className={twMerge(
@@ -230,60 +283,8 @@ export const EditField = React.forwardRef<
                   style?.header?.edit?.main,
                 )}
               >
-                <button
-                  ref={saveRef}
-                  className={twMerge(
-                    `text-green-300`,
-                    getMergedDefs(
-                      className?.header?.edit?.save,
-                    ),
-                  )}
-                  style={getMergedProps(
-                    style?.header?.edit?.save,
-                  )}
-                  onClick={async () => {
-                    if (textRef.current) {
-                      const value =
-                        textRef.current.innerHTML.trim() ??
-                        "";
-                      const text = SanitizedText.fromHTML(
-                        value,
-                        !raw,
-                      ).htr;
-                      if (
-                        text === defaultValue ||
-                        (undefinedIsEmpty &&
-                          !text &&
-                          !defaultValue)
-                      )
-                        return void setEdit(false);
-                      await onSave?.(text.trim());
-                      setEdit(false);
-                    }
-                  }}
-                >
-                  Save
-                </button>
-                <button
-                  className={twMerge(
-                    `text-red-400`,
-                    getMergedDefs(
-                      className?.header?.edit?.cancel,
-                    ),
-                  )}
-                  style={getMergedProps(
-                    style?.header?.edit?.cancel,
-                  )}
-                  onClick={() => {
-                    setEdit((p) => !p);
-                    if (textRef.current)
-                      void onCancel?.(
-                        textRef.current.innerText,
-                      );
-                  }}
-                >
-                  Cancel
-                </button>
+                {saveBtn}
+                {cancelBtn}
               </div>)}
         </small>
         {edit ?
@@ -349,7 +350,11 @@ export const EditField = React.forwardRef<
                 style?.staticField?.span,
               )}
             >
-              <HTRText htr={defaultValue ?? ""} />
+              {!alwaysRawEdit ?
+                <HTRText htr={defaultValue ?? ""} />
+              : defaultValue}
+              {editBtnAfter && editBtn}
+              {restoreBtnAfter && restoreBtn}
             </div>
           </div>
         }
