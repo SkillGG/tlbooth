@@ -47,22 +47,22 @@ export function isFetchLineSaveData(
     isPropertyType(
       d,
       "chapterID",
-      (q) => typeof q === "string",
+      (q): q is string => typeof q === "string",
     ) &&
     isPropertyType(
       d,
       "novelID",
-      (q) => typeof q === "string",
+      (q): q is string => typeof q === "string",
     ) &&
     isPropertyType(
       d,
       "tlID",
-      (q) => typeof q === "string",
+      (q): q is string => typeof q === "string",
     ) &&
     isPropertyType(
       d,
       "fetchID",
-      (q) => typeof q === "string",
+      (q): q is string => typeof q === "string",
     ) &&
     isPropertyType(
       d,

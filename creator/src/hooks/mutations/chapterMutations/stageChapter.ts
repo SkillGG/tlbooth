@@ -31,29 +31,34 @@ export const isStageChapterSaveData = (
     isPropertyType(
       o,
       "chapterID",
-      (q) => typeof q === "string",
+      (q): q is string => typeof q === "string",
     ) &&
     isPropertyType(
       o,
       "novelID",
-      (q) => typeof q === "string",
+      (q): q is string => typeof q === "string",
     ) &&
     isPropertyType(
       o,
       "url",
-      (q) => typeof q === "string",
+      (q): q is string => typeof q === "string",
     ) &&
     isPropertyType(
       o,
       "ognum",
-      (q) => typeof q === "number",
+      (q): q is number => typeof q === "number",
     ) &&
     isPropertyType(
       o,
       "date",
-      (q) => typeof q === "string" || q instanceof Date,
+      (q): q is Date | string =>
+        typeof q === "string" || q instanceof Date,
     ) &&
-    isPropertyType(o, "name", (q) => typeof q === "string")
+    isPropertyType(
+      o,
+      "name",
+      (q): q is string => typeof q === "string",
+    )
   ) {
     o satisfies ConstParam;
     return true;

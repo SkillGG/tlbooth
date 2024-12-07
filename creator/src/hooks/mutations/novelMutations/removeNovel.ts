@@ -23,7 +23,7 @@ export const isRemoveNovelSaveData = (
     isPropertyType(
       o,
       "novelID",
-      (q) => typeof q === "string",
+      (q): q is string => typeof q === "string",
     )
   ) {
     o satisfies ConstParam;

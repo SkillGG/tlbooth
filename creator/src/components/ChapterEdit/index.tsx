@@ -8,7 +8,7 @@ import { RemoveTLMutation } from "@/hooks/mutations/chapterMutations/removeTrans
 import { NovelEditCard } from "./NovelEditCard";
 import { ChapterEditCard } from "./ChapterEditCard";
 import Head from "next/head";
-import { useAdmin } from "@/hooks/admin";
+// import { useAdmin } from "@/hooks/admin";
 
 function TranslationItem({ tl }: { tl: StoreTranslation }) {
   const {
@@ -103,7 +103,8 @@ export function ChapterEdit(props: {
   const { getChapter, getDBNovel, mutate } =
     useNovelStore();
 
-  const user = useAdmin();
+  // const _user = useAdmin();
+  // _user;
 
   const localNovel = !getDBNovel(novelID);
 

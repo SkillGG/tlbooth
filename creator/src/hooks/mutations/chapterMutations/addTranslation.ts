@@ -41,12 +41,12 @@ export const isAddTranslationSaveData = (
     isPropertyType(
       o,
       "chapterID",
-      (q) => typeof q === "string",
+      (q): q is string => typeof q === "string",
     ) &&
     isPropertyType(
       o,
       "novelID",
-      (q) => typeof q === "string",
+      (q): q is string => typeof q === "string",
     ) &&
     isPropertyType(o, "from", isLang) &&
     isPropertyType(o, "to", isLang)

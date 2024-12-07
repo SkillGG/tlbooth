@@ -3,6 +3,7 @@ import {
   type CommonSaveData,
   getMDate,
   isPropertyType,
+  isPropertyTypeOrUndefined,
   Mutation,
   MutationType,
   type StoreChapter,
@@ -34,38 +35,42 @@ export const isChangeLineSaveData = (
     isPropertyType(
       o,
       "value",
-      (q) => typeof q === "string",
+      (q): q is string => typeof q === "string",
     ) &&
     isPropertyType(
       o,
       "novelID",
-      (q) => typeof q === "string",
+      (q): q is string => typeof q === "string",
     ) &&
     isPropertyType(
       o,
       "og",
-      (q) => typeof q === "boolean",
+      (q): q is boolean => typeof q === "boolean",
     ) &&
     isPropertyType(
       o,
       "chapterID",
-      (q) => typeof q === "string",
+      (q): q is string => typeof q === "string",
     ) &&
     isPropertyType(
       o,
       "tlID",
-      (q) => typeof q === "string",
+      (q): q is string => typeof q === "string",
     ) &&
     isPropertyType(
       o,
       "lineID",
-      (q) => typeof q === "string",
+      (q): q is string => typeof q === "string",
     ) &&
-    ("status" in o ?
-      Object.values(LineStatus).includes(
-        o.status as LineStatus,
-      )
-    : true)
+    isPropertyTypeOrUndefined(
+      o,
+      "status",
+      (q): q is LineStatus => {
+        return Object.values(LineStatus).includes(
+          q as LineStatus,
+        );
+      },
+    )
   ) {
     o satisfies ConstParam;
     return true;

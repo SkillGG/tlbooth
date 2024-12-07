@@ -28,19 +28,23 @@ export const isChangeChapterNumSaveData = (
     isPropertyType(
       o,
       "num",
-      (q) => typeof q === "string",
+      (q): q is string => typeof q === "string",
     ) &&
     isPropertyType(
       o,
       "novelID",
-      (q) => typeof q === "string",
+      (q): q is string => typeof q === "string",
     ) &&
     isPropertyType(
       o,
       "chapterID",
-      (q) => typeof q === "string",
+      (q): q is string => typeof q === "string",
     ) &&
-    isPropertyType(o, "ognum", (q) => typeof q === "number")
+    isPropertyType(
+      o,
+      "ognum",
+      (q): q is number => typeof q === "number",
+    )
   ) {
     o satisfies ConstParam;
     return true;

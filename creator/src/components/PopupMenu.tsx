@@ -1,7 +1,7 @@
 import {
   cssDef,
   flatten,
-  NestedArray,
+  type NestedArray,
 } from "@/utils/utils";
 import {
   createContext,

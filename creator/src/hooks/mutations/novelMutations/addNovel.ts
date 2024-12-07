@@ -31,22 +31,22 @@ export const isAddNovelMutationSaveData = (
     isPropertyType(
       o,
       "novelID",
-      (q) => typeof q === "string",
+      (q): q is string => typeof q === "string",
     ) &&
     isPropertyType(
       o,
       "novelName",
-      (q) => typeof q === "string",
+      (q): q is string => typeof q === "string",
     ) &&
     isPropertyType(
       o,
       "novelURL",
-      (q) => typeof q === "string",
+      (q): q is string => typeof q === "string",
     ) &&
     isPropertyType(
       o,
       "novelDescription",
-      (q) => typeof q === "string",
+      (q): q is string => typeof q === "string",
     )
   ) {
     o satisfies ConstParam;

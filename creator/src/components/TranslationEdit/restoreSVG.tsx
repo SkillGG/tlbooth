@@ -17,6 +17,7 @@ export default function RestoreSVG({
       height={height}
       viewBox="0 0 200 200"
       version="1.1"
+      className={className}
     >
       <defs id="defs658">
         <marker

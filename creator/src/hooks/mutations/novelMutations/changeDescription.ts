@@ -26,14 +26,18 @@ export const isChangeNovelDescriptionSaveData = (
     isPropertyType(
       o,
       "desc",
-      (q) => typeof q === "string",
+      (q): q is string => typeof q === "string",
     ) &&
     isPropertyType(
       o,
       "novelID",
-      (q) => typeof q === "string",
+      (q): q is string => typeof q === "string",
     ) &&
-    isPropertyType(o, "og", (q) => typeof q === "boolean")
+    isPropertyType(
+      o,
+      "og",
+      (q): q is boolean => typeof q === "boolean",
+    )
   ) {
     o satisfies ConstParam;
     return true;

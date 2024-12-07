@@ -29,22 +29,22 @@ export const isRemoveLineSaveData = (
     isPropertyType(
       o,
       "tlID",
-      (q) => typeof q === "string",
+      (q): q is string => typeof q === "string",
     ) &&
     isPropertyType(
       o,
       "chapterID",
-      (q) => typeof q === "string",
+      (q): q is string => typeof q === "string",
     ) &&
     isPropertyType(
       o,
       "novelID",
-      (q) => typeof q === "string",
+      (q): q is string => typeof q === "string",
     ) &&
     isPropertyType(
       o,
       "lineID",
-      (q) => typeof q === "string",
+      (q): q is string => typeof q === "string",
     )
   ) {
     o satisfies ConstParam;

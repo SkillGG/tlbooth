@@ -31,22 +31,22 @@ export const isChangeTLStatusSaveData = (
     isPropertyType(
       o,
       "novelID",
-      (q) => typeof q === "string",
+      (q): q is string => typeof q === "string",
     ) &&
     isPropertyType(
       o,
       "chapterID",
-      (q) => typeof q === "string",
+      (q): q is string => typeof q === "string",
     ) &&
     isPropertyType(
       o,
       "tlID",
-      (q) => typeof q === "string",
+      (q): q is string => typeof q === "string",
     ) &&
     isPropertyType(
       o,
       "lineID",
-      (q) => typeof q === "string",
+      (q): q is string => typeof q === "string",
     ) &&
     isPropertyType(o, "status", (q): q is TLStatus =>
       Object.values(TLStatus).includes(q as TLStatus),
@@ -54,12 +54,12 @@ export const isChangeTLStatusSaveData = (
     isPropertyTypeOrUndefined(
       o,
       "publishdate",
-      (q) => typeof q === "string",
+      (q): q is string => typeof q === "string",
     ) &&
     isPropertyTypeOrUndefined(
       o,
       "editdate",
-      (q) => typeof q === "string",
+      (q): q is string => typeof q === "string",
     )
   ) {
     o satisfies ConstParam;
