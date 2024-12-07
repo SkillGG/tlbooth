@@ -1,8 +1,21 @@
 import { type Optional } from "@/utils/utils";
-import { Mutation, MutationType } from "../mutation";
+import {
+  type CommonSaveData,
+  getMDate,
+  isPropertyType,
+  Mutation,
+  MutationType,
+  type StoreChapter,
+  type StoreTextLine,
+  type StoreTranslation,
+} from "../mutation";
 import { type TextLine } from "@prisma/client";
 import { type ScrapperTextLine } from "@/server/api/routers/scrapper";
 import { trpcClient } from "@/pages/_app";
+
+type ConstParam = ConstructorParameters<
+  typeof FetchLinesMutation
+>[0];
 
 type SaveData = {
   lines: ScrapperTextLine[];
@@ -27,24 +40,45 @@ export function isScrapperTextLine(
 
 export function isFetchLineSaveData(
   d: unknown,
-): d is SaveData {
-  return (
+): d is ConstParam {
+  if (
     !!d &&
     typeof d === "object" &&
-    "chapterID" in d &&
-    typeof d.chapterID === "string" &&
-    "novelID" in d &&
-    typeof d.novelID === "string" &&
-    "tlID" in d &&
-    typeof d.tlID === "string" &&
-    "fetchID" in d &&
-    typeof d.fetchID === "string" &&
-    "lines" in d &&
-    Array.isArray(d.lines) &&
-    d.lines.reduce<boolean>((p, n: unknown) => {
-      return !p ? p : isScrapperTextLine(n);
-    }, true)
-  );
+    isPropertyType(
+      d,
+      "chapterID",
+      (q) => typeof q === "string",
+    ) &&
+    isPropertyType(
+      d,
+      "novelID",
+      (q) => typeof q === "string",
+    ) &&
+    isPropertyType(
+      d,
+      "tlID",
+      (q) => typeof q === "string",
+    ) &&
+    isPropertyType(
+      d,
+      "fetchID",
+      (q) => typeof q === "string",
+    ) &&
+    isPropertyType(
+      d,
+      "lines",
+      (l): l is ScrapperTextLine[] => {
+        return (
+          Array.isArray(l) &&
+          l.every((p) => isScrapperTextLine(p))
+        );
+      },
+    )
+  ) {
+    d satisfies ConstParam;
+    return true;
+  }
+  return false;
 }
 
 export class FetchLinesMutation extends Mutation<
@@ -72,8 +106,6 @@ export class FetchLinesMutation extends Mutation<
         status: "STAGED",
         textID: tlID,
         tlline: "",
-        changeAuthors: [],
-        changeTime: new Date(),
       } satisfies TextLine;
     });
   }
@@ -83,10 +115,15 @@ export class FetchLinesMutation extends Mutation<
     tlID,
     lines,
     fetchID,
-  }: Optional<SaveData, "fetchID">) {
+    mutationDate,
+  }: Optional<
+    SaveData & CommonSaveData,
+    "fetchID" | "mutationDate"
+  >) {
     const id =
       fetchID ??
       `fetch_lines_${++FetchLinesMutation.fetchLineID}`;
+    const mDate = getMDate(mutationDate);
     super(
       FetchLinesMutation.getID({
         chapterID,
@@ -99,32 +136,49 @@ export class FetchLinesMutation extends Mutation<
           n.id === this.data.novelID ?
             {
               ...n,
-              chapters: n.chapters.map((ch) => {
-                return ch.id === this.data.chapterID ?
-                    {
-                      ...ch,
-                      translations: ch.translations.map(
-                        (tl) => {
-                          return tl.id === this.data.tlID ?
-                              {
-                                ...tl,
-                                lines:
-                                  FetchLinesMutation.toTextLines(
-                                    this.data.tlID,
-                                    this.data.lines,
-                                  ),
-                              }
-                            : tl;
-                        },
-                      ),
-                    }
-                  : ch;
-              }),
+              // add lines and update all lastUpdatedAt values
+              chapters: n.chapters.map<StoreChapter>(
+                (ch) => {
+                  return ch.id === this.data.chapterID ?
+                      {
+                        ...ch,
+                        lastUpdatedAt: mDate,
+                        translations: ch.translations.map(
+                          (tl: StoreTranslation) => {
+                            return (
+                                tl.id === this.data.tlID
+                              ) ?
+                                {
+                                  ...tl,
+                                  lastUpdatedAt: mDate,
+                                  lines:
+                                    FetchLinesMutation.toTextLines(
+                                      this.data.tlID,
+                                      this.data.lines,
+                                    ).map(
+                                      (
+                                        l: StoreTextLine,
+                                      ) => ({
+                                        ...l,
+                                        createdAt: mDate,
+                                        lastUpdatedAt:
+                                          mDate,
+                                      }),
+                                    ),
+                                }
+                              : tl;
+                          },
+                        ),
+                      }
+                    : ch;
+                },
+              ),
             }
           : n,
         );
       },
       () =>
+        // id creator
         `...${this.data.novelID.substring(this.data.novelID.length - 4)}/...${this.data.chapterID.substring(this.data.chapterID.length - 4)}/...${this.data.tlID.substring(this.data.tlID.length - 4)}`,
       MutationType.FETCH_LINES,
       async () => {
@@ -134,6 +188,7 @@ export class FetchLinesMutation extends Mutation<
             ogline: f.text,
             pos: f.pos,
           })),
+          mutationDate: mDate,
         });
       },
       {
@@ -142,7 +197,9 @@ export class FetchLinesMutation extends Mutation<
         fetchID: id,
         lines,
         tlID,
+        mutationDate: mDate,
       },
+      mDate,
     );
   }
   updateID(): void {

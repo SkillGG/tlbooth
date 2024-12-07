@@ -149,7 +149,7 @@ export function TransformationHistory() {
                   <React.Fragment key={t.id}>
                     <div
                       className="grid justify-start"
-                      title={`${t.id}`}
+                      title={`${t.id}\nCreated @ ${t.mutationDate.toLocaleString()}`}
                     >
                       {t.type}:{" "}
                     </div>

@@ -1,7 +1,19 @@
 import { LineStatus } from "@prisma/client";
-import { Mutation, MutationType } from "../mutation";
+import {
+  type CommonSaveData,
+  getMDate,
+  isPropertyType,
+  Mutation,
+  MutationType,
+  type StoreChapter,
+  type StoreTextLine,
+  type StoreTranslation,
+} from "../mutation";
 import { trpcClient } from "@/pages/_app";
-import { NovelStore } from "@/hooks/novelStore";
+
+type ConstParam = ConstructorParameters<
+  typeof ChangeLineMutation
+>[0];
 
 type SaveData = {
   value: string;
@@ -15,26 +27,50 @@ type SaveData = {
 
 export const isChangeLineSaveData = (
   o: unknown,
-): o is SaveData => {
-  return (
+): o is ConstParam => {
+  if (
     !!o &&
     typeof o === "object" &&
-    "value" in o &&
-    typeof o.value === "string" &&
-    "novelID" in o &&
-    typeof o.novelID === "string" &&
-    "og" in o &&
-    typeof o.og === "boolean" &&
-    "chapterID" in o &&
-    typeof o.chapterID === "string" &&
-    "tlID" in o &&
-    typeof o.tlID === "string" &&
+    isPropertyType(
+      o,
+      "value",
+      (q) => typeof q === "string",
+    ) &&
+    isPropertyType(
+      o,
+      "novelID",
+      (q) => typeof q === "string",
+    ) &&
+    isPropertyType(
+      o,
+      "og",
+      (q) => typeof q === "boolean",
+    ) &&
+    isPropertyType(
+      o,
+      "chapterID",
+      (q) => typeof q === "string",
+    ) &&
+    isPropertyType(
+      o,
+      "tlID",
+      (q) => typeof q === "string",
+    ) &&
+    isPropertyType(
+      o,
+      "lineID",
+      (q) => typeof q === "string",
+    ) &&
     ("status" in o ?
       Object.values(LineStatus).includes(
         o.status as LineStatus,
       )
     : true)
-  );
+  ) {
+    o satisfies ConstParam;
+    return true;
+  }
+  return false;
 };
 
 export class ChangeLineMutation extends Mutation<
@@ -57,7 +93,9 @@ export class ChangeLineMutation extends Mutation<
     value,
     lineID,
     status,
-  }: SaveData) {
+    mutationDate,
+  }: SaveData & Partial<CommonSaveData>) {
+    const mDate = getMDate(mutationDate);
     super(
       ChangeLineMutation.getID({
         novelID,
@@ -71,49 +109,61 @@ export class ChangeLineMutation extends Mutation<
           return n.id === this.data.novelID ?
               {
                 ...n,
-                chapters: n.chapters.map((ch) => {
-                  return ch.id === this.data.chapterID ?
-                      {
-                        ...ch,
-                        translations: ch.translations.map(
-                          (tl) => {
-                            return (
-                                tl.id === this.data.tlID
-                              ) ?
-                                {
-                                  ...tl,
-                                  lines: tl.lines.map(
-                                    (l) => {
-                                      return (
-                                        l.id === lineID ?
-                                          og ?
-                                            {
-                                              ...l,
-                                              ogline: value,
-                                              status:
-                                                status ?
-                                                  status
-                                                : l.status,
-                                            }
-                                          : {
-                                              ...l,
-                                              tlline: value,
-                                              status:
-                                                status ?
-                                                  status
-                                                : l.status,
-                                            }
-                                        : l
-                                      );
-                                    },
-                                  ),
-                                }
-                              : tl;
-                          },
-                        ),
-                      }
-                    : ch;
-                }),
+                chapters: n.chapters.map(
+                  (ch: StoreChapter) => {
+                    return ch.id === this.data.chapterID ?
+                        {
+                          ...ch,
+                          lastUpdatedAt: mDate,
+                          translations: ch.translations.map(
+                            (tl: StoreTranslation) => {
+                              return (
+                                  tl.id === this.data.tlID
+                                ) ?
+                                  {
+                                    ...tl,
+                                    lastUpdatedAt: mDate,
+                                    lines: tl.lines.map(
+                                      (
+                                        l: StoreTextLine,
+                                      ) => {
+                                        return (
+                                          l.id === lineID ?
+                                            og ?
+                                              {
+                                                ...l,
+                                                ogline:
+                                                  value,
+                                                lastUpdatedAt:
+                                                  mDate,
+                                                status:
+                                                  status ?
+                                                    status
+                                                  : l.status,
+                                              }
+                                            : {
+                                                ...l,
+                                                tlline:
+                                                  value,
+                                                lastUpdatedAt:
+                                                  mDate,
+                                                status:
+                                                  status ?
+                                                    status
+                                                  : l.status,
+                                              }
+                                          : l
+                                        );
+                                      },
+                                    ),
+                                  }
+                                : tl;
+                            },
+                          ),
+                        }
+                      : ch;
+                  },
+                ),
               }
             : n;
         });
@@ -128,6 +178,7 @@ export class ChangeLineMutation extends Mutation<
             og: this.data.og,
             text: this.data.value,
           },
+          mutationDate: mDate,
         });
       },
       {
@@ -138,7 +189,9 @@ export class ChangeLineMutation extends Mutation<
         tlID,
         value,
         status,
+        mutationDate: mDate,
       },
+      mDate,
     );
   }
   updateID(): void {

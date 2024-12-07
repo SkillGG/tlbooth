@@ -1,4 +1,8 @@
-import { cssDef } from "@/utils/utils";
+import {
+  cssDef,
+  flatten,
+  NestedArray,
+} from "@/utils/utils";
 import {
   createContext,
   useContext,
@@ -60,10 +64,10 @@ const usePopup = () => {
     show: (
       x: number,
       y: number,
-      actions: ChapterActionMenuItem[],
+      actions: NestedArray<ChapterActionMenuItem>[],
     ) => {
       console.log("showing popup");
-      setActions(actions);
+      setActions(flatten(actions));
       setShowMenu({ x, y });
     },
     hide: () => {

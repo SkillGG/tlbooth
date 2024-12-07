@@ -5,9 +5,13 @@ import { isChangeChapterNameSaveData } from "./chapterMutations/changeName";
 import { isChangeChapterNumSaveData } from "./chapterMutations/changeNum";
 import { isChangeTLStatusSaveData } from "./chapterMutations/changeTLStatus";
 import { isFetchLineSaveData } from "./chapterMutations/fetchLines";
+import { isRemoveChapterSaveData } from "./chapterMutations/removeChapter";
 import { isRemoveLineSaveData } from "./chapterMutations/removeLine";
 import { isStageChapterSaveData } from "./chapterMutations/stageChapter";
-import { MutationType } from "./mutation";
+import {
+  type CommonSaveData,
+  MutationType,
+} from "./mutation";
 import { type SaveMutationDatas } from "./mutationTypes";
 import { isAddNovelMutationSaveData } from "./novelMutations/addNovel";
 import { isChangeNovelDescriptionSaveData } from "./novelMutations/changeDescription";
@@ -27,7 +31,7 @@ export type MutationSavedType = {
 export type MutationSaveData<
   T extends MutationType,
   eX extends object,
-> = { type: T } & eX;
+> = { type: T } & CommonSaveData & eX;
 
 const consistsOfValidMutationSaveData = (
   arr: unknown[],
@@ -43,8 +47,23 @@ const consistsOfValidMutationSaveData = (
           n.type as MutationType,
         )
       )
-    )
+    ) {
+      console.error("Mutation has no type!");
       return false;
+    }
+
+    if (
+      !(
+        "mutationDate" in n &&
+        (typeof n.mutationDate === "string" ||
+          n.mutationDate instanceof Date)
+      )
+    ) {
+      console.error("Mutation has no date!");
+      console.warn(n);
+      return false;
+    }
+
     const typedN = n as { type: MutationType };
     try {
       switch (typedN.type) {
@@ -103,6 +122,10 @@ const consistsOfValidMutationSaveData = (
         case MutationType.REMOVE_LINE:
           if (!isRemoveLineSaveData(typedN))
             throw "REMOVE_LINE";
+          break;
+        case MutationType.REMOVE_CHAPTER:
+          if (!isRemoveChapterSaveData(typedN))
+            throw "REMOVE_CHAPTER";
           break;
         default:
           typedN.type satisfies never;

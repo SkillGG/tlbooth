@@ -1,6 +1,17 @@
 import { type NovelStore } from "@/hooks/novelStore";
-import { Mutation, MutationType } from "../mutation";
+import {
+  type CommonSaveData,
+  getMDate,
+  isPropertyType,
+  Mutation,
+  MutationType,
+  type StoreChapter,
+} from "../mutation";
 import { trpcClient } from "@/pages/_app";
+
+type ConstParam = ConstructorParameters<
+  typeof RemoveLineMutation
+>[0];
 
 type SaveData = {
   tlID: string;
@@ -11,19 +22,35 @@ type SaveData = {
 
 export const isRemoveLineSaveData = (
   o: unknown,
-): o is SaveData => {
-  return (
+): o is ConstParam => {
+  if (
     !!o &&
     typeof o === "object" &&
-    "tlID" in o &&
-    typeof o.tlID === "string" &&
-    "chapterID" in o &&
-    typeof o.chapterID === "string" &&
-    "novelID" in o &&
-    typeof o.novelID === "string" &&
-    "lineID" in o &&
-    typeof o.lineID === "string"
-  );
+    isPropertyType(
+      o,
+      "tlID",
+      (q) => typeof q === "string",
+    ) &&
+    isPropertyType(
+      o,
+      "chapterID",
+      (q) => typeof q === "string",
+    ) &&
+    isPropertyType(
+      o,
+      "novelID",
+      (q) => typeof q === "string",
+    ) &&
+    isPropertyType(
+      o,
+      "lineID",
+      (q) => typeof q === "string",
+    )
+  ) {
+    o satisfies ConstParam;
+    return true;
+  }
+  return false;
 };
 
 export class RemoveLineMutation extends Mutation<
@@ -42,7 +69,9 @@ export class RemoveLineMutation extends Mutation<
     novelID,
     chapterID,
     lineID,
-  }: SaveData) {
+    mutationDate,
+  }: SaveData & Partial<CommonSaveData>) {
+    const mDate = getMDate(mutationDate);
     super(
       RemoveLineMutation.getID({
         chapterID,
@@ -55,28 +84,29 @@ export class RemoveLineMutation extends Mutation<
           n.id === this.data.novelID ?
             {
               ...n,
-              chapters: n.chapters.map((ch) =>
-                ch.id === this.data.chapterID ?
-                  {
-                    ...ch,
-                    translations: ch.translations.map(
-                      (tl) =>
-                        tl.id === this.data.tlID ?
-                          {
-                            ...tl,
-                            lines: tl.lines.map((line) =>
-                              line.id === lineID ?
-                                {
-                                  ...line,
-                                  forDeletion: true,
-                                }
-                              : line,
-                            ),
-                          }
-                        : tl,
-                    ),
-                  }
-                : ch,
+              chapters: n.chapters.map(
+                (ch: StoreChapter) =>
+                  ch.id === this.data.chapterID ?
+                    {
+                      ...ch,
+                      translations: ch.translations.map(
+                        (tl) =>
+                          tl.id === this.data.tlID ?
+                            {
+                              ...tl,
+                              lines: tl.lines.map((line) =>
+                                line.id === lineID ?
+                                  {
+                                    ...line,
+                                    forDeletion: true,
+                                  }
+                                : line,
+                              ),
+                            }
+                          : tl,
+                      ),
+                    }
+                  : ch,
               ),
             }
           : n,
@@ -93,7 +123,14 @@ export class RemoveLineMutation extends Mutation<
           this,
         );
       },
-      { tlID, novelID, chapterID, lineID },
+      {
+        tlID,
+        novelID,
+        chapterID,
+        lineID,
+        mutationDate: mDate,
+      },
+      mDate,
     );
   }
   updateID(): void {

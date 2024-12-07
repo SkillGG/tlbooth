@@ -210,25 +210,32 @@ export const useNovelStore = create<NovelStore>()(
         ?.find((n) => n.url === url) ?? null,
     getChapter: (nID, id) =>
       get()
-        .getNovel(nID)
-        ?.chapters.find((c) => c.id === id) ?? null,
+        ?.getNovel(nID)
+        ?.chapters?.find((c) => c.id === id) ?? null,
     getDBChapter: (nID, id) =>
       get()
-        .getDBNovel(nID)
-        ?.chapters.find((c) => c.id === id) ?? null,
-    getChapterBy: (nID, fn) =>
-      get()
-        .getNovel(nID)
-        ?.chapters.find((c) => fn(c)) ?? null,
+        ?.getDBNovel(nID)
+        ?.chapters?.find((c) => c.id === id) ?? null,
+    getChapterBy: (nID, fn) => {
+      console.log(
+        "getChBy Cahpters:",
+        get()?.getNovel(nID)?.chapters,
+      );
+      return (
+        get()
+          ?.getNovel(nID)
+          ?.chapters?.find((c) => fn(c)) ?? null
+      );
+    },
     getDBChapterBy: (nID, fn) =>
       get()
-        .getDBNovel(nID)
-        ?.chapters.find((c) => fn(c)) ?? null,
+        ?.getDBNovel(nID)
+        ?.chapters?.find((c) => fn(c)) ?? null,
     getTranslationInfo: (tlID) => {
       let chap: StoreChapter | undefined;
       const novel = get().getNovelBy((p) => {
-        const ch = p.chapters.find((c) =>
-          c.translations.find((t) => t.id === tlID),
+        const ch = (p.chapters as StoreChapter[]).find(
+          (c) => c.translations.find((t) => t.id === tlID),
         );
         return !!(chap = ch);
       });
@@ -281,7 +288,7 @@ export const useNovelStore = create<NovelStore>()(
         console.error(
           "Could not find mutation with ID: ",
           id,
-        );  
+        );
       set((s) => {
         const filterFn = (x: AnyMutation) => {
           if (x.id === id) return false;

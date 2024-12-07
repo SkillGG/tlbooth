@@ -1,5 +1,16 @@
 import { trpcClient } from "@/pages/_app";
-import { Mutation, MutationType } from "../mutation";
+import {
+  type CommonSaveData,
+  getMDate,
+  isPropertyType,
+  Mutation,
+  MutationType,
+  type StoreChapter,
+} from "../mutation";
+
+type ConstParam = ConstructorParameters<
+  typeof ChangeChapterNumMutation
+>[0];
 
 type SaveData = {
   ognum: number;
@@ -10,19 +21,31 @@ type SaveData = {
 
 export const isChangeChapterNumSaveData = (
   o: unknown,
-): o is SaveData => {
-  return (
+): o is ConstParam => {
+  if (
     !!o &&
     typeof o === "object" &&
-    "num" in o &&
-    "novelID" in o &&
-    "chapterID" in o &&
-    "ognum" in o &&
-    typeof o.num === "string" &&
-    typeof o.novelID === "string" &&
-    typeof o.chapterID === "string" &&
-    typeof o.ognum === "number"
-  );
+    isPropertyType(
+      o,
+      "num",
+      (q) => typeof q === "string",
+    ) &&
+    isPropertyType(
+      o,
+      "novelID",
+      (q) => typeof q === "string",
+    ) &&
+    isPropertyType(
+      o,
+      "chapterID",
+      (q) => typeof q === "string",
+    ) &&
+    isPropertyType(o, "ognum", (q) => typeof q === "number")
+  ) {
+    o satisfies ConstParam;
+    return true;
+  }
+  return false;
 };
 
 export class ChangeChapterNumMutation extends Mutation<
@@ -39,7 +62,9 @@ export class ChangeChapterNumMutation extends Mutation<
     ognum,
     num,
     chapterID,
-  }: SaveData) {
+    mutationDate,
+  }: SaveData & Partial<CommonSaveData>) {
+    const mDate = getMDate(mutationDate);
     super(
       ChangeChapterNumMutation.getID({
         novelID,
@@ -50,10 +75,15 @@ export class ChangeChapterNumMutation extends Mutation<
           n.id === this.data.novelID ?
             {
               ...n,
-              chapters: n.chapters.map((ch) =>
-                ch.ognum === this.data.ognum ?
-                  { ...ch, num }
-                : ch,
+              chapters: n.chapters.map(
+                (ch: StoreChapter) =>
+                  ch.ognum === this.data.ognum ?
+                    {
+                      ...ch,
+                      num,
+                      lastUpdatedAt: mDate,
+                    }
+                  : ch,
               ),
             }
           : n,
@@ -66,7 +96,14 @@ export class ChangeChapterNumMutation extends Mutation<
           this.data,
         );
       },
-      { novelID, num, ognum, chapterID },
+      {
+        novelID,
+        num,
+        ognum,
+        chapterID,
+        mutationDate: mDate,
+      },
+      mDate,
     );
   }
   updateID(): void {

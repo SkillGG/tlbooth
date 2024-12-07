@@ -1,7 +1,20 @@
 import { LineStatus } from "@prisma/client";
-import { Mutation, MutationType } from "../mutation";
+import {
+  type CommonSaveData,
+  getMDate,
+  isPropertyType,
+  Mutation,
+  MutationType,
+  type StoreChapter,
+  type StoreTextLine,
+  type StoreTranslation,
+} from "../mutation";
 import { trpcClient } from "@/pages/_app";
 import { type NovelStore } from "@/hooks/novelStore";
+
+type ConstParam = ConstructorParameters<
+  typeof ChangeLineStatusMutation
+>[0];
 
 type SaveData = {
   status: LineStatus;
@@ -13,23 +26,38 @@ type SaveData = {
 
 export const isChangeLineStatusSaveData = (
   o: unknown,
-): o is SaveData => {
-  return (
+): o is ConstParam => {
+  if (
     !!o &&
     typeof o === "object" &&
-    "novelID" in o &&
-    typeof o.novelID === "string" &&
-    "chapterID" in o &&
-    typeof o.chapterID === "string" &&
-    "tlID" in o &&
-    typeof o.tlID === "string" &&
-    "lineID" in o &&
-    typeof o.lineID === "string" &&
-    "status" in o &&
-    Object.values(LineStatus).includes(
-      o.status as LineStatus,
+    isPropertyType(
+      o,
+      "novelID",
+      (q) => typeof q === "string",
+    ) &&
+    isPropertyType(
+      o,
+      "chapterID",
+      (q) => typeof q === "string",
+    ) &&
+    isPropertyType(
+      o,
+      "tlID",
+      (q) => typeof q === "string",
+    ) &&
+    isPropertyType(
+      o,
+      "lineID",
+      (q) => typeof q === "string",
+    ) &&
+    isPropertyType(o, "status", (q): q is LineStatus =>
+      Object.values(LineStatus).includes(q as LineStatus),
     )
-  );
+  ) {
+    o satisfies ConstParam;
+    return true;
+  }
+  return false;
 };
 
 export class ChangeLineStatusMutation extends Mutation<
@@ -50,7 +78,9 @@ export class ChangeLineStatusMutation extends Mutation<
     tlID,
     lineID,
     status,
-  }: SaveData) {
+    mutationDate,
+  }: SaveData & Partial<CommonSaveData>) {
+    const mDate = getMDate(mutationDate);
     super(
       ChangeLineStatusMutation.getID({
         novelID,
@@ -64,36 +94,44 @@ export class ChangeLineStatusMutation extends Mutation<
           return n.id === this.data.novelID ?
               {
                 ...n,
-                chapters: n.chapters.map((ch) => {
-                  return ch.id === this.data.chapterID ?
-                      {
-                        ...ch,
-                        translations: ch.translations.map(
-                          (tl) => {
-                            return (
-                                tl.id === this.data.tlID
-                              ) ?
-                                {
-                                  ...tl,
-                                  lines: tl.lines.map(
-                                    (l) => {
-                                      return (
-                                          l.id === lineID
-                                        ) ?
-                                          {
-                                            ...l,
-                                            status,
-                                          }
-                                        : l;
-                                    },
-                                  ),
-                                }
-                              : tl;
-                          },
-                        ),
-                      }
-                    : ch;
-                }),
+                chapters: n.chapters.map(
+                  (ch: StoreChapter) => {
+                    return ch.id === this.data.chapterID ?
+                        {
+                          ...ch,
+                          lastUpdatedAt: mDate,
+                          translations: ch.translations.map(
+                            (tl: StoreTranslation) => {
+                              return (
+                                  tl.id === this.data.tlID
+                                ) ?
+                                  {
+                                    ...tl,
+                                    lastUpdatedAt: mDate,
+                                    lines: tl.lines.map(
+                                      (
+                                        l: StoreTextLine,
+                                      ) => {
+                                        return (
+                                            l.id === lineID
+                                          ) ?
+                                            {
+                                              ...l,
+                                              status,
+                                              lastUpdatedAt:
+                                                mDate,
+                                            }
+                                          : l;
+                                      },
+                                    ),
+                                  }
+                                : tl;
+                            },
+                          ),
+                        }
+                      : ch;
+                  },
+                ),
               }
             : n;
         });
@@ -104,6 +142,7 @@ export class ChangeLineStatusMutation extends Mutation<
         await trpcClient.db.changeLine.mutate({
           lineID: this.data.lineID,
           status: this.data.status,
+          mutationDate: mDate,
         });
       },
       {
@@ -112,7 +151,9 @@ export class ChangeLineStatusMutation extends Mutation<
         lineID,
         tlID,
         status,
+        mutationDate: mDate,
       },
+      mDate,
     );
   }
   updateID(): void {

@@ -1,7 +1,11 @@
 import { type LANG } from "@prisma/client";
 import {
+  type CommonSaveData,
+  getMDate,
+  isPropertyType,
   Mutation,
   MutationType,
+  type StoreChapter,
   type StoreTranslation,
 } from "../mutation";
 import { type Optional, isLang } from "@/utils/utils";
@@ -15,27 +19,42 @@ type SaveData = {
   from: LANG;
   to: LANG;
   tlID: string;
-  author: string;
   date: Date;
 };
 
+type ConstParam = ConstructorParameters<
+  typeof AddTranslationMutation
+>[0];
+
 export const isAddTranslationSaveData = (
   o: unknown,
-): o is SaveData => {
-  return (
+): o is ConstParam => {
+  if (
     !!o &&
     typeof o === "object" &&
-    "from" in o &&
-    "to" in o &&
-    "novelID" in o &&
-    "chapterID" in o &&
-    "author" in o &&
-    typeof o.novelID === "string" &&
-    typeof o.author === "string" &&
-    typeof o.chapterID === "string" &&
-    isLang(o.from) &&
-    isLang(o.to)
-  );
+    isPropertyType(
+      o,
+      "date",
+      (q): q is Date =>
+        typeof q === "string" || q instanceof Date,
+    ) &&
+    isPropertyType(
+      o,
+      "chapterID",
+      (q) => typeof q === "string",
+    ) &&
+    isPropertyType(
+      o,
+      "novelID",
+      (q) => typeof q === "string",
+    ) &&
+    isPropertyType(o, "from", isLang) &&
+    isPropertyType(o, "to", isLang)
+  ) {
+    o satisfies ConstParam;
+    return true;
+  }
+  return false;
 };
 
 export class AddTranslationMutation extends Mutation<
@@ -58,29 +77,32 @@ export class AddTranslationMutation extends Mutation<
     date,
     tlID,
     to,
-    author,
-  }: Optional<SaveData, "tlID">) {
-    const id =
+    mutationDate,
+  }: Optional<
+    SaveData & CommonSaveData,
+    "tlID" | "mutationDate"
+  >) {
+    const local_id =
       tlID ??
       `translation_${++AddTranslationMutation.translationID}`;
+    const mDate = getMDate(mutationDate);
     const newTL: StoreTranslation = {
       chapterID,
-      id,
+      id: local_id,
       lines: [],
       oglang: from,
       tllang: to,
       local: true,
       status: "STAGED",
-      lastEditDate: date,
       publishDate: date,
-      editAuthors: [author],
-      author,
+      createdAt: mDate,
+      lastUpdatedAt: mDate,
     };
     super(
       AddTranslationMutation.getID({
         novelID,
         chapterID,
-        tlID: id,
+        tlID: local_id,
         from,
         to,
       }),
@@ -89,22 +111,25 @@ export class AddTranslationMutation extends Mutation<
           n.id === this.data.novelID ?
             {
               ...n,
-              chapters: n.chapters.map((ch) =>
-                ch.id === this.data.chapterID ?
-                  {
-                    ...ch,
-                    translations: [
-                      ...ch.translations,
-                      newTL,
-                    ],
-                  }
-                : ch,
+              lastUpdatedAt: mDate,
+              chapters: n.chapters.map(
+                (ch: StoreChapter) =>
+                  ch.id === this.data.chapterID ?
+                    {
+                      ...ch,
+                      lastUpdatedAt: mDate,
+                      translations: [
+                        ...ch.translations,
+                        newTL,
+                      ],
+                    }
+                  : ch,
               ),
             }
           : n,
         );
       },
-      id,
+      local_id,
       MutationType.ADD_TRANSLATION,
       async (novelStore) => {
         const retTL = await trpcClient.db.addTL.mutate({
@@ -112,9 +137,7 @@ export class AddTranslationMutation extends Mutation<
           oglang: this.data.from,
           status: "STAGED",
           tllang: this.data.to,
-          author: this.data.author,
-          lastEditDate: this.data.date,
-          pubDate: this.data.date,
+          mutationDate: mDate,
         });
         // update all novelIDs in every mutation with new novelID from database
         novelStore.getMutations().forEach((n) => {
@@ -134,11 +157,12 @@ export class AddTranslationMutation extends Mutation<
         novelID,
         chapterID,
         from,
-        tlID: id,
+        tlID: local_id,
         to,
-        author,
         date,
+        mutationDate: mDate,
       },
+      mDate,
     );
   }
   updateID(): void {

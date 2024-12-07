@@ -1,6 +1,15 @@
 import { trpcClient } from "@/pages/_app";
-import { Mutation, MutationType } from "../mutation";
-
+import {
+  type CommonSaveData,
+  getMDate,
+  isPropertyType,
+  Mutation,
+  MutationType,
+  type StoreChapter,
+} from "../mutation";
+type ConstParam = ConstructorParameters<
+  typeof ChangeChapterNameMutation
+>[0];
 type SaveData = {
   og: boolean;
   name: string;
@@ -10,19 +19,35 @@ type SaveData = {
 
 export const isChangeChapterNameSaveData = (
   o: unknown,
-): o is SaveData => {
-  return (
+): o is ConstParam => {
+  if (
     !!o &&
     typeof o === "object" &&
-    "name" in o &&
-    "novelID" in o &&
-    "og" in o &&
-    "chapterID" in o &&
-    typeof o.name === "string" &&
-    typeof o.novelID === "string" &&
-    typeof o.og === "boolean" &&
-    typeof o.chapterID === "string"
-  );
+    isPropertyType(
+      o,
+      "name",
+      (q) => typeof q === "string",
+    ) &&
+    isPropertyType(
+      o,
+      "novelID",
+      (q) => typeof q === "string",
+    ) &&
+    isPropertyType(
+      o,
+      "og",
+      (q) => typeof q === "boolean",
+    ) &&
+    isPropertyType(
+      o,
+      "chapterID",
+      (q) => typeof q === "string",
+    )
+  ) {
+    o satisfies ConstParam;
+    return true;
+  }
+  return false;
 };
 
 export class ChangeChapterNameMutation extends Mutation<
@@ -35,7 +60,14 @@ export class ChangeChapterNameMutation extends Mutation<
     og,
   }: Omit<SaveData, "name">) =>
     `change_chapter_${og ? "og" : "tl"}_name_${novelID}_${chapterID}`;
-  constructor({ novelID, chapterID, name, og }: SaveData) {
+  constructor({
+    novelID,
+    chapterID,
+    name,
+    og,
+    mutationDate,
+  }: SaveData & Partial<CommonSaveData>) {
+    const mDate = getMDate(mutationDate);
     super(
       ChangeChapterNameMutation.getID({
         novelID,
@@ -47,11 +79,21 @@ export class ChangeChapterNameMutation extends Mutation<
           n.id === this.data.novelID ?
             {
               ...n,
-              chapters: n.chapters.map((ch) =>
-                ch.id === this.data.chapterID ?
-                  og ? { ...ch, ogname: name }
-                  : { ...ch, tlname: name }
-                : ch,
+              chapters: n.chapters.map(
+                (ch: StoreChapter) =>
+                  ch.id === this.data.chapterID ?
+                    og ?
+                      {
+                        ...ch,
+                        ogname: name,
+                        lastUpdatedAt: mDate,
+                      }
+                    : {
+                        ...ch,
+                        tlname: name,
+                        lastUpdatedAt: mDate,
+                      }
+                  : ch,
               ),
             }
           : n,
@@ -60,11 +102,13 @@ export class ChangeChapterNameMutation extends Mutation<
       name,
       MutationType.CHANGE_CHAPTER_NAME,
       async () => {
-        await trpcClient.db.changeChapterName.mutate(
-          this.data,
-        );
+        await trpcClient.db.changeChapterName.mutate({
+          ...this.data,
+          mutationDate: this.mutationDate,
+        });
       },
-      { novelID, name, og, chapterID },
+      { novelID, name, og, chapterID, mutationDate: mDate },
+      mDate,
     );
   }
   updateID(): void {

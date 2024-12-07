@@ -75,11 +75,13 @@ export const NovelCard = ({
       ],
       [isMutation, novel.id, mutations],
     );
-
+  const novelCreatedAt =
+    novel.createdAt?.toLocaleString() ?? "???";
   return (
     <div
       className="w-full justify-center rounded-xl border-2 border-gray-400"
       id={`novel_${novel.id}`}
+      title={`Created at: ${novelCreatedAt}\nLast updated at: ${novel.lastUpdatedAt?.toLocaleString() ?? novelCreatedAt}`}
     >
       <div
         className={`${cssIf(novel.local, novelItem.local)}
@@ -131,16 +133,6 @@ export const NovelCard = ({
         <>
           <div className="box-content grid grid-cols-[1fr_1fr] sm:grid-cols-[1fr]">
             <div className="px-3 pt-1">
-              <div className="border-b-2">
-                <EditField
-                  fieldName="Author"
-                  defaultValue={novel.author}
-                  lock={false}
-                  onSave={() => {
-                    throw "TODO! Add Author changes";
-                  }}
-                />
-              </div>
               <div
                 className="grid grid-flow-col grid-cols-[1fr_1fr] gap-[2px] border-x-[1px] border-b-2 border-dotted px-3 pb-2"
                 style={{
@@ -289,7 +281,9 @@ export const NovelCard = ({
                   onClick={() => {
                     if (!novel.local)
                       mutate(
-                        new RemoveNovelMutation(novel.id),
+                        new RemoveNovelMutation({
+                          novelID: novel.id,
+                        }),
                       );
                     else
                       removeMutation(

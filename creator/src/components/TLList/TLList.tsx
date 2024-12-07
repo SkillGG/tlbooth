@@ -1,21 +1,18 @@
-import { useState, type FC } from "react";
+import { useState } from "react";
 import { Skeleton } from "../Skeleton/Skeleton";
 import { useNovelStore } from "@/hooks/novelStore";
 
 import { TransformationHistory } from "./TransformHistory";
 import { NovelCard } from "./NovelCard";
-import { type StoreNovel } from "@/hooks/mutations/mutation";
 
-interface TLListProps {
-  tls?: StoreNovel[];
-}
-
-export const TLList: FC<TLListProps> = () => {
+export const TLList = () => {
   const [skeleton] = useState(false);
 
   const { getMutated } = useNovelStore();
 
   const tls = getMutated();
+
+  console.log(tls);
 
   const showSkele = !(!skeleton && tls);
 

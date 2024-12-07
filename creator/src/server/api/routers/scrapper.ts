@@ -24,7 +24,7 @@ export const ScrapperChapterInfo = z.object({
   url: z.string().url(),
   name: z.string().min(1),
   ognum: z.number(),
-  date: z.date(),
+  date: z.date().or(z.string()),
 });
 
 export const ScrapperTextLine = z.object({
@@ -320,7 +320,7 @@ export const scrapperRouter = createTRPCRouter({
             url,
             date: new Date(
               date ? date + " UTC+09" : Date.now(),
-            ),
+            ).toISOString(),
           });
         } else {
           const chs =
@@ -343,7 +343,7 @@ export const scrapperRouter = createTRPCRouter({
                     date ?
                       date.innerText + " UTC+09"
                     : Date.now(),
-                  ),
+                  ).toISOString(),
                 };
               },
             );

@@ -1,5 +1,15 @@
-import { Mutation, MutationType } from "../mutation";
+import {
+  type CommonSaveData,
+  getMDate,
+  isPropertyType,
+  Mutation,
+  MutationType,
+} from "../mutation";
 import { trpcClient } from "@/pages/_app";
+
+type ConstParam = ConstructorParameters<
+  typeof ChangeNovelNameMutation
+>[0];
 
 type SaveData = {
   og: boolean;
@@ -9,17 +19,26 @@ type SaveData = {
 
 export const isChangeNovelNameSaveData = (
   o: unknown,
-): o is SaveData => {
-  return (
+): o is ConstParam => {
+  if (
     !!o &&
     typeof o === "object" &&
-    "name" in o &&
-    "novelID" in o &&
-    "og" in o &&
-    typeof o.name === "string" &&
-    typeof o.novelID === "string" &&
-    typeof o.og === "boolean"
-  );
+    isPropertyType(
+      o,
+      "name",
+      (q) => typeof q === "string",
+    ) &&
+    isPropertyType(
+      o,
+      "novelID",
+      (q) => typeof q === "string",
+    ) &&
+    isPropertyType(o, "og", (q) => typeof q === "boolean")
+  ) {
+    o satisfies ConstParam;
+    return true;
+  }
+  return false;
 };
 
 export class ChangeNovelNameMutation extends Mutation<
@@ -31,14 +50,29 @@ export class ChangeNovelNameMutation extends Mutation<
     og,
   }: Omit<SaveData, "name">) =>
     `change_novel_${og ? "og" : "tl"}_name_${novelID}`;
-  constructor({ name, novelID, og }: SaveData) {
+  constructor({
+    name,
+    novelID,
+    og,
+    mutationDate,
+  }: SaveData & Partial<CommonSaveData>) {
+    const mDate = getMDate(mutationDate);
     super(
       ChangeNovelNameMutation.getID({ novelID, og }),
       (p) => {
         return p.map((n) =>
           n.id === this.data.novelID ?
-            og ? { ...n, ogname: name }
-            : { ...n, tlname: name }
+            og ?
+              {
+                ...n,
+                lastUpdatedAt: mDate,
+                ogname: name,
+              }
+            : {
+                ...n,
+                tlname: name,
+                lastUpdatedAt: mDate,
+              }
           : n,
         );
       },
@@ -49,7 +83,8 @@ export class ChangeNovelNameMutation extends Mutation<
           this.data,
         );
       },
-      { novelID, name, og },
+      { novelID, name, og, mutationDate: mDate },
+      mDate,
     );
   }
   updateID(): void {

@@ -131,7 +131,11 @@ const NovelItem = ({
               className="h-full"
               onClick={() => {
                 console.log(novel);
-                mutate(new AddNovelMutation(novel));
+                mutate(
+                  new AddNovelMutation({
+                    ...novel,
+                  }),
+                );
               }}
             >
               Add

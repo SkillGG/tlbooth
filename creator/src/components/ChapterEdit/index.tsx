@@ -8,7 +8,6 @@ import { RemoveTLMutation } from "@/hooks/mutations/chapterMutations/removeTrans
 import { NovelEditCard } from "./NovelEditCard";
 import { ChapterEditCard } from "./ChapterEditCard";
 import Head from "next/head";
-import { useAuth } from "@clerk/nextjs";
 import { useAdmin } from "@/hooks/admin";
 
 function TranslationItem({ tl }: { tl: StoreTranslation }) {
@@ -32,7 +31,20 @@ function TranslationItem({ tl }: { tl: StoreTranslation }) {
         : "text-chapstate-good"
       } grid w-[50%] grid-flow-col grid-rows-2 px-4`}
     >
-      <small>Last Edited:{tl.lastEditDate.getDate()}</small>
+      <div>
+        <p>
+          <small>
+            Created:
+            {(tl.createdAt ?? "???").toLocaleString()}
+          </small>
+        </p>
+        <p>
+          <small>
+            Last Edited:
+            {(tl.lastUpdatedAt ?? "???").toLocaleString()}
+          </small>
+        </p>
+      </div>
       <div>
         ({tl.oglang} {"=>"} {tl.tllang}) [{tl.status}]
       </div>
@@ -189,7 +201,6 @@ export function ChapterEdit(props: {
                     chapterID,
                     from,
                     to,
-                    author: user.sign ?? "unknown",
                     date: new Date(),
                   }),
                 )

@@ -20,6 +20,9 @@ import {
   type PopupMenuObject,
   usePopupMenu,
 } from "../PopupMenu";
+import { RemoveChapterMutation } from "@/hooks/mutations/chapterMutations/removeChapter";
+import { twMerge } from "tailwind-merge";
+import { type NestedArray } from "@/utils/utils";
 
 type StagedChapterInfo = ScrapperChapterInfo & {
   staged: boolean;
@@ -64,7 +67,7 @@ function ChapterMenuButton({
   onClick,
   ...props
 }: React.ComponentPropsWithoutRef<"button"> & {
-  actions: ChapterActionMenuItem[];
+  actions: NestedArray<ChapterActionMenuItem>[];
   openMenu?: PopupMenuObject["show"];
 }) {
   return (
@@ -112,14 +115,26 @@ const ChapterItem = React.memo(function ChapterItem({
       novelID,
       (c) => c.url === db.url,
     );
-    console.log(dbChap, localChap);
+
+    console.log("db/local", dbChap, localChap);
+
+    const createdAt =
+      dbChap?.createdAt?.toLocaleString() ??
+      localChap?.createdAt?.toLocaleString() ??
+      "??";
+    const lastUpdatedAt =
+      dbChap?.lastUpdatedAt?.toLocaleString() ??
+      localChap?.lastUpdatedAt?.toLocaleString() ??
+      createdAt;
+
     return (
       <div
         className={`${novelItem.chaplinked} ${!dbChap ? "text-chapstate-localonly" : "text-chapstate-dbonly"}`}
-        title={"DB: " + db.url}
+        title={`DB: ${db.url}\nCreated@ ${createdAt}\nLast Edit@ ${lastUpdatedAt}`}
       >
         <div className="grid h-full w-full content-center justify-center text-balance text-center">
-          {db.name} ({getChapterDate(db.date)})
+          {db.name} ({getChapterDate(db.date)}){" "}
+          {dbChap?.forDeletion && "[DEL]"}
         </div>
         <ChapterMenuButton
           actions={[
@@ -149,7 +164,14 @@ const ChapterItem = React.memo(function ChapterItem({
                 label: "Remove",
                 className: "bg-red-300 hover:bg-red-600",
                 action() {
-                  throw "TODO _removeChapterAction";
+                  if (dbChap) {
+                    mutate(
+                      new RemoveChapterMutation({
+                        chapterID: dbChap.id,
+                        novelID: dbChap.novelID,
+                      }),
+                    );
+                  }
                 },
               },
           ]}
@@ -158,10 +180,23 @@ const ChapterItem = React.memo(function ChapterItem({
       </div>
     );
   } else if (!db && local) {
+    const localChap = getChapterBy(
+      novelID,
+      (c) => c.url === local.url,
+    );
+
+    const createdAt =
+      localChap?.createdAt?.toLocaleString() ??
+      "Not staged";
+
+    const lastUpdatedAt =
+      localChap?.lastUpdatedAt?.toLocaleString() ??
+      createdAt;
+
     return (
       <div
         className={`${novelItem.chaplinked} text-chapstate-localonly`}
-        title={"Local:" + local.url}
+        title={`Local: ${local.url}\nCreated@ ${createdAt}\nLast Edit@ ${lastUpdatedAt}`}
       >
         <div className="h-full w-full text-balance text-center">
           {local.name} ({getChapterDate(local.date)})
@@ -211,26 +246,41 @@ const ChapterItem = React.memo(function ChapterItem({
       );
       const isLocalFromMutation = !dbChap;
 
+      const createdAt =
+        dbChap?.createdAt?.toLocaleString() ??
+        localChap?.createdAt?.toLocaleString() ??
+        "??";
+      const lastUpdatedAt =
+        dbChap?.lastUpdatedAt?.toLocaleString() ??
+        localChap?.lastUpdatedAt?.toLocaleString() ??
+        createdAt;
+
       return (
         <div
-          className={`${novelItem.chaplinked} text-chapstate-good`}
-          title={"DB: " + db.url + " Local: " + local.url}
+          className={twMerge(
+            `${novelItem.chaplinked}`,
+            `text-chapstate-good`,
+            localChap?.forDeletion && "text-red-400",
+          )}
+          title={`DB: ${db.url}\nLocal: ${local.url}\nCreated@ ${createdAt}\nLast Edit@ ${lastUpdatedAt}`}
         >
           <div className="grid w-full content-center justify-center">
             {db.name} ({getChapterDate(db.date)})
           </div>
           <ChapterMenuButton
             actions={[
-              {
-                label: "Edit",
-                action() {
-                  toEdit(
-                    novelID,
-                    (dbChap ?? localChap)?.id ?? "",
-                  );
+              !localChap?.forDeletion && [
+                {
+                  label: "Edit",
+                  action() {
+                    toEdit(
+                      novelID,
+                      (dbChap ?? localChap)?.id ?? "",
+                    );
+                  },
                 },
-              },
-              "-",
+                "-",
+              ],
               isLocalFromMutation ?
                 {
                   label: "Unstage",
@@ -246,11 +296,33 @@ const ChapterItem = React.memo(function ChapterItem({
                     }
                   },
                 }
+              : localChap?.forDeletion ?
+                {
+                  label: "Undo remove",
+                  className: "bg-red-600 hover:bg-red-400",
+                  action() {
+                    if (dbChap) {
+                      removeMutation(
+                        RemoveChapterMutation.getID(
+                          dbChap.novelID,
+                          dbChap.id,
+                        ),
+                      );
+                    }
+                  },
+                }
               : {
                   label: "Remove",
                   className: "bg-red-300 hover:bg-red-600",
                   action() {
-                    throw "TODO _removeChapterAction";
+                    if (dbChap) {
+                      mutate(
+                        new RemoveChapterMutation({
+                          chapterID: dbChap.id,
+                          novelID: dbChap.novelID,
+                        }),
+                      );
+                    }
                   },
                 },
             ]}

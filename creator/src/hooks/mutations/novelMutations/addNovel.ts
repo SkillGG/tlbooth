@@ -1,5 +1,8 @@
 import { trpcClient } from "@/pages/_app";
 import {
+  type CommonSaveData,
+  getMDate,
+  isPropertyType,
   Mutation,
   MutationType,
   type StoreNovel,
@@ -7,6 +10,10 @@ import {
 import { type Optional } from "@/utils/utils";
 import { type NovelStore } from "@/hooks/novelStore";
 import { RemoveNovelMutation } from "./removeNovel";
+
+type ConstParam = ConstructorParameters<
+  typeof AddNovelMutation
+>[0];
 
 export type SaveData = {
   novelURL: string;
@@ -17,19 +24,35 @@ export type SaveData = {
 
 export const isAddNovelMutationSaveData = (
   o: unknown,
-): o is SaveData => {
-  return (
+): o is ConstParam => {
+  if (
     typeof o === "object" &&
     !!o &&
-    "novelURL" in o &&
-    "novelName" in o &&
-    "novelID" in o &&
-    "novelDescription" in o &&
-    typeof o.novelID === "string" &&
-    typeof o.novelName === "string" &&
-    typeof o.novelURL === "string" &&
-    typeof o.novelDescription === "string"
-  );
+    isPropertyType(
+      o,
+      "novelID",
+      (q) => typeof q === "string",
+    ) &&
+    isPropertyType(
+      o,
+      "novelName",
+      (q) => typeof q === "string",
+    ) &&
+    isPropertyType(
+      o,
+      "novelURL",
+      (q) => typeof q === "string",
+    ) &&
+    isPropertyType(
+      o,
+      "novelDescription",
+      (q) => typeof q === "string",
+    )
+  ) {
+    o satisfies ConstParam;
+    return true;
+  }
+  return false;
 };
 
 export class AddNovelMutation extends Mutation<
@@ -44,7 +67,12 @@ export class AddNovelMutation extends Mutation<
     novelName,
     novelURL,
     novelID,
-  }: Optional<SaveData, "novelID">) {
+    mutationDate,
+  }: Optional<
+    CommonSaveData & SaveData,
+    "novelID" | "mutationDate"
+  >) {
+    const mDate = getMDate(mutationDate);
     const novel: StoreNovel = {
       id:
         novelID ??
@@ -57,6 +85,7 @@ export class AddNovelMutation extends Mutation<
       ogdesc: novelDescription,
       tldesc: "",
       author: "",
+      createdAt: mDate,
     };
     console.log("adding novel", novel);
     super(
@@ -71,6 +100,7 @@ export class AddNovelMutation extends Mutation<
             novelName,
             novelURL,
             novelDescription,
+            createdAt: novel.createdAt ?? mDate,
           });
         // update all novelIDs in every mutation with new novelID from database
         novelStore.getMutations().forEach((n) => {
@@ -91,7 +121,9 @@ export class AddNovelMutation extends Mutation<
         novelID: novel.id,
         novelName,
         novelURL,
+        mutationDate: mDate,
       },
+      mDate,
     );
   }
   updateID(): void {

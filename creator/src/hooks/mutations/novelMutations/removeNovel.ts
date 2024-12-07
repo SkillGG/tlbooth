@@ -1,18 +1,35 @@
 import { trpcClient } from "@/pages/_app";
-import { Mutation, MutationType } from "../mutation";
+import {
+  type CommonSaveData,
+  getMDate,
+  isPropertyType,
+  Mutation,
+  MutationType,
+} from "../mutation";
 import { type NovelStore } from "@/hooks/novelStore";
+
+type ConstParam = ConstructorParameters<
+  typeof RemoveNovelMutation
+>[0];
 
 type SaveData = { novelID: string };
 
 export const isRemoveNovelSaveData = (
   o: unknown,
-): o is SaveData => {
-  return (
+): o is ConstParam => {
+  if (
     !!o &&
     typeof o === "object" &&
-    "novelID" in o &&
-    typeof o.novelID === "string"
-  );
+    isPropertyType(
+      o,
+      "novelID",
+      (q) => typeof q === "string",
+    )
+  ) {
+    o satisfies ConstParam;
+    return true;
+  }
+  return false;
 };
 
 export class RemoveNovelMutation extends Mutation<
@@ -21,7 +38,11 @@ export class RemoveNovelMutation extends Mutation<
 > {
   static getID = (novelID: string) =>
     `remove_novel_${novelID}`;
-  constructor(novelID: string) {
+  constructor({
+    novelID,
+    mutationDate,
+  }: SaveData & Partial<CommonSaveData>) {
+    const mDate = getMDate(mutationDate);
     super(
       RemoveNovelMutation.getID(novelID),
       (p) => {
@@ -44,7 +65,8 @@ export class RemoveNovelMutation extends Mutation<
           this,
         );
       },
-      { novelID },
+      { novelID, mutationDate: mDate },
+      mDate,
     );
   }
   updateID(): void {

@@ -1,7 +1,18 @@
 import { TLStatus } from "@prisma/client";
-import { Mutation, MutationType } from "../mutation";
+import {
+  type CommonSaveData,
+  getMDate,
+  isPropertyType,
+  isPropertyTypeOrUndefined,
+  Mutation,
+  MutationType,
+  type StoreChapter,
+  type StoreTranslation,
+} from "../mutation";
 import { trpcClient } from "@/pages/_app";
-
+type ConstParam = ConstructorParameters<
+  typeof ChangeTLStatusMutation
+>[0];
 type SaveData = {
   novelID: string;
   chapterID: string;
@@ -13,29 +24,48 @@ type SaveData = {
 
 export const isChangeTLStatusSaveData = (
   o: unknown,
-): o is SaveData => {
-  return (
+): o is ConstParam => {
+  if (
     !!o &&
     typeof o === "object" &&
-    "novelID" in o &&
-    typeof o.novelID === "string" &&
-    "chapterID" in o &&
-    typeof o.chapterID === "string" &&
-    "tlID" in o &&
-    typeof o.tlID === "string" &&
-    "lineID" in o &&
-    typeof o.lineID === "string" &&
-    "status" in o &&
-    Object.values(TLStatus).includes(
-      o.status as TLStatus,
+    isPropertyType(
+      o,
+      "novelID",
+      (q) => typeof q === "string",
     ) &&
-    ("publishdate" in o ?
-      typeof o.publishdate === "string"
-    : true) &&
-    ("editdate" in o ?
-      typeof o.editdate === "string"
-    : true)
-  );
+    isPropertyType(
+      o,
+      "chapterID",
+      (q) => typeof q === "string",
+    ) &&
+    isPropertyType(
+      o,
+      "tlID",
+      (q) => typeof q === "string",
+    ) &&
+    isPropertyType(
+      o,
+      "lineID",
+      (q) => typeof q === "string",
+    ) &&
+    isPropertyType(o, "status", (q): q is TLStatus =>
+      Object.values(TLStatus).includes(q as TLStatus),
+    ) &&
+    isPropertyTypeOrUndefined(
+      o,
+      "publishdate",
+      (q) => typeof q === "string",
+    ) &&
+    isPropertyTypeOrUndefined(
+      o,
+      "editdate",
+      (q) => typeof q === "string",
+    )
+  ) {
+    o satisfies ConstParam;
+    return true;
+  }
+  return false;
 };
 
 export class ChangeTLStatusMutation extends Mutation<
@@ -57,7 +87,9 @@ export class ChangeTLStatusMutation extends Mutation<
     status,
     publishdate,
     editdate,
-  }: SaveData) {
+    mutationDate,
+  }: SaveData & Partial<CommonSaveData>) {
+    const mDate = getMDate(mutationDate);
     super(
       ChangeTLStatusMutation.getID({
         novelID,
@@ -69,25 +101,29 @@ export class ChangeTLStatusMutation extends Mutation<
           return n.id === this.data.novelID ?
               {
                 ...n,
-                chapters: n.chapters.map((ch) => {
-                  return ch.id === this.data.chapterID ?
-                      {
-                        ...ch,
-                        translations: ch.translations.map(
-                          (tl) => {
-                            return (
-                                tl.id === this.data.tlID
-                              ) ?
-                                {
-                                  ...tl,
-                                  status,
-                                }
-                              : tl;
-                          },
-                        ),
-                      }
-                    : ch;
-                }),
+                chapters: n.chapters.map(
+                  (ch: StoreChapter) => {
+                    return ch.id === this.data.chapterID ?
+                        {
+                          ...ch,
+                          lastUpdatedAt: mDate,
+                          translations: ch.translations.map(
+                            (tl: StoreTranslation) => {
+                              return (
+                                  tl.id === this.data.tlID
+                                ) ?
+                                  {
+                                    ...tl,
+                                    status,
+                                    lastUpdatedAt: mDate,
+                                  }
+                                : tl;
+                            },
+                          ),
+                        }
+                      : ch;
+                  },
+                ),
               }
             : n;
         });
@@ -98,6 +134,7 @@ export class ChangeTLStatusMutation extends Mutation<
         await trpcClient.db.changeTLStatus.mutate({
           tlID: this.data.tlID,
           status: this.data.status,
+          mutationDate: mDate,
         });
       },
       {
@@ -107,7 +144,9 @@ export class ChangeTLStatusMutation extends Mutation<
         status,
         publishdate,
         editdate,
+        mutationDate: mDate,
       },
+      mDate,
     );
   }
   updateID(): void {

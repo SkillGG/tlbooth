@@ -6,9 +6,9 @@ generator client {
 }
 
 datasource db {
-    provider  = "postgresql"
-    url       = env("DB_URL")
-    directUrl = env("DB_DIRECT_URL")
+    provider     = "postgresql"
+    url          = env("DB_URL")
+    directUrl    = env("DB_DIRECT_URL")
     relationMode = "prisma"
 }
 
@@ -31,6 +31,20 @@ enum LineStatus {
     PR
 }
 
+enum CHANGE_TYPE {
+    CREATE
+    EDIT
+    REMOVE
+}
+
+model Users {
+    id String @id
+
+    name String @unique
+
+    role String[]
+}
+
 model Translation {
     id String @id @default(cuid())
 
@@ -39,17 +53,14 @@ model Translation {
 
     status TLStatus
 
-    publishDate DateTime @default(now())
-
-    lastEditDate DateTime @default(now())
-    editAuthors  String[] @default([])
-
-    author String
+    publishDate DateTime?
 
     Chapter   Chapter? @relation(fields: [chapterID], references: [id], onDelete: Cascade)
     chapterID String?  @map("chapterId")
 
     lines TextLine[]
+
+    @@index([chapterID])
 }
 
 model TextLine {
@@ -61,12 +72,10 @@ model TextLine {
 
     status LineStatus @default(STAGED)
 
-    changeTime DateTime @default(now())
-
-    changeAuthors String[]
-
     Translation Translation? @relation(fields: [textID], references: [id], onDelete: Cascade)
     textID      String?      @map("textId")
+
+    @@index([textID])
 }
 
 model Novel {
@@ -102,4 +111,18 @@ model Chapter {
     novelID String @map("novelId")
 
     translations Translation[]
+
+    @@index([novelID])
+}
+
+model Changes {
+    id String @id @default(cuid()) @map("_id")
+
+    date DateTime
+
+    user String
+
+    changedID  String
+    changeType CHANGE_TYPE
+    changeData Json
 }

@@ -5,10 +5,14 @@ import { ChangeChapterNameMutation } from "./chapterMutations/changeName";
 import { ChangeChapterNumMutation } from "./chapterMutations/changeNum";
 import { ChangeTLStatusMutation } from "./chapterMutations/changeTLStatus";
 import { FetchLinesMutation } from "./chapterMutations/fetchLines";
+import { RemoveChapterMutation } from "./chapterMutations/removeChapter";
 import { RemoveLineMutation } from "./chapterMutations/removeLine";
 import { RemoveTLMutation } from "./chapterMutations/removeTranslation";
 import { StageChapterMutation } from "./chapterMutations/stageChapter";
-import { MutationType } from "./mutation";
+import {
+  type CommonSaveData,
+  MutationType,
+} from "./mutation";
 import { AddNovelMutation } from "./novelMutations/addNovel";
 import { ChangeNovelDescriptionMutation } from "./novelMutations/changeDescription";
 import { ChangeNovelNameMutation } from "./novelMutations/changeName";
@@ -42,51 +46,57 @@ export type ChangeTLStatusMutationData =
   typeof ChangeTLStatusMutation.prototype.data;
 export type RemoveLineMutationData =
   typeof RemoveLineMutation.prototype.data;
+export type RemoveChapterMutationData =
+  typeof RemoveChapterMutation.prototype.data;
 
-export type SaveMutationDatas = NonNullable<
-  | ({
-      type: MutationType.ADD_NOVEL;
-    } & AddNovelMutationData)
-  | ({
-      type: MutationType.CHANGE_DESC;
-    } & ChangeNovelDescriptionMutationData)
-  | ({
-      type: MutationType.CHANGE_NAME;
-    } & ChangeNovelNameMutationData)
-  | ({
-      type: MutationType.REMOVE_NOVEL;
-    } & RemoveNovelMutationData)
-  | ({
-      type: MutationType.STAGE_CHAPTER;
-    } & StageChapterMutationData)
-  | ({
-      type: MutationType.CHANGE_CHAPTER_NAME;
-    } & ChangeChapterNameMutationData)
-  | ({
-      type: MutationType.ADD_TRANSLATION;
-    } & AddTranslationMutationData)
-  | ({
-      type: MutationType.REMOVE_TRANSLATION;
-    } & RemoveTLMutationData)
-  | ({
-      type: MutationType.FETCH_LINES;
-    } & FetchLinesMutationData)
-  | ({
-      type: MutationType.CHANGE_LINE;
-    } & ChangeLineMutationData)
-  | ({
-      type: MutationType.CHANGE_CHAPTER_NUMBER;
-    } & ChangeChapterNumMutationData)
-  | ({
-      type: MutationType.CHANGE_LINE_STATUS;
-    } & ChangeLineStatusMutationData)
-  | ({
-      type: MutationType.CHANGE_TL_STATUS;
-    } & ChangeTLStatusMutationData)
-  | ({
-      type: MutationType.REMOVE_LINE;
-    } & RemoveLineMutationData)
->;
+export type SaveMutationDatas = CommonSaveData &
+  NonNullable<
+    | ({
+        type: MutationType.ADD_NOVEL;
+      } & AddNovelMutationData)
+    | ({
+        type: MutationType.CHANGE_DESC;
+      } & ChangeNovelDescriptionMutationData)
+    | ({
+        type: MutationType.CHANGE_NAME;
+      } & ChangeNovelNameMutationData)
+    | ({
+        type: MutationType.REMOVE_NOVEL;
+      } & RemoveNovelMutationData)
+    | ({
+        type: MutationType.STAGE_CHAPTER;
+      } & StageChapterMutationData)
+    | ({
+        type: MutationType.CHANGE_CHAPTER_NAME;
+      } & ChangeChapterNameMutationData)
+    | ({
+        type: MutationType.ADD_TRANSLATION;
+      } & AddTranslationMutationData)
+    | ({
+        type: MutationType.REMOVE_TRANSLATION;
+      } & RemoveTLMutationData)
+    | ({
+        type: MutationType.FETCH_LINES;
+      } & FetchLinesMutationData)
+    | ({
+        type: MutationType.CHANGE_LINE;
+      } & ChangeLineMutationData)
+    | ({
+        type: MutationType.CHANGE_CHAPTER_NUMBER;
+      } & ChangeChapterNumMutationData)
+    | ({
+        type: MutationType.CHANGE_LINE_STATUS;
+      } & ChangeLineStatusMutationData)
+    | ({
+        type: MutationType.CHANGE_TL_STATUS;
+      } & ChangeTLStatusMutationData)
+    | ({
+        type: MutationType.REMOVE_LINE;
+      } & RemoveLineMutationData)
+    | ({
+        type: MutationType.REMOVE_CHAPTER;
+      } & RemoveChapterMutationData)
+  >;
 
 export const MutationFromData = (
   rmd: SaveMutationDatas,
@@ -99,7 +109,7 @@ export const MutationFromData = (
     case MutationType.CHANGE_NAME:
       return new ChangeNovelNameMutation(rmd);
     case MutationType.REMOVE_NOVEL:
-      return new RemoveNovelMutation(rmd.novelID);
+      return new RemoveNovelMutation(rmd);
     case MutationType.STAGE_CHAPTER:
       return new StageChapterMutation(rmd);
     case MutationType.ADD_TRANSLATION:
@@ -120,6 +130,8 @@ export const MutationFromData = (
       return new ChangeTLStatusMutation(rmd);
     case MutationType.REMOVE_LINE:
       return new RemoveLineMutation(rmd);
+    case MutationType.REMOVE_CHAPTER:
+      return new RemoveChapterMutation(rmd);
     default:
       rmd satisfies never;
       throw "Unknown mutation type!";

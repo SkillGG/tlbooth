@@ -1,7 +1,17 @@
 import { type Optional } from "@/utils/utils";
-import { Mutation, MutationType } from "../mutation";
+import {
+  type CommonSaveData,
+  getMDate,
+  isPropertyType,
+  Mutation,
+  MutationType,
+} from "../mutation";
 import { trpcClient } from "@/pages/_app";
 import { type NovelStore } from "@/hooks/novelStore";
+
+type ConstParam = ConstructorParameters<
+  typeof StageChapterMutation
+>[0];
 
 type SaveData = {
   novelID: string;
@@ -9,29 +19,46 @@ type SaveData = {
   name: string;
   ognum: number;
   chapterID: string;
-  date: Date;
+  date: Date | string;
 };
 
 export const isStageChapterSaveData = (
   o: unknown,
-): o is SaveData => {
-  return (
+): o is ConstParam => {
+  if (
     !!o &&
     typeof o === "object" &&
-    "chapterID" in o &&
-    typeof o.chapterID === "string" &&
-    "novelID" in o &&
-    typeof o.novelID === "string" &&
-    "url" in o &&
-    typeof o.url === "string" &&
-    "ognum" in o &&
-    typeof o.ognum === "number" &&
-    "name" in o &&
-    typeof o.name === "string" &&
-    "date" in o &&
-    typeof o.date === "object" &&
-    o.date instanceof Date
-  );
+    isPropertyType(
+      o,
+      "chapterID",
+      (q) => typeof q === "string",
+    ) &&
+    isPropertyType(
+      o,
+      "novelID",
+      (q) => typeof q === "string",
+    ) &&
+    isPropertyType(
+      o,
+      "url",
+      (q) => typeof q === "string",
+    ) &&
+    isPropertyType(
+      o,
+      "ognum",
+      (q) => typeof q === "number",
+    ) &&
+    isPropertyType(
+      o,
+      "date",
+      (q) => typeof q === "string" || q instanceof Date,
+    ) &&
+    isPropertyType(o, "name", (q) => typeof q === "string")
+  ) {
+    o satisfies ConstParam;
+    return true;
+  }
+  return false;
 };
 
 export class StageChapterMutation extends Mutation<
@@ -55,10 +82,15 @@ export class StageChapterMutation extends Mutation<
     url,
     chapterID,
     date,
-  }: Optional<SaveData, "chapterID">) {
+    mutationDate,
+  }: Optional<
+    SaveData & CommonSaveData,
+    "chapterID" | "mutationDate"
+  >) {
     const id =
       chapterID ??
       `local_chapter_${++StageChapterMutation.chapterID}`;
+    const mDate = getMDate(mutationDate);
     super(
       StageChapterMutation.getID({
         novelID,
@@ -77,10 +109,11 @@ export class StageChapterMutation extends Mutation<
                     num: `${ognum}`,
                     ogname: name,
                     ognum,
+                    createdAt: mDate,
                     url: url,
                     tlname: "",
                     translations: [],
-                    ogPub: date,
+                    ogPub: new Date(date),
                   },
                 ],
               }
@@ -90,7 +123,10 @@ export class StageChapterMutation extends Mutation<
       MutationType.STAGE_CHAPTER,
       async (store) => {
         const result =
-          await trpcClient.db.addChapter.mutate(this.data);
+          await trpcClient.db.addChapter.mutate({
+            ...this.data,
+            date: new Date(this.data.date),
+          });
         if (result) {
           store.getMutations().forEach((mut) => {
             if ("chapterID" in mut.data) {
@@ -111,7 +147,9 @@ export class StageChapterMutation extends Mutation<
         date,
         ognum,
         url,
+        mutationDate: mDate,
       },
+      mDate,
     );
   }
   updateID(): void {

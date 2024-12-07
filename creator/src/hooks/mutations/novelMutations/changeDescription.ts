@@ -1,5 +1,15 @@
 import { trpcClient } from "@/pages/_app";
-import { Mutation, MutationType } from "../mutation";
+import {
+  type CommonSaveData,
+  getMDate,
+  isPropertyType,
+  Mutation,
+  MutationType,
+} from "../mutation";
+
+type ConstParam = ConstructorParameters<
+  typeof ChangeNovelDescriptionMutation
+>[0];
 
 type SaveData = {
   desc: string;
@@ -9,17 +19,26 @@ type SaveData = {
 
 export const isChangeNovelDescriptionSaveData = (
   o: unknown,
-): o is SaveData => {
-  return (
+): o is ConstParam => {
+  if (
     !!o &&
     typeof o === "object" &&
-    "desc" in o &&
-    "novelID" in o &&
-    "og" in o &&
-    typeof o.desc === "string" &&
-    typeof o.novelID === "string" &&
-    typeof o.og === "boolean"
-  );
+    isPropertyType(
+      o,
+      "desc",
+      (q) => typeof q === "string",
+    ) &&
+    isPropertyType(
+      o,
+      "novelID",
+      (q) => typeof q === "string",
+    ) &&
+    isPropertyType(o, "og", (q) => typeof q === "boolean")
+  ) {
+    o satisfies ConstParam;
+    return true;
+  }
+  return false;
 };
 
 export class ChangeNovelDescriptionMutation extends Mutation<
@@ -31,14 +50,29 @@ export class ChangeNovelDescriptionMutation extends Mutation<
     og,
   }: Omit<SaveData, "desc">) =>
     `change_novel_${og ? "og" : "tl"}_desc_${novelID}`;
-  constructor({ desc, novelID, og }: SaveData) {
+  constructor({
+    desc,
+    novelID,
+    og,
+    mutationDate,
+  }: SaveData & Partial<CommonSaveData>) {
+    const mDate = getMDate(mutationDate);
     super(
       ChangeNovelDescriptionMutation.getID({ novelID, og }),
       (p) => {
         return p.map((n) =>
           n.id === this.data.novelID ?
-            og ? { ...n, ogdesc: desc }
-            : { ...n, tldesc: desc }
+            og ?
+              {
+                ...n,
+                ogdesc: desc,
+                lastUpdatedAt: mDate,
+              }
+            : {
+                ...n,
+                tldesc: desc,
+                lastUpdatedAt: mDate,
+              }
           : n,
         );
       },
@@ -46,10 +80,11 @@ export class ChangeNovelDescriptionMutation extends Mutation<
       MutationType.CHANGE_DESC,
       async () => {
         await trpcClient.db.changeNovelDescription.mutate(
-          this.data,
+          Mutation.getSaveData(this),
         );
       },
-      { desc, novelID, og },
+      { desc, novelID, og, mutationDate: mDate },
+      mDate,
     );
   }
   updateID(): void {
